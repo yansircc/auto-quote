@@ -1,55 +1,15 @@
 import { getGroupWeight } from './utils/weight';
-import { isValidGrouping, normalizeGrouping } from './utils/validation';
-import { generateSolutionDescription, formatGroupsAsJson } from './utils/format';
+import { isValidGrouping } from './utils/validation';
+import { generateSolutionDescription } from './utils/format';
 import { checkVolumeUtilization } from './utils/volume';
-import type { Product, ResponseData } from './types';
+import { generateAllPossibleCombinations } from './utils/combinations';
+import type { Product, ResponseData, Solution } from './types';
 
 /**
- * 生成所有可能的分组组合
- */
-function generateAllPossibleGroups(products: Product[]): Product[][][] {
-  const result: Product[][][] = [];
-  const seenGroupings = new Set<string>();
-
-  function generateCombinations(remaining: Product[], current: Product[][], maxGroups: number) {
-    if (remaining.length === 0) {
-      const nonEmptyGroups = current.filter((g) => g.length > 0);
-      const validationResult = isValidGrouping(nonEmptyGroups);
-
-      if (validationResult.valid) {
-        const normalized = normalizeGrouping(nonEmptyGroups);
-        if (!seenGroupings.has(normalized)) {
-          seenGroupings.add(normalized);
-          result.push([...nonEmptyGroups]);
-        }
-      }
-      return;
-    }
-
-    const [currentProduct, ...newRemaining] = remaining;
-
-    current.forEach((_, i) => {
-      if (currentProduct) {
-        const newGroups = current.map((g, idx) => (idx === i ? [...g, currentProduct] : [...g]));
-        generateCombinations(newRemaining, newGroups, maxGroups);
-      }
-    });
-
-    if (current.length < products.length && currentProduct) {
-      const newGroups = [...current, [currentProduct]];
-      generateCombinations(newRemaining, newGroups, maxGroups);
-    }
-  }
-
-  generateCombinations(products, [[]], products.length);
-  return result;
-}
-
-/**
- * 查找最优的产品分组方案
+ * Find optimal grouping solutions for products within a single mold
  */
 export function findOptimalGroups(products: Product[]): ResponseData {
-  // 检查体积利用率
+  // Check volume utilization first
   const volumeCheck = checkVolumeUtilization(products);
   if (!volumeCheck.canGroup) {
     return {
@@ -64,7 +24,18 @@ export function findOptimalGroups(products: Product[]): ResponseData {
     };
   }
 
-  const possibleGroups = generateAllPossibleGroups(products);
+  // Generate all possible groupings
+  const combinations = generateAllPossibleCombinations({
+    items: products,
+    validate: (groups) => ({ 
+      valid: isValidGrouping(groups).valid 
+    }),
+    maxGroups: 2, // We only want to split into 2 groups for weight balance
+    minItemsPerGroup: 1
+  });
+
+  // Extract just the groups from combinations
+  const possibleGroups = combinations.map(c => c.groups);
 
   if (possibleGroups.length === 0) {
     return {
@@ -79,20 +50,39 @@ export function findOptimalGroups(products: Product[]): ResponseData {
     };
   }
 
-  const descriptions = possibleGroups.map((grouping, index) =>
-    generateSolutionDescription(grouping, index)
-  );
+  // Convert to our solution format
+  const solutions: Solution[] = possibleGroups.map((groups, index) => ({
+    solutionId: index + 1,
+    groups: groups.map((group, groupIndex) => ({
+      groupId: groupIndex + 1,
+      weights: group.map((p) => p.weight),
+      totalWeight: getGroupWeight(group),
+    })),
+  }));
 
-  // 计算第一个分组方案的重量差异
-  const firstGrouping = possibleGroups[0];
-  if (!firstGrouping) {
-    throw new Error('第一个分组方案未定义');
+  // Generate descriptions for each solution
+  const descriptions = solutions.map((_, index) => {
+    const groups = possibleGroups[index];
+    if (!groups) {
+      throw new Error(`Missing groups for solution ${index + 1}`);
+    }
+    return generateSolutionDescription(groups, index + 1);
+  });
+
+  // Ensure we have at least one solution before accessing it
+  if (solutions.length === 0) {
+    throw new Error('No solutions available');
   }
-  const groupWeights = firstGrouping.map(getGroupWeight);
-  const weightDiff = Math.max(...groupWeights) - Math.min(...groupWeights);
+
+  const firstSolution = solutions[0];
+  if (!firstSolution || firstSolution.groups.length < 2) {
+    throw new Error('Invalid solution structure');
+  }
 
   return {
-    weightDiff,
+    weightDiff: Math.abs(
+        firstSolution.groups[0]!.totalWeight - firstSolution.groups[1]!.totalWeight
+    ),
     weights: products.map((p) => p.weight),
     message: {
       general: `找到${possibleGroups.length}种分组方案`,
@@ -100,17 +90,17 @@ export function findOptimalGroups(products: Product[]): ResponseData {
       solutions: descriptions,
     },
     totalSolutions: possibleGroups.length,
-    solutions: formatGroupsAsJson(possibleGroups),
+    solutions,
   };
 }
 
-const mockProducts: Product[] = [
-  { weight: 5, dimensions: { length: 100, width: 50, height: 30 } },
-  { weight: 300, dimensions: { length: 150, width: 80, height: 30 } },
-  { weight: 550, dimensions: { length: 200, width: 100, height: 30 } },
-  { weight: 830, dimensions: { length: 250, width: 120, height: 30 } },
-];
-const result = findOptimalGroups(mockProducts);
+// const mockProducts: Product[] = [
+//   { weight: 5, dimensions: { length: 100, width: 50, height: 30 } },
+//   { weight: 300, dimensions: { length: 150, width: 80, height: 30 } },
+//   { weight: 550, dimensions: { length: 200, width: 100, height: 30 } },
+//   { weight: 830, dimensions: { length: 250, width: 120, height: 30 } },
+// ];
+// const result = findOptimalGroups(mockProducts);
 
-console.log('result', result);
-// bun run src/lib/algorithm/grouping.ts
+// console.log('result', result);
+// // bun run src/lib/algorithm/grouping.ts
