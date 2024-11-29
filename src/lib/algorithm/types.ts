@@ -20,6 +20,7 @@ export interface Solution {
 
 export interface Message {
   general: string;
+  volumeUtilization?: string;
   solutions: string[];
 }
 

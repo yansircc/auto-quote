@@ -1,6 +1,7 @@
 import { getGroupWeight } from './utils/weight';
 import { isValidGrouping, normalizeGrouping } from './utils/validation';
 import { generateSolutionDescription, formatGroupsAsJson } from './utils/format';
+import { checkVolumeUtilization } from './utils/volume';
 import type { Product, ResponseData } from './types';
 
 /**
@@ -48,6 +49,21 @@ function generateAllPossibleGroups(products: Product[]): Product[][][] {
  * 查找最优的产品分组方案
  */
 export function findOptimalGroups(products: Product[]): ResponseData {
+  // 检查体积利用率
+  const volumeCheck = checkVolumeUtilization(products);
+  if (!volumeCheck.canGroup) {
+    return {
+      weightDiff: 0,
+      weights: products.map((p) => p.weight),
+      message: {
+        general: volumeCheck.message ?? '产品不适合分组',
+        solutions: [],
+      },
+      totalSolutions: 0,
+      solutions: [],
+    };
+  }
+
   const possibleGroups = generateAllPossibleGroups(products);
 
   if (possibleGroups.length === 0) {
@@ -80,6 +96,7 @@ export function findOptimalGroups(products: Product[]): ResponseData {
     weights: products.map((p) => p.weight),
     message: {
       general: `找到${possibleGroups.length}种分组方案`,
+      volumeUtilization: volumeCheck.message,
       solutions: descriptions,
     },
     totalSolutions: possibleGroups.length,
@@ -87,8 +104,13 @@ export function findOptimalGroups(products: Product[]): ResponseData {
   };
 }
 
-// const mockProducts: Product[] = [{ weight: 5 }, { weight: 300 }, { weight: 550 }, { weight: 830 }];
-// const result = findOptimalGroups(mockProducts);
+const mockProducts: Product[] = [
+  { weight: 5, dimensions: { length: 100, width: 50, height: 30 } },
+  { weight: 300, dimensions: { length: 150, width: 80, height: 30 } },
+  { weight: 550, dimensions: { length: 200, width: 100, height: 30 } },
+  { weight: 830, dimensions: { length: 250, width: 120, height: 30 } },
+];
+const result = findOptimalGroups(mockProducts);
 
-// console.log('weightDiff', result);
-// // bun run src/lib/algorithm/grouping.ts
+console.log('result', result);
+// bun run src/lib/algorithm/grouping.ts
