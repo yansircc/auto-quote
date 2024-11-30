@@ -52,6 +52,12 @@ export interface QuadrantConfig {
   centerPoint?: Point2D;
 }
 
+// 新增：Annotation配置接口
+export interface AnnotationConfig {
+  title: string;
+  descriptions: string[];
+}
+
 export const useViewBoxCalculation = (
   layout: Rectangle[],
   width: number,
@@ -237,3 +243,30 @@ export const Legend: React.FC<{config: LegendConfig}> = ({ config }) => (
     ))}
   </div>
 );
+
+interface AnnotationProps {
+  config: AnnotationConfig;
+  position?: 'bottom-right' | 'bottom';
+}
+
+export const Annotation: React.FC<AnnotationProps> = ({ 
+  config, 
+  position = 'bottom-right' 
+}) => {
+  const positionClass = position === 'bottom-right' 
+    ? 'bottom-4 right-4'
+    : 'bottom-4 left-1/2 -translate-x-1/2';
+
+  return (
+    <div className={`absolute ${positionClass} p-3 bg-white/80 backdrop-blur-sm rounded-lg shadow-sm`}>
+      <div className="text-sm font-medium text-slate-800 mb-1">
+        {config.title}
+      </div>
+      {config.descriptions.map((desc, index) => (
+        <div key={index} className="text-xs text-slate-600">
+          • {desc}
+        </div>
+      ))}
+    </div>
+  );
+};
