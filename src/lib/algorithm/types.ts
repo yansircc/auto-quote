@@ -1,6 +1,7 @@
 export interface Product {
   id: number;
   weight: number;
+  flowLength?: number;
   dimensions?: {
     length: number;
     width: number;

@@ -27,8 +27,50 @@ export function calculateWeightedVariance(
 }
 
 /**
- * Normalize a score to 0-100 range
- * 将分数归一化到0-100范围
+ * Calculate weighted mean for a set of values and their weights
+ * 计算加权平均值
+ */
+export function calculateWeightedMean(
+  values: number[],
+  weights: number[]
+): number {
+  if (!values.length || !weights.length) return 0;
+
+  if (values.length !== weights.length) {
+    throw new Error('Values and weights arrays must be of the same length.');
+  }
+
+  const totalWeight = weights.reduce((sum, w) => sum + w, 0);
+  if (totalWeight === 0) return 0;
+
+  return values.reduce((sum, v, i) => sum + v * weights[i]!, 0) / totalWeight;
+}
+
+/**
+ * Normalize a value to a given range
+ * 将值归一化到指定范围
+ * @param value 要归一化的值
+ * @param min 最小值
+ * @param max 最大值
+ * @param invert 是否反转（较小值对应较高分数）
+ * @returns 归一化后的值（0-100）
+ */
+export function normalizeToRange(
+  value: number,
+  min: number,
+  max: number,
+  invert = false
+): number {
+  if (min === max) return 50; // 当最大值等于最小值时返回中间值
+  
+  const normalized = (value - min) / (max - min);
+  const score = invert ? 1 - normalized : normalized;
+  return Math.max(0, Math.min(100, score * 100));
+}
+
+/**
+ * Normalize a score to 0-100 range based on maximum variance
+ * 基于最大方差将分数归一化到0-100范围
  * @param value The value to normalize
  * @param maxVariance The maximum acceptable variance (will result in score 0)
  * @returns Normalized score between 0 and 100
@@ -37,19 +79,14 @@ export function normalizeScore(
   value: number,
   maxVariance = 1000
 ): number {
-  // For variance, smaller is better
-  // 对于方差来说，越小越好
-  if (value >= maxVariance) return 0;
-  if (value <= 0) return 100;
-  
-  return Math.max(0, Math.min(100, 
-    100 * (1 - value / maxVariance)
-  ));
+  return normalizeToRange(value, 0, maxVariance, true);
 }
 
 /**
  * Calculate weighted average of scores
  * 计算加权平均分
+ * @param scoreWeightPairs 分数和权重对数组 [[score, weight], ...]
+ * @returns 加权平均分（0-100）
  */
 export function weightedAverage(
   scoreWeightPairs: [number, number][]
@@ -59,8 +96,10 @@ export function weightedAverage(
   const totalWeight = scoreWeightPairs.reduce((sum, [_, w]) => sum + w, 0);
   if (totalWeight === 0) return 0;
   
-  return scoreWeightPairs.reduce(
-    (sum, [score, weight]) => sum + score * weight,
+  const weightedSum = scoreWeightPairs.reduce(
+    (sum, [score, weight]) => sum + Math.max(0, Math.min(100, score)) * weight,
     0
-  ) / totalWeight;
+  );
+  
+  return Math.max(0, Math.min(100, weightedSum / totalWeight));
 }
