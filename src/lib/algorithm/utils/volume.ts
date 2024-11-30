@@ -1,16 +1,7 @@
-import type { Product } from '@/lib/algorithm/types';
-import { calculateMinArea } from '../min-area';
+import type { Product } from '@/types/geometry';
+import { calculateMinArea } from '@/lib/algorithm/min-area';
 
 const MIN_VOLUME_UTILIZATION_RATIO = 0.6; // 60% minimum volume utilization ratio
-
-/**
- * Convert our Product type to MinArea's Product type
- * MinArea expects dimensions in the same unit
- */
-interface MinAreaProduct {
-  length: number;
-  width: number;
-}
 
 /**
  * Check if a group of products is suitable for grouping based on volume utilization
@@ -39,14 +30,8 @@ export function checkVolumeUtilization(products: Product[]): {
     };
   }
 
-  // Convert products to MinArea format
-  const minAreaProducts: MinAreaProduct[] = products.map(p => ({
-    length: p.dimensions!.length,
-    width: p.dimensions!.width
-  }));
-
   // Calculate minimum area using MinArea algorithm
-  const minArea = calculateMinArea(minAreaProducts);
+  const minArea = calculateMinArea(products);
   
   // Find maximum height
   const maxHeight = Math.max(...products.map(p => p.dimensions!.height));

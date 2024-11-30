@@ -1,10 +1,6 @@
-import type { Rectangle, AreaResult, SkylineNode } from './types';
+import type { Rectangle, Product as FullProduct } from '@/types/geometry';
+import type { AreaResult, SkylineNode } from '@/types/layout';
 import { calculateSpacing } from './utils/spacing';
-
-interface Product {
-  length: number;
-  width: number;
-}
 
 abstract class BasePacker {
   protected boundingWidth = 0;
@@ -30,9 +26,24 @@ abstract class BasePacker {
 
 // MinArea算法实现
 class MinAreaPacker extends BasePacker {
+  // Maximum allowed aspect ratio (length/width)
+  // 最大允许的长宽比（长/宽）
+  private maxAspectRatio = 2.5;
+
   pack(rectangles: Rectangle[], maxSpacing: number): AreaResult {
     this.reset();
 
+    // Try default layout first
+    try {
+      return this.tryLayout(rectangles, maxSpacing);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (e) {
+      // If default layout fails, try alternative layout with grid-like arrangement
+      return this.tryAlternativeLayout(rectangles, maxSpacing);
+    }
+  }
+
+  private tryLayout(rectangles: Rectangle[], maxSpacing: number): AreaResult {
     // Sort by height descending (for bottom-up placement)
     const sortedRects = [...rectangles].sort((a, b) => b.height - a.height);
 
@@ -73,17 +84,23 @@ class MinAreaPacker extends BasePacker {
       const positions = this.findPossiblePositions(rect);
 
       for (const pos of positions) {
+        // Add spacing to position
+        const posWithSpacing = {
+          x: pos.x + (pos.x > 0 ? maxSpacing : 0),
+          y: pos.y + (pos.y > 0 ? maxSpacing : 0)
+        };
+
         // Try normal orientation
         const normalRect: Rectangle = {
-          x: pos.x,
-          y: pos.y,
+          x: posWithSpacing.x,
+          y: posWithSpacing.y,
           width: rect.width,
           height: rect.height,
           rotated: false,
           originalIndex: rect.originalIndex ?? i,
         };
-        if (!this.hasOverlap(normalRect)) {
-          const score = this.evaluatePlacement(normalRect);
+        if (!this.hasOverlap(normalRect) && this.evaluatePlacement(normalRect, posWithSpacing)) {
+          const score = this.evaluateScore(normalRect);
           if (score < bestScore) {
             bestScore = score;
             bestPlacement = normalRect;
@@ -96,12 +113,12 @@ class MinAreaPacker extends BasePacker {
             ...rect,
             width: rect.height,
             height: rect.width,
-            x: pos.x,
-            y: pos.y,
+            x: posWithSpacing.x,
+            y: posWithSpacing.y,
             rotated: true,
           };
-          if (!this.hasOverlap(rotatedRect)) {
-            const score = this.evaluatePlacement(rotatedRect);
+          if (!this.hasOverlap(rotatedRect) && this.evaluatePlacement(rotatedRect, posWithSpacing)) {
+            const score = this.evaluateScore(rotatedRect);
             if (score < bestScore) {
               bestScore = score;
               bestPlacement = rotatedRect;
@@ -119,7 +136,74 @@ class MinAreaPacker extends BasePacker {
       this.boundingHeight = Math.max(this.boundingHeight, bestPlacement.y + bestPlacement.height);
     }
 
-    return this.generateResult(maxSpacing);
+    // After placing all rectangles, check final aspect ratio
+    const finalAspectRatio = Math.max(this.boundingWidth, this.boundingHeight) / 
+                            Math.min(this.boundingWidth, this.boundingHeight);
+    
+    if (finalAspectRatio > this.maxAspectRatio) {
+      throw new Error('Aspect ratio constraint violated');
+    }
+
+    return {
+      length: this.boundingWidth,
+      width: this.boundingHeight,
+      area: this.calculateArea(),
+      rotation: false,
+      spacing: maxSpacing,
+      layout: this.placedRectangles,
+    };
+  }
+
+  private tryAlternativeLayout(rectangles: Rectangle[], maxSpacing: number): AreaResult {
+    this.reset();
+    
+    // Calculate ideal number of rows for a more square-like arrangement
+    const numRows = Math.ceil(Math.sqrt(rectangles.length));
+    
+    let currentX = 0;
+    let currentY = 0;
+    let maxRowHeight = 0;
+    let rowCount = 0;
+    
+    // Place rectangles in a grid-like pattern
+    for (const rect of rectangles) {
+      const spacing = this.getRequiredSpacing(rect);
+      
+      // Move to next row if needed
+      if (rowCount >= numRows) {
+        currentY += maxRowHeight + spacing;
+        currentX = 0;
+        maxRowHeight = 0;
+        rowCount = 0;
+      }
+      
+      // Place rectangle
+      this.placedRectangles.push({
+        x: currentX,
+        y: currentY,
+        width: rect.width,
+        height: rect.height,
+        rotated: false,
+        originalIndex: rect.originalIndex,
+      });
+      
+      currentX += rect.width + spacing;
+      maxRowHeight = Math.max(maxRowHeight, rect.height);
+      rowCount++;
+      
+      // Update bounding box
+      this.boundingWidth = Math.max(this.boundingWidth, currentX);
+      this.boundingHeight = Math.max(this.boundingHeight, currentY + maxRowHeight);
+    }
+    
+    return {
+      length: this.boundingWidth,
+      width: this.boundingHeight,
+      area: this.calculateArea(),
+      rotation: false,
+      spacing: maxSpacing,
+      layout: this.placedRectangles,
+    };
   }
 
   private findPossiblePositions(rect: Rectangle): Array<{ x: number; y: number }> {
@@ -170,18 +254,55 @@ class MinAreaPacker extends BasePacker {
   }
 
   private hasOverlap(rect: Rectangle): boolean {
-    return this.placedRectangles.some(
-      (placed) =>
-        !(
-          rect.x + rect.width <= placed.x ||
-          placed.x + placed.width <= rect.x ||
-          rect.y + rect.height <= placed.y ||
-          placed.y + placed.height <= rect.y
-        )
+    // Add spacing check to overlap detection
+    const spacing = this.getRequiredSpacing(rect);
+    
+    for (const placed of this.placedRectangles) {
+      // Check if rectangles overlap with spacing
+      if (
+        rect.x < placed.x + placed.width + spacing &&
+        rect.x + rect.width + spacing > placed.x &&
+        rect.y < placed.y + placed.height + spacing &&
+        rect.y + rect.height + spacing > placed.y
+      ) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private evaluatePlacement(rect: Rectangle, position: { x: number, y: number }): boolean {
+    // Check for collisions with placed rectangles
+    for (const placed of this.placedRectangles) {
+      if (this.checkCollision(rect, position, placed)) {
+        return false;
+      }
+    }
+
+    // Calculate new bounding box dimensions
+    const newWidth = Math.max(this.boundingWidth, position.x + rect.width);
+    const newHeight = Math.max(this.boundingHeight, position.y + rect.height);
+
+    // Check aspect ratio constraint
+    // 检查长宽比约束
+    const aspectRatio = Math.max(newWidth, newHeight) / Math.min(newWidth, newHeight);
+    if (aspectRatio > this.maxAspectRatio) {
+      return false;
+    }
+
+    return true;
+  }
+
+  private checkCollision(rect: Rectangle, position: { x: number, y: number }, placed: Rectangle): boolean {
+    return (
+      position.x < placed.x + placed.width &&
+      position.x + rect.width > placed.x &&
+      position.y < placed.y + placed.height &&
+      position.y + rect.height > placed.y
     );
   }
 
-  private evaluatePlacement(rect: Rectangle): number {
+  private evaluateScore(rect: Rectangle): number {
     const newWidth = Math.max(this.boundingWidth, rect.x + rect.width);
     const newHeight = Math.max(this.boundingHeight, rect.y + rect.height);
     const area = newWidth * newHeight;
@@ -445,18 +566,24 @@ class MultiStrategyPacker {
     }, []);
   }
 
-  private convertToRectangles(products: Product[]): Rectangle[] {
-    return products.map((product, index) => ({
-      x: 0,
-      y: 0,
-      width: product.length,
-      height: product.width,
-      rotated: false,
-      originalIndex: index,
-    }));
+  private convertToRectangles(products: FullProduct[]): Rectangle[] {
+    return products.map((product, index) => {
+      // 优先使用 dimensions，如果没有则尝试使用 cadData 中的 boundingBox
+      const length = product.dimensions?.length ?? (product.cadData?.boundingBox.dimensions.x ?? 0);
+      const width = product.dimensions?.width ?? (product.cadData?.boundingBox.dimensions.y ?? 0);
+
+      return {
+        x: 0,
+        y: 0,
+        width: length,
+        height: width,
+        rotated: false,
+        originalIndex: index,
+      };
+    });
   }
 
-  pack(products: Product[]): AreaResult {
+  pack(products: FullProduct[]): AreaResult {
     if (!products.length) {
       return {
         length: 0,
@@ -470,7 +597,11 @@ class MultiStrategyPacker {
 
     const rectangles = this.convertToRectangles(products);
     const maxSpacing = calculateSpacing(
-      Math.max(...products.map((p) => Math.max(p.length, p.width)))
+      Math.max(...products.map((p) => {
+        const length = p.dimensions?.length ?? (p.cadData?.boundingBox.dimensions.x ?? 0);
+        const width = p.dimensions?.width ?? (p.cadData?.boundingBox.dimensions.y ?? 0);
+        return Math.max(length, width);
+      }))
     );
 
     // 生成所有可能的矩形排列
@@ -494,7 +625,7 @@ class MultiStrategyPacker {
 }
 
 // 导出主函数
-export function calculateMinArea(products: Product[]): AreaResult {
+export function calculateMinArea(products: FullProduct[]): AreaResult {
   const packer = new MultiStrategyPacker();
   return packer.pack(products);
 }

@@ -1,4 +1,4 @@
-import type { Rectangle, Product, Point2D } from '@/lib/algorithm/types';
+import type { Rectangle, Product, Point2D } from '@/types/geometry';
 
 // Test Case 1: Perfectly balanced square layout
 // 测试用例1：完美平衡的正方形布局

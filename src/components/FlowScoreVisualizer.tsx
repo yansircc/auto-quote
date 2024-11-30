@@ -11,7 +11,7 @@ import {
   QuadrantWeightLabels,
   Legend,
 } from './base/BaseScoreVisualizer';
-import { type Point2D } from '@/lib/algorithm/types';
+import type { Point2D } from '@/types/geometry';
 
 interface FlowVisualizerProps extends BaseVisualizerProps {
   injectionPoint: Point2D;

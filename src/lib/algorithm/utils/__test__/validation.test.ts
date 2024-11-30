@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { isValidGrouping, normalizeGrouping } from '../validation';
-import type { Product } from '../../types';
+import type { Product } from '@/types/geometry';
 
 describe('validation utils', () => {
   describe('isValidGrouping', () => {

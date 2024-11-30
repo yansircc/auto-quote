@@ -1,4 +1,4 @@
-import type { Point2D, Rectangle } from '@/lib/algorithm/types';
+import type { Point2D, Rectangle } from '@/types/geometry';
 
 /**
  * Calculate distance between two 2D points

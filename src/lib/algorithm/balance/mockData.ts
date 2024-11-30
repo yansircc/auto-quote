@@ -1,4 +1,5 @@
-import type { Rectangle, Product, Point2D } from '../types';
+import type { Rectangle, Product, Point2D } from '@/types/geometry';
+import { calculateMinArea } from '../min-area';
 
 /**
  * Mock product data for testing
@@ -8,6 +9,11 @@ export const mockProducts: Product[] = [
   { // 左上象限
     id: 1,
     weight: 100, 
+    dimensions: {
+      length: 30,
+      width: 30,
+      height: 20
+    },
     cadData: { 
       volume: 100, 
       surfaceArea: 200,
@@ -21,7 +27,12 @@ export const mockProducts: Product[] = [
   },
   { // 右上象限
     id: 2,
-    weight: 100, 
+    weight: 100,
+    dimensions: {
+      length: 30,
+      width: 30,
+      height: 20
+    },
     cadData: { 
       volume: 100, 
       surfaceArea: 200,
@@ -35,7 +46,12 @@ export const mockProducts: Product[] = [
   },
   { // 左下象限
     id: 3,
-    weight: 100, 
+    weight: 100,
+    dimensions: {
+      length: 30,
+      width: 30,
+      height: 20
+    },
     cadData: { 
       volume: 100, 
       surfaceArea: 200,
@@ -49,7 +65,12 @@ export const mockProducts: Product[] = [
   },
   { // 右下象限
     id: 4,
-    weight: 100, 
+    weight: 100,
+    dimensions: {
+      length: 30,
+      width: 30,
+      height: 20
+    },
     cadData: { 
       volume: 100, 
       surfaceArea: 200,
@@ -63,23 +84,14 @@ export const mockProducts: Product[] = [
   }
 ];
 
-/**
- * Mock layout data for testing
- * 测试用模拟布局数据
- */
-export const mockLayout: Rectangle[] = [
-  // 左上象限
-  { x: 10, y: 10, width: 30, height: 30 },
-  // 右上象限
-  { x: 60, y: 10, width: 30, height: 30 },
-  // 左下象限
-  { x: 10, y: 60, width: 30, height: 30 },
-  // 右下象限
-  { x: 60, y: 60, width: 30, height: 30 },
-];
+// 使用 min-area 算法生成布局（现在可以直接使用 mockProducts）
+const minAreaResult = calculateMinArea(mockProducts);
 
-/**
- * Mock injection point for testing
- * 测试用模拟注塑点数据
- */
-export const mockInjectionPoint: Point2D = { x: 50, y: 50 };
+// 注入点位置（模具中心）
+export const mockInjectionPoint: Point2D = { 
+  x: minAreaResult.width / 2, 
+  y: minAreaResult.length / 2 
+};
+
+// 布局结果 - 保持原始布局，不进行坐标转换
+export const mockLayout: Rectangle[] = minAreaResult.layout;

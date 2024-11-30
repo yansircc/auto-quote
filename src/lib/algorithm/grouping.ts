@@ -3,7 +3,8 @@ import { isValidGrouping } from './utils/validation';
 import { generateSolutionDescription } from './utils/format';
 import { checkVolumeUtilization } from './utils/volume';
 import { generateAllPossibleCombinations } from './utils/combinations';
-import type { Product, ResponseData, Solution } from './types';
+import type { ResponseData, Solution } from '@/types/grouping';
+import type { Product } from '@/types/geometry';
 
 /**
  * Find optimal grouping solutions for products within a single mold

@@ -1,10 +1,10 @@
 import type { 
-  Product, 
   ResponseData, 
   MoldDistribution, 
   DistributionSolution, 
   DistributionResult 
-} from './types';
+} from '@/types/grouping';
+import type { Product } from '@/types/geometry';
 import { findOptimalGroups } from './grouping';
 import { generateAllPossibleCombinations } from './utils/combinations';
 import { checkVolumeUtilization } from './utils/volume';

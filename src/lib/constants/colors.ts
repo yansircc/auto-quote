@@ -38,5 +38,13 @@ export const COLORS = {
       primary: '#1E293B',   // slate-800
       secondary: '#64748B',  // slate-500
     }
+  },
+  // 可视化专用颜色
+  visualization: {
+    primary: '#0EA5E9',    // blue-500
+    secondary: '#F59E0B',  // amber-500
+    gray: '#94A3B8',       // slate-400
+    accent: '#22C55E',     // green-500
+    highlight: '#EF4444',  // red-500
   }
 } as const;

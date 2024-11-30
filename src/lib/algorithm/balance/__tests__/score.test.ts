@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { calculateBalanceScore } from '../score';
-import type { Rectangle, Product, Point2D } from '@/lib/algorithm/types';
+import type { Rectangle, Product, Point2D } from '@/types/geometry';
 import {
   perfectSquareLayout,
   linearLayout,

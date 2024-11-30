@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import type { Rectangle, Product, Point2D } from '@/lib/algorithm/types';
+import type { Rectangle, Product, Point2D } from '@/types/geometry';
 
 export interface BaseVisualizerProps {
   layout: Rectangle[];

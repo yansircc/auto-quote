@@ -1,5 +1,5 @@
-import type { Rectangle, Point2D, Product } from '@/lib/algorithm/types';
-import type { BalanceScore, DetailedGeometryScore, DetailedFlowScore } from './types';
+import type { Rectangle, Point2D, Product } from '@/types/geometry';
+import type { BalanceScore, DetailedGeometryScore, DetailedFlowScore } from '@/types/balance';
 import { calculateWeightedVariance, normalizeScore, weightedAverage } from './utils/math';
 import { calculateDistance, calculateRectCenter } from './utils/geometry';
 

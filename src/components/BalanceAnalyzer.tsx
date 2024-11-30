@@ -1,6 +1,6 @@
 "use client";
 import { useMemo } from 'react';
-import { type Rectangle, type Point2D, type Product } from '@/lib/algorithm/types';
+import type { Rectangle, Point2D, Product } from '@/types/geometry';
 import { 
   calculateDetailedGeometryScore,
   calculateDetailedFlowScore,
