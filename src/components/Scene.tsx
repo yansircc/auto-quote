@@ -170,21 +170,27 @@ export function Scene({ product, products, layout }: SceneProps) {
           return;
         }
 
-        // 计算3D尺寸
+        // 计算3D尺寸和位置
         const size: Point3D = {
-          x: layoutItem.rotated ? product.dimensions.width / 100 : product.dimensions.length / 100,
-          y: product.dimensions.height / 100,
-          z: layoutItem.rotated ? product.dimensions.length / 100 : product.dimensions.width / 100
+          x: layoutItem.rotated ? layoutItem.height / 100 : layoutItem.width / 100,   // 如果旋转，height变为x轴尺寸
+          y: product.dimensions.height / 100,  // 产品高度
+          z: layoutItem.rotated ? layoutItem.width / 100 : layoutItem.height / 100    // 如果旋转，width变为z轴尺寸
         };
 
+        // 计算布局位置（中心点）
+        const position = convertTo3D(layoutItem, size.y / 2);
+        
+        // Debug日志
         console.log(`Product #${index}:`, {
           productId: product.id,
           dimensions: product.dimensions,
           layout: layoutItem,
           size,
-          position: convertTo3D(layoutItem, size.y / 2)
+          position,
+          rotated: layoutItem.rotated
         });
 
+        // 创建产品几何体
         const geometry = new THREE.BoxGeometry(size.x, size.y, size.z);
         const material = new THREE.MeshPhysicalMaterial({
           color: `hsl(${(index * 360) / products.length}, 70%, 60%)`,
@@ -197,25 +203,45 @@ export function Scene({ product, products, layout }: SceneProps) {
 
         const cube = new THREE.Mesh(geometry, material);
         
-        // Convert from 2D layout coordinates to 3D scene coordinates
-        const position = convertTo3D(layoutItem, size.y / 2);
+        // 设置产品位置
         cube.position.set(
-          position.x / 100 + size.x / 2 - totalWidth / 2,  // Center X
-          position.y,                                       // Place on ground
-          -position.z / 100 - size.z / 2 + totalHeight / 2 // Center Z and flip
+          position.x + size.x / 2,  // 中心点偏移
+          position.y,               // 高度保持不变
+          position.z + size.z / 2   // 中心点偏移
         );
+
+        // 如果产品被旋转，进行90度旋转
+        if (layoutItem.rotated) {
+          cube.rotateY(Math.PI / 2);
+        }
 
         cube.castShadow = true;
         cube.receiveShadow = true;
         scene.add(cube);
 
-        // Add debug wireframe
+        // Debug: 添加线框以显示布局边界
+        const wireframeGeometry = new THREE.BoxGeometry(size.x, size.y, size.z);
+        const wireframeMaterial = new THREE.LineBasicMaterial({ 
+          color: '#94a3b8',
+          transparent: true,
+          opacity: 0.5
+        });
         const wireframe = new THREE.LineSegments(
-          new THREE.EdgesGeometry(geometry),
-          new THREE.LineBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.2 })
+          new THREE.WireframeGeometry(wireframeGeometry),
+          wireframeMaterial
         );
         wireframe.position.copy(cube.position);
+        if (layoutItem.rotated) {
+          wireframe.rotateY(Math.PI / 2);
+        }
         scene.add(wireframe);
+
+        // Debug: 添加中心点标记
+        const centerGeometry = new THREE.SphereGeometry(0.02);
+        const centerMaterial = new THREE.MeshBasicMaterial({ color: '#ef4444' });
+        const centerPoint = new THREE.Mesh(centerGeometry, centerMaterial);
+        centerPoint.position.copy(cube.position);
+        scene.add(centerPoint);
       });
     }
 
@@ -263,7 +289,9 @@ export function Scene({ product, products, layout }: SceneProps) {
       renderer.dispose();
       scene.traverse((object) => {
         if (object instanceof THREE.Mesh) {
-          object.geometry.dispose();
+          if (object.geometry instanceof THREE.BufferGeometry) {
+            object.geometry.dispose();
+          }
           if (object.material instanceof THREE.Material) {
             object.material.dispose();
           }

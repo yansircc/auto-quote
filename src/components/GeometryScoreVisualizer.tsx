@@ -30,6 +30,7 @@ export const GeometryScoreVisualizer: React.FC<GeometryScoreVisualizerProps> = (
 }) => {
   // Calculate visualization parameters
   const viewBoxData = useViewBoxCalculation(layout, width, height);
+  console.log('debugLayout', layout);
   
   // Calculate centers and weights
   const centers: LayoutItem[] = useMemo(() => {
@@ -68,7 +69,7 @@ export const GeometryScoreVisualizer: React.FC<GeometryScoreVisualizerProps> = (
         label: '产品重心',
       },
       {
-        color: COLORS.visualization.secondary,
+        color: COLORS.visualization.highlight,
         label: '整体重心',
       },
       {
@@ -86,6 +87,21 @@ export const GeometryScoreVisualizer: React.FC<GeometryScoreVisualizerProps> = (
         viewBox={`${viewBoxData.viewBox.x} ${viewBoxData.viewBox.y} ${viewBoxData.viewBox.width} ${viewBoxData.viewBox.height}`}
         className="border rounded bg-white"
       >
+        {/* 布局矩形 */}
+        {layout.map((rect, index) => (
+          <rect
+            key={`rect-${index}`}
+            x={rect.x}
+            y={rect.y}
+            width={rect.width}
+            height={rect.height}
+            className="stroke-blue-500"
+            fill={COLORS.primary.light}
+            strokeWidth={1/viewBoxData.scale}
+            fillOpacity={0.2}
+          />
+        ))}
+
         {/* 象限分界线 */}
         <QuadrantLines
           centerPoint={centerOfMass}
@@ -120,7 +136,7 @@ export const GeometryScoreVisualizer: React.FC<GeometryScoreVisualizerProps> = (
           cx={centerOfMass.x}
           cy={centerOfMass.y}
           r={5/viewBoxData.scale}
-          fill={COLORS.visualization.secondary}
+          fill={COLORS.visualization.highlight}
           stroke="white"
           strokeWidth={2/viewBoxData.scale}
         />

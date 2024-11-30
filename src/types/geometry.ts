@@ -69,14 +69,18 @@ export interface Product {
 
 /**
  * 坐标系转换工具函数
+ * 注意：
+ * 1. 2D布局直接映射到3D的xz平面
+ * 2. y轴（高度）独立处理
+ * 3. 坐标需要除以100转换为米
  */
 export const convertTo3D = (rect: Rectangle, height: number): Point3D => ({
-  x: rect.x,
+  x: rect.x / 100,
   y: height,
-  z: rect.y
+  z: rect.y / 100
 });
 
 export const convertTo2D = (point: Point3D): Point2D => ({
-  x: point.x,
-  y: point.z
+  x: point.x * 100,
+  y: point.z * 100
 });
