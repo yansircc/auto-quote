@@ -2,13 +2,15 @@ import type { Point2D, Rectangle } from '@/types/geometry';
 
 /**
  * Calculate distance between two 2D points
- * 计算两点间距离
+ * 计算两点间距离，单位为毫米
  */
 export function calculateDistance(p1: Point2D, p2: Point2D): number {
-  return Math.sqrt(
-    Math.pow(p2.x - p1.x, 2) + 
-    Math.pow(p2.y - p1.y, 2)
-  );
+  // Convert to millimeters
+  // 转换为毫米
+  const dx = p2.x - p1.x;
+  const dy = p2.y - p1.y;
+  const distanceInMm = Math.sqrt(dx * dx + dy * dy);
+  return distanceInMm;
 }
 
 /**

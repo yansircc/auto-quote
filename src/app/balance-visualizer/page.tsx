@@ -5,8 +5,8 @@ import { BalanceAnalyzer } from '@/components/BalanceAnalyzer';
 import { ProductViewer } from '@/components/ProductViewer';
 import { generateRandomProducts } from '@/lib/utils/product-generator';
 import { calculateMinArea } from '@/lib/algorithm/min-area';
-import { mockInjectionPoint } from '@/lib/algorithm/balance/mockData';
-import type { Product, Rectangle } from '@/lib/algorithm/types';
+import { calculateInjectionPoint } from '@/lib/algorithm/balance/utils/geometry';
+import type { Product, Rectangle } from '@/types/geometry';
 
 export default function BalanceVisualizerPage() {
   const [productCount, setProductCount] = useState<number>(4);
@@ -80,7 +80,7 @@ export default function BalanceVisualizerPage() {
               <BalanceAnalyzer
                 products={products}
                 layout={layout}
-                injectionPoint={mockInjectionPoint}
+                injectionPoint={calculateInjectionPoint(layout)}
               />
             ) : (
               <div className="text-center text-gray-500">

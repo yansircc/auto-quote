@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { calculateRectCenter } from '@/lib/algorithm/balance/utils/geometry';
+import { calculateRectCenter, calculateDistance } from '@/lib/algorithm/balance/utils/geometry';
 import { COLORS } from '@/lib/constants/colors';
 import {
   type BaseVisualizerProps,
@@ -34,10 +34,31 @@ export const FlowScoreVisualizer: React.FC<FlowVisualizerProps> = ({
       return [];
     }
     
+    // First pass: calculate all flow lengths
+    const flowLengths = layout.map((rect, i) => {
+      const product = products[i];
+      if (!product) return 0;
+      
+      const center = calculateRectCenter(rect);
+      const calculatedLength = calculateDistance(injectionPoint, center);
+      const flowLength = product.flowLength ?? calculatedLength;
+      
+      console.log('Flow length calculation:', {
+        productId: product.id,
+        rect,
+        center,
+        injectionPoint,
+        calculatedLength,
+        flowLength
+      });
+      
+      return flowLength;
+    });
+    
+    // Second pass: create layout items with actual flow lengths as weights
     return layout.map((rect, i) => {
       const product = products[i];
       if (!product) {
-        console.error(`No product found at index ${i}`);
         return {
           center: calculateRectCenter(rect),
           weight: 0,
@@ -45,14 +66,16 @@ export const FlowScoreVisualizer: React.FC<FlowVisualizerProps> = ({
         };
       }
       
+      const center = calculateRectCenter(rect);
+      const flowLength = flowLengths[i] ?? 0;
+      
       return {
-        center: calculateRectCenter(rect),
-        // For flow score, we use flow length as weight, default to 0 if not available
-        weight: product?.flowLength ?? 0,
+        center,
+        weight: flowLength, // Use actual flow length as weight, not normalized
         dimensions: rect,
       };
     });
-  }, [layout, products]);
+  }, [layout, products, injectionPoint]);
 
   // Calculate quadrant data
   const { quadrantWeights } = useQuadrantCalculation(centers, viewBoxData.originPoint);
@@ -122,8 +145,7 @@ export const FlowScoreVisualizer: React.FC<FlowVisualizerProps> = ({
             {/* Flow length label */}
             <text
               x={c.center.x}
-              y={c.center.y - 8/viewBoxData.scale}
-              className="fill-slate-600"
+              y={c.center.y}
               style={{
                 fontSize: `${10/viewBoxData.scale}px`,
                 textAnchor: 'middle',
