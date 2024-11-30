@@ -18,10 +18,14 @@ export interface BalanceScore {
  * 详细的几何平衡分数，用于可视化展示
  */
 export interface DetailedGeometryScore {
-  radialBalance: number;     // 径向平衡分数 (0-100)
-  quadrantBalance: number;   // 象限平衡分数 (0-100)
-  centerOffset: number;      // 中心偏移分数 (0-100)
-  overall: number;          // 总体几何分数 (0-100)
+  score: number;          // 总体几何分数 (0-100)
+  details: {
+    principalMoments: [number, number];  // 主惯性矩（特征值）
+    principalAxes: [[number, number], [number, number]];  // 主轴方向（特征向量）
+    gyrationRadius: number;  // 陀螺半径
+    isotropy: number;       // 各向同性比
+    centerDeviation: number;  // 质心偏移
+  };
 }
 
 /**
