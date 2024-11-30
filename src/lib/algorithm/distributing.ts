@@ -106,7 +106,7 @@ function formatProducts(products: Product[]): string {
   return `[${products.map(p => formatWeight(p.weight)).join(', ')}]`;
 }
 
-function formatDistributionResult(result: DistributionResult): string {
+export function formatDistributionResult(result: DistributionResult): string {
   let output = '\n=== 模具分配方案 ===\n';
   output += `${result.message.general}\n`;
   
@@ -133,13 +133,13 @@ function formatDistributionResult(result: DistributionResult): string {
   return output;
 }
 
-const mockProducts: Product[] = [
-  { weight: 350, dimensions: { length: 100, width: 50, height: 30 } },
-  { weight: 300, dimensions: { length: 150, width: 80, height: 30 } },
-  { weight: 500, dimensions: { length: 200, width: 100, height: 30 } },
-  { weight: 550, dimensions: { length: 200, width: 100, height: 30 } },
-  { weight: 430, dimensions: { length: 250, width: 120, height: 30 } },
-];
+// const mockProducts: Product[] = [
+//   { id: 0, weight: 350, dimensions: { length: 100, width: 50, height: 30 } },
+//   { id: 1, weight: 300, dimensions: { length: 150, width: 80, height: 30 } },
+//   { id: 2, weight: 500, dimensions: { length: 200, width: 100, height: 30 } },
+//   { id: 3, weight: 550, dimensions: { length: 200, width: 100, height: 30 } },
+//   { id: 4, weight: 430, dimensions: { length: 250, width: 120, height: 30 } },
+// ];
 
-const result = findOptimalDistribution(mockProducts);
-console.log(formatDistributionResult(result));
+// const result = findOptimalDistribution(mockProducts);
+// console.log(formatDistributionResult(result));
