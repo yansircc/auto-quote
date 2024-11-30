@@ -19,6 +19,7 @@ interface BalanceAnalyzerProps {
   injectionPoint: Point2D;
   width?: number;
   height?: number;
+  renderScore?: (type: 'geometry' | 'flow' | 'volume' | 'distribution', score: string) => React.ReactNode;
 }
 
 /**
@@ -30,7 +31,8 @@ export function BalanceAnalyzer({
   products,
   injectionPoint,
   width = 800,
-  height = 600
+  height = 600,
+  renderScore
 }: BalanceAnalyzerProps) {
   // Calculate detailed scores
   // 计算详细分数
@@ -99,21 +101,48 @@ export function BalanceAnalyzer({
       </Tabs>
 
       <div className="grid grid-cols-4 gap-4 mt-8">
-        <div className="bg-white p-4 rounded-lg shadow-sm">
-          <h3 className="text-lg font-medium mb-2">几何平衡</h3>
-          <p className="text-3xl font-bold text-blue-600">{scores.geometry.overall.toFixed(1)}</p>
+        {/* 几何平衡分数 */}
+        <div className="p-4 bg-white rounded-lg shadow-sm">
+          <h3 className="text-sm font-medium text-slate-600 mb-1">几何平衡</h3>
+          <div className="text-2xl font-semibold text-slate-800">
+            {renderScore ? 
+              renderScore('geometry', `${scores.geometry.overall.toFixed(1)}`) :
+              scores.geometry.overall.toFixed(1)
+            }
+          </div>
         </div>
-        <div className="bg-white p-4 rounded-lg shadow-sm">
-          <h3 className="text-lg font-medium mb-2">流动平衡</h3>
-          <p className="text-3xl font-bold text-blue-600">{scores.flow.overall.toFixed(1)}</p>
+
+        {/* 流动平衡分数 */}
+        <div className="p-4 bg-white rounded-lg shadow-sm">
+          <h3 className="text-sm font-medium text-slate-600 mb-1">流动平衡</h3>
+          <div className="text-2xl font-semibold text-slate-800">
+            {renderScore ? 
+              renderScore('flow', `${scores.flow.overall.toFixed(1)}`) :
+              scores.flow.overall.toFixed(1)
+            }
+          </div>
         </div>
-        <div className="bg-white p-4 rounded-lg shadow-sm">
-          <h3 className="text-lg font-medium mb-2">分布平衡</h3>
-          <p className="text-3xl font-bold text-blue-600">{scores.distribution.toFixed(1)}</p>
+
+        {/* 分布平衡分数 */}
+        <div className="p-4 bg-white rounded-lg shadow-sm">
+          <h3 className="text-sm font-medium text-slate-600 mb-1">分布平衡</h3>
+          <div className="text-2xl font-semibold text-slate-800">
+            {renderScore ? 
+              renderScore('distribution', `${scores.distribution.toFixed(1)}`) :
+              scores.distribution.toFixed(1)
+            }
+          </div>
         </div>
-        <div className="bg-white p-4 rounded-lg shadow-sm">
-          <h3 className="text-lg font-medium mb-2">体积利用</h3>
-          <p className="text-3xl font-bold text-blue-600">{calculateVolumeScore(layout, products).toFixed(1)}</p>
+
+        {/* 体积利用分数 */}
+        <div className="p-4 bg-white rounded-lg shadow-sm">
+          <h3 className="text-sm font-medium text-slate-600 mb-1">体积利用</h3>
+          <div className="text-2xl font-semibold text-slate-800">
+            {renderScore ? 
+              renderScore('volume', `${calculateVolumeScore(layout, products).toFixed(1)}`) :
+              calculateVolumeScore(layout, products).toFixed(1)
+            }
+          </div>
         </div>
       </div>
     </div>

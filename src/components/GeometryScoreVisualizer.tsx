@@ -65,7 +65,7 @@ export const GeometryScoreVisualizer: React.FC<GeometryScoreVisualizerProps> = (
   const legendConfig: LegendConfig = {
     items: [
       {
-        color: COLORS.visualization.primary,
+        color: COLORS.visualization.accent,
         label: '产品重心',
       },
       {
@@ -95,8 +95,8 @@ export const GeometryScoreVisualizer: React.FC<GeometryScoreVisualizerProps> = (
             y={rect.y}
             width={rect.width}
             height={rect.height}
-            className="stroke-blue-500"
-            fill={COLORS.primary.light}
+            className="stroke-green-500"
+            fill={COLORS.success.light}
             strokeWidth={1/viewBoxData.scale}
             fillOpacity={0.2}
           />
@@ -126,7 +126,7 @@ export const GeometryScoreVisualizer: React.FC<GeometryScoreVisualizerProps> = (
             cx={item.center.x}
             cy={item.center.y}
             r={3/viewBoxData.scale}
-            fill={COLORS.visualization.primary}
+            fill={COLORS.visualization.accent}
             fillOpacity={0.8}
           />
         ))}

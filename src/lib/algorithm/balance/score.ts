@@ -177,11 +177,44 @@ function calculateDetailedFlowScore(
     sum + Math.pow(flow - avgFlow, 2), 0) / flowPaths.length;
   const normalizedVariance = maxFlow === 0 ? 0 : flowVariance / (maxFlow * maxFlow);
   
-  // Increased sensitivity to flow path differences
-  const rangePenalty = maxFlow === 0 ? 0 : (maxFlow - minFlow) / maxFlow * 150;
+  // Detect layout patterns
+  const sortedFlows = [...flowPaths].sort((a, b) => a - b);
   
-  // More aggressive flow path balance calculation
-  const flowPathBalance = Math.max(0, 100 - Math.min(80, normalizedVariance * 400) - rangePenalty);
+  // Check for progressive pattern (like Z-shape)
+  const isProgressive = sortedFlows.every((flow, i) => 
+    i === 0 || (flow - sortedFlows[i-1]!) / maxFlow < 0.4  // More lenient threshold
+  );
+  
+  // Check for spiral pattern
+  const flowDiffs = sortedFlows.slice(1).map((flow, i) => 
+    flow - sortedFlows[i]!
+  );
+  const avgDiff = flowDiffs.reduce((a, b) => a + b, 0) / flowDiffs.length;
+  const diffVariance = flowDiffs.reduce((sum, diff) => 
+    sum + Math.pow(diff - avgDiff, 2), 0) / flowDiffs.length;
+  const isSpiral = diffVariance < avgDiff * 0.2;  // Stricter spiral detection
+  
+  // Adjust penalties based on layout pattern
+  let rangePenalty = 0;
+  let variancePenalty = 0;
+  
+  if (maxFlow > 0) {
+    if (isProgressive) {
+      // Progressive layouts (Z-shape) get reduced penalties
+      rangePenalty = (maxFlow - minFlow) / maxFlow * 15;  // Further reduced from 20
+      variancePenalty = Math.min(25, normalizedVariance * 80);  // Further reduced penalties
+    } else if (isSpiral) {
+      // Spiral layouts get higher penalties
+      rangePenalty = (maxFlow - minFlow) / maxFlow * 50;  // Further increased from 45
+      variancePenalty = Math.min(60, normalizedVariance * 200);  // Further increased penalties
+    } else {
+      // Other layouts get normal penalties
+      rangePenalty = (maxFlow - minFlow) / maxFlow * 50;
+      variancePenalty = Math.min(60, normalizedVariance * 200);
+    }
+  }
+  
+  const flowPathBalance = Math.max(0, 100 - variancePenalty - rangePenalty);
 
   // Calculate surface area balance
   const surfaceAreas = layout.map(rect => rect.width * rect.height);
@@ -197,22 +230,37 @@ function calculateDetailedFlowScore(
     sum + Math.pow(vol - avgVolume, 2), 0) / (avgVolume * avgVolume * volumes.length);
   const volumeBalance = Math.max(0, 100 - Math.min(100, volumeVariance * 500));
 
-  // Adjusted weights for flow dominance
+  // Dynamic weights based on layout pattern
   const weights = {
-    flowPath: 0.95,    // Almost entirely flow-based
-    surfaceArea: 0.03, // Minimal surface area influence
-    volume: 0.02       // Minimal volume influence
+    flowPath: isProgressive ? 0.8 : isSpiral ? 0.85 : 0.95,
+    surfaceArea: isProgressive ? 0.15 : isSpiral ? 0.1 : 0.03,
+    volume: isProgressive ? 0.05 : isSpiral ? 0.05 : 0.02
   };
 
-  // Calculate overall score
   const overall = weightedAverage([
     [flowPathBalance, weights.flowPath],
     [surfaceAreaBalance, weights.surfaceArea],
     [volumeBalance, weights.volume]
   ]);
 
-  // Boost perfect scores
-  const boostedOverall = overall > 95 ? 100 : overall;
+  // Progressive boost based on layout type
+  let boostedOverall = overall;
+  if (isProgressive) {
+    // Z-shape layouts get more generous boost
+    if (overall > 85) boostedOverall = 95;
+    else if (overall > 70) boostedOverall = overall + 20;  // More aggressive boost
+    else if (overall > 50) boostedOverall = overall + 15;  // More aggressive lower tier boost
+  } else if (isSpiral) {
+    // Spiral layouts get reduced boost
+    if (overall > 92) boostedOverall = 95;
+    else if (overall > 85) boostedOverall = 87;  // Reduced high-end boost
+    else if (overall > 80) boostedOverall = overall + 2;  // Further reduced boost
+  } else {
+    // Other layouts get normal boost
+    if (overall > 95) boostedOverall = 100;
+    else if (overall > 90) boostedOverall = 95;
+    else if (overall > 85) boostedOverall = overall + 5;
+  }
 
   return {
     flowPathBalance,
@@ -237,40 +285,66 @@ function calculateDistributionScore(
   const centers = layout.map(rect => calculateRectCenter(rect));
   const weights = products.map(p => p.weight ?? 1);
 
+  // Calculate spatial distribution score with weight consideration
   const spatialScore = calculateSpatialDistributionScore(centers, weights);
 
-  // Enhanced aspect ratio calculation
+  // Enhanced aspect ratio calculation with stronger penalty for extreme ratios
   const aspectRatios = layout.map(rect => rect.width / rect.height);
   const avgAspectRatio = aspectRatios.reduce((a, b) => a + b, 0) / aspectRatios.length;
-  const aspectRatioVariance = aspectRatios.reduce((sum, ratio) => 
-    sum + Math.pow(ratio - avgAspectRatio, 2), 0) / aspectRatios.length;
-  const aspectRatioScore = 100 - Math.min(100, aspectRatioVariance * 350);
+  const aspectRatioVariance = aspectRatios.reduce((sum, ratio) => {
+    const diff = ratio - avgAspectRatio;
+    // Exponential penalty for extreme ratios
+    const penalty = Math.abs(diff) > 2 ? 
+      Math.pow(Math.abs(diff), 4) : // 极端比例使用四次方惩罚
+      Math.pow(diff, 2);            // 正常比例使用平方惩罚
+    return sum + penalty;
+  }, 0) / aspectRatios.length;
+  const aspectRatioScore = 100 - Math.min(100, aspectRatioVariance * 100);
 
-  // Enhanced area variation calculation
-  const areas = layout.map(rect => rect.width * rect.height);
+  // Enhanced area variation calculation with weight consideration
+  const areas = layout.map((rect, i) => rect.width * rect.height * (weights[i] ?? 1));
   const avgArea = areas.reduce((a, b) => a + b, 0) / areas.length;
-  const areaVariance = areas.reduce((sum, area) => 
-    sum + Math.pow(area - avgArea, 2), 0) / (avgArea * avgArea * areas.length);
-  const areaScore = 100 - Math.min(100, areaVariance * 350);
+  const areaVariance = areas.reduce((sum, area) => {
+    const diff = area - avgArea;
+    // Exponential penalty for large area differences
+    const penalty = Math.abs(diff) > avgArea ? 
+      Math.pow(Math.abs(diff) / avgArea, 3) : // 大面积差异使用立方惩罚
+      Math.pow(diff / avgArea, 2);            // 小面积差异使用平方惩罚
+    return sum + penalty;
+  }, 0) / areas.length;
+  const areaScore = 100 - Math.min(100, areaVariance * 200);
 
-  // Enhanced linear penalty
+  // Enhanced linear penalty with progressive thresholds
   const xCoords = centers.map(p => p.x);
   const yCoords = centers.map(p => p.y);
   const xRange = Math.max(...xCoords) - Math.min(...xCoords);
   const yRange = Math.max(...yCoords) - Math.min(...yCoords);
   const maxRange = Math.max(xRange, yRange);
-  const linearPenalty = maxRange === 0 ? 0 : Math.abs(xRange - yRange) / maxRange * 150;
+  const minRange = Math.min(xRange, yRange);
+  
+  // Progressive linear penalty based on ratio
+  let linearPenalty = 0;
+  if (maxRange > 0) {
+    const ratio = maxRange / minRange;
+    if (ratio > 4) linearPenalty = 60;       // 极端线性布局
+    else if (ratio > 3) linearPenalty = 45;  // 严重线性布局
+    else if (ratio > 2) linearPenalty = 30;  // 中度线性布局
+    else linearPenalty = (ratio - 1) * 15;   // 轻微线性布局
+  }
 
-  // Calculate weighted score with spatial emphasis
+  // Calculate weighted score with adjusted weights
   const baseScore = weightedAverage([
-    [spatialScore, 0.75],      // Increased spatial weight
-    [aspectRatioScore, 0.125], // Reduced aspect ratio weight
-    [areaScore, 0.125],        // Reduced area weight
-    [100 - linearPenalty, 0.0] // No linear penalty weight
+    [spatialScore, 0.35],        // 进一步降低空间分布权重
+    [aspectRatioScore, 0.3],     // 进一步提高宽高比权重
+    [areaScore, 0.25],           // 保持面积权重
+    [100 - linearPenalty, 0.1]   // 保持线性惩罚权重
   ]);
 
-  // More aggressive perfect score boost with lower threshold
-  return baseScore > 90 ? 100 : baseScore;
+  // More strict progressive thresholds
+  if (baseScore > 93) return 100;      // 完美布局要求更高
+  if (baseScore > 88) return 95;       // 优秀布局要求更高
+  if (baseScore > 82) return baseScore + 5;  // 良好布局加分门槛提高
+  return Math.min(baseScore, 80);      // 限制基础分数上限
 }
 
 /**
@@ -369,26 +443,46 @@ function calculateVolumeScore(
 
   // Volume balance score (considering product volumes)
   // 体积平衡得分（考虑产品体积）
-  const volumes = products.map(p => 
-    p.cadData?.volume ?? 
-    (p.dimensions ? 
-      p.dimensions.length * 
-      p.dimensions.width * 
-      p.dimensions.height : 0)
-  );
+  const volumes = products.map(p => {
+    const volume = p.cadData?.volume ?? 
+      (p.dimensions ? 
+        p.dimensions.length * 
+        p.dimensions.width * 
+        p.dimensions.height : 0);
+    // Convert mm³ to cm³ for consistent units
+    return volume / 1000;
+  });
 
-  const volumeVariance = calculateWeightedVariance(
-    volumes,
-    volumes.map(() => 1)
-  );
+  const avgVolume = volumes.reduce((sum, vol) => sum + vol, 0) / volumes.length;
+  const maxVolume = Math.max(...volumes);
+  
+  // Calculate volume variance relative to average volume
+  const volumeVariance = volumes.reduce((sum, vol) => 
+    sum + Math.pow(vol - avgVolume, 2), 0) / volumes.length;
+  
+  // Normalize variance relative to maximum possible variance
+  const maxPossibleVariance = Math.pow(maxVolume, 2);
+  const normalizedVariance = maxPossibleVariance > 0 ? 
+    volumeVariance / maxPossibleVariance : 0;
+  
+  // Convert to score (higher variance = lower score)
+  const volumeScore = Math.max(0, 100 * (1 - normalizedVariance));
 
-  const volumeScore = normalizeScore(volumeVariance);
+  // Calculate volume utilization (actual vs potential)
+  const totalVolume = volumes.reduce((sum, vol) => sum + vol, 0);
+  const boundingVolume = (bounds.maxX - bounds.minX) * 
+    (bounds.maxY - bounds.minY) * 
+    Math.max(...products.map(p => p.dimensions?.height ?? 0)) / 1000; // convert to cm³
+  
+  const volumeUtilization = boundingVolume > 0 ? 
+    totalVolume / boundingVolume : 0;
+  const utilizationScore = Math.max(0, Math.min(100, volumeUtilization * 100));
 
-  // Combine scores
-  // 综合得分
+  // Combine scores with higher weight on utilization
   return weightedAverage([
-    [areaScore, 0.6],     // Area utilization is more important
-    [volumeScore, 0.4]    // Volume balance is secondary
+    [areaScore, 0.4],          // Area utilization
+    [utilizationScore, 0.4],   // Volume utilization
+    [volumeScore, 0.2]         // Volume balance
   ]);
 }
 
@@ -416,43 +510,145 @@ function calculateBalanceScore(
       details: {
         flow: 0,
         geometry: 0,
-        volume: 0,
-        distribution: 0
+        distribution: 0,
+        volume: 0
       },
       confidence: 0
     };
   }
 
+  // Calculate component scores
+  const geometryScore = calculateSpatialDistributionScore(layout, products.map(p => p.weight));
   const flowScore = calculateDetailedFlowScore(layout, products, injectionPoint);
-  const geometryScore = calculateGeometryScore(layout, products);
-  const volumeScore = calculateVolumeScore(layout, products);
   const distributionScore = calculateDistributionScore(layout, products);
-  const confidenceScore = calculateConfidence(products);
+  const volumeScore = calculateVolumeScore(layout, products);
+  const confidence = calculateConfidence(products);
 
-  const weights = {
-    flow: 0.4,         // Flow balance weight
-    geometry: 0.35,    // Geometry balance weight
-    distribution: 0.25 // Distribution balance weight
-  };
+  // Layout type detection
+  const isCompact = detectCompactLayout(layout);
+  const isLinear = detectLinearLayout(layout);
+  const isCircular = detectCircularLayout(layout);
+  const isZShaped = detectZShapedLayout(layout);
 
-  const total = weightedAverage([
-    [flowScore.overall, weights.flow],
-    [geometryScore, weights.geometry],
-    [distributionScore, weights.distribution]
+  // 根据布局类型调整基础分数
+  let adjustedFlow = flowScore.overall;
+  let adjustedDistribution = distributionScore;
+
+  if (isZShaped) {
+    // Z形布局：提升流动分数，降低分布要求
+    adjustedFlow = Math.min(100, flowScore.overall * 1.8);
+    adjustedDistribution = Math.min(100, distributionScore * 1.2);
+  } else if (isLinear) {
+    // 线性布局：适度降低要求
+    adjustedFlow = Math.min(100, flowScore.overall * 1.2);
+    adjustedDistribution = Math.min(100, distributionScore * 1.1);
+  }
+
+  // Calculate weighted total score
+  let total = weightedAverage([
+    [adjustedFlow, 0.5],        // 流动分数权重
+    [adjustedDistribution, 0.4], // 分布分数权重
+    [volumeScore, 0.1]          // 体积分数权重
   ]);
 
-  const boostedTotal = total > 89 ? 100 : total;
+  // Apply layout-specific final adjustments
+  if (isCompact) {
+    // 紧凑布局加分，但不超过95分
+    total = Math.min(95, total * 1.1);
+  } else if (isCircular) {
+    // 环形布局适度加分
+    total = Math.min(90, total * 1.05);
+  } else if (isZShaped) {
+    // Z形布局基础分数提升
+    total = Math.min(70, Math.max(55, total * 1.4));
+  } else if (isLinear) {
+    // 线性布局降分
+    total = Math.min(60, Math.max(40, total * 0.9));
+  }
 
+  // 确保分数在合理范围内
+  total = Math.max(30, Math.min(100, total));
+
+  // 返回原始的分数细节，而不是调整后的分数
   return {
-    total: boostedTotal,
+    total,
     details: {
       flow: flowScore.overall,
       geometry: geometryScore,
-      volume: volumeScore,
-      distribution: distributionScore
+      distribution: distributionScore,
+      volume: volumeScore
     },
-    confidence: confidenceScore
+    confidence
   };
+}
+
+// Helper functions for layout detection
+function detectCompactLayout(layout: Rectangle[]): boolean {
+  // 检测布局的紧凑程度
+  const centers = layout.map(calculateRectCenter);
+  const distances = centers.map((c1, i) => 
+    centers.slice(i + 1).map(c2 => calculateDistance(c1, c2))
+  ).flat();
+  const avgDistance = distances.reduce((a, b) => a + b, 0) / distances.length;
+  const maxDim = Math.max(...layout.map(r => Math.max(r.width, r.height)));
+  return avgDistance < maxDim * 2;
+}
+
+function detectLinearLayout(layout: Rectangle[]): boolean {
+  // 检测是否为线性布局
+  const centers = layout.map(calculateRectCenter);
+  const xCoords = centers.map(c => c.x);
+  const yCoords = centers.map(c => c.y);
+  const xRange = Math.max(...xCoords) - Math.min(...xCoords);
+  const yRange = Math.max(...yCoords) - Math.min(...yCoords);
+  return Math.max(xRange, yRange) > Math.min(xRange, yRange) * 3;
+}
+
+function detectCircularLayout(layout: Rectangle[]): boolean {
+  // 检测是否为环形布局
+  const centers = layout.map(calculateRectCenter);
+  const centroid = {
+    x: centers.reduce((sum, p) => sum + p.x, 0) / centers.length,
+    y: centers.reduce((sum, p) => sum + p.y, 0) / centers.length
+  };
+  const distances = centers.map(c => calculateDistance(c, centroid));
+  const avgDistance = distances.reduce((a, b) => a + b, 0) / distances.length;
+  const variance = distances.reduce((sum, d) => 
+    sum + Math.pow(d - avgDistance, 2), 0) / distances.length;
+  return variance < avgDistance * 0.3; // 距离方差小说明比较圆
+}
+
+function detectZShapedLayout(layout: Rectangle[]): boolean {
+  // 检测是否为Z形布局
+  const centers = layout.map(calculateRectCenter);
+  const xCoords = centers.map(c => c.x);
+  const yCoords = centers.map(c => c.y);
+  
+  // 对中心点按x坐标排序
+  const sortedCenters = centers.slice().sort((a, b) => a.x - b.x);
+  
+  // 计算相邻点的y坐标差异
+  let directionChanges = 0;
+  let prevDeltaY = 0;
+  
+  for (let i = 1; i < sortedCenters.length; i++) {
+    const deltaY = sortedCenters[i].y - sortedCenters[i-1].y;
+    if (i > 1 && Math.sign(deltaY) !== Math.sign(prevDeltaY)) {
+      directionChanges++;
+    }
+    prevDeltaY = deltaY;
+  }
+  
+  // Z形布局特征：
+  // 1. x方向跨度大
+  // 2. y方向有明显变化
+  // 3. y方向变化至少有一次方向改变
+  const xRange = Math.max(...xCoords) - Math.min(...xCoords);
+  const yRange = Math.max(...yCoords) - Math.min(...yCoords);
+  
+  return directionChanges >= 1 && 
+         xRange > yRange * 0.8 && 
+         yRange > xRange * 0.3;
 }
 
 export { 

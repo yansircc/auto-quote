@@ -62,8 +62,8 @@ export const VolumeScoreVisualizer: React.FC<BaseVisualizerProps> = ({
 
   // Calculate color based on score
   const getScoreColor = (score: number) => {
-    if (score >= 90) return COLORS.success.main;
-    if (score >= 70) return COLORS.warning.main;
+    if (score >= 75) return COLORS.success.main;      // 更合理的成功阈值
+    if (score >= 55) return COLORS.warning.main;      // 更合理的警告阈值
     return COLORS.error.main;
   };
 
@@ -71,11 +71,15 @@ export const VolumeScoreVisualizer: React.FC<BaseVisualizerProps> = ({
   const legendConfig: LegendConfig = {
     items: [
       {
-        label: '高体积利用率',
+        label: '高体积利用率 (≥85%)',
         color: COLORS.success.main,
       },
       {
-        label: '低体积利用率',
+        label: '中等体积利用率 (65-85%)',
+        color: COLORS.warning.main,
+      },
+      {
+        label: '低体积利用率 (<65%)',
         color: COLORS.error.main,
       },
     ],
@@ -103,7 +107,11 @@ export const VolumeScoreVisualizer: React.FC<BaseVisualizerProps> = ({
           const volume = scores.volumes[index] ?? 0;
           const area = scores.areas[index] ?? 0;
           const utilizationRatio = area > 0 ? volume / area : 0;
-          const opacity = Math.min(0.8, Math.max(0.2, utilizationRatio));
+          
+          // 将利用率映射到0.3-0.8的透明度范围
+          const minOpacity = 0.3;
+          const maxOpacity = 0.8;
+          const opacity = minOpacity + (maxOpacity - minOpacity) * Math.min(1, utilizationRatio);
           
           return (
             <rect
@@ -114,7 +122,7 @@ export const VolumeScoreVisualizer: React.FC<BaseVisualizerProps> = ({
               height={rect.height}
               fill={getScoreColor(scores.total)}
               fillOpacity={opacity}
-              stroke={COLORS.neutral.border}
+              stroke={getScoreColor(scores.total)}
               strokeWidth={1 / scale}
             />
           );
