@@ -1,5 +1,5 @@
-import { Rectangle, Product, Point2D } from '@/types/geometry';
-import { DetailedGeometryScore } from '@/types/balance';
+import type { Rectangle, Product, Point2D } from '@/types/geometry';
+import type { DetailedGeometryScore } from '@/types/balance';
 
 /**
  * 计算几何平衡分数
@@ -31,15 +31,15 @@ export function calculateGeometryScore(
   // 1. 计算质心
   const totalWeight = products.reduce((sum, p) => sum + p.weight, 0);
   const centerOfMass: Point2D = {
-    x: products.reduce((sum, p) => sum + p.weight * layout[p.id].x, 0) / totalWeight,
-    y: products.reduce((sum, p) => sum + p.weight * layout[p.id].y, 0) / totalWeight
+    x: products.reduce((sum, p) => sum + p.weight * (layout[p.id]?.x ?? 0), 0) / totalWeight,
+    y: products.reduce((sum, p) => sum + p.weight * (layout[p.id]?.y ?? 0), 0) / totalWeight
   };
 
   // 2. 计算惯性张量（相对于质心）
   let Ixx = 0, Iyy = 0, Ixy = 0;
   products.forEach(p => {
-    const x = layout[p.id].x - centerOfMass.x;
-    const y = layout[p.id].y - centerOfMass.y;
+    const x = (layout[p.id]?.x ?? 0) - centerOfMass.x;
+    const y = (layout[p.id]?.y ?? 0) - centerOfMass.y;
     Ixx += p.weight * y * y;  // y方向的惯性矩
     Iyy += p.weight * x * x;  // x方向的惯性矩
     Ixy -= p.weight * x * y;  // 混合惯性积
@@ -68,21 +68,21 @@ export function calculateGeometryScore(
   // 4.2 陀螺半径（gyration radius）- 评估空间利用
   const maxRadius = Math.sqrt(
     products.reduce((max, p) => {
-      const x = layout[p.id].x - centerOfMass.x;
-      const y = layout[p.id].y - centerOfMass.y;
+      const x = (layout[p.id]?.x ?? 0) - centerOfMass.x;
+      const y = (layout[p.id]?.y ?? 0) - centerOfMass.y;
       return Math.max(max, x * x + y * y);
     }, 0)
   );
-  // 避免除以零，如果maxRadius为0（单个产品在原点），则设为1
+  // 避免除以零，如果maxRadius为0（单个产品在原点)),则设为1
   const normalizedMaxRadius = maxRadius === 0 ? 1 : maxRadius;
   const gyrationRadius = Math.sqrt((lambda1 + lambda2) / totalWeight) / normalizedMaxRadius;
 
   // 4.3 质心偏移（相对于几何中心）
   const geometricCenter: Point2D = {
-    x: (products.reduce((min, p) => Math.min(min, layout[p.id].x), Infinity) +
-        products.reduce((max, p) => Math.max(max, layout[p.id].x), -Infinity)) / 2,
-    y: (products.reduce((min, p) => Math.min(min, layout[p.id].y), Infinity) +
-        products.reduce((max, p) => Math.max(max, layout[p.id].y), -Infinity)) / 2
+    x: (products.reduce((min, p) => Math.min(min, layout[p.id]?.x ?? 0), Infinity) +
+        products.reduce((max, p) => Math.max(max, layout[p.id]?.x ?? 0), -Infinity)) / 2,
+    y: (products.reduce((min, p) => Math.min(min, layout[p.id]?.y ?? 0), Infinity) +
+        products.reduce((max, p) => Math.max(max, layout[p.id]?.y ?? 0), -Infinity)) / 2
   };
 
   const centerDeviation = Math.sqrt(

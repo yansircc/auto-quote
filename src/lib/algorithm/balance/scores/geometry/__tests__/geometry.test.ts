@@ -1,5 +1,5 @@
 import { calculateGeometryScore } from '../index';
-import { Product, Dimensions3D, Rectangle } from '@/types/geometry';
+import type { Product, Dimensions3D, Rectangle } from '@/types/geometry';
 import { describe, expect, test } from "vitest";
 
 describe('Geometry Score Calculation', () => {
@@ -12,24 +12,26 @@ describe('Geometry Score Calculation', () => {
   };
 
   // 产品尺寸常量
-  const SIZES: Record<string, Dimensions3D> = {
-    TINY: { length: 20, width: 20, height: 10 },     // 小型产品
-    SMALL: { length: 50, width: 50, height: 25 },    // 标准小产品
-    MEDIUM: { length: 100, width: 100, height: 50 }, // 中型产品
-    LARGE: { length: 200, width: 200, height: 100 }, // 大型产品
-    LONG: { length: 300, width: 50, height: 30 },    // 长条产品
-    WIDE: { length: 50, width: 300, height: 30 },    // 宽条产品
-    TALL: { length: 50, width: 50, height: 200 },    // 高型产品
-    CUBE: { length: 100, width: 100, height: 100 },  // 立方体
-    FLAT: { length: 200, width: 200, height: 20 },   // 扁平产品
-  };
+  const SIZES = {
+    TINY: { length: 20, width: 20, height: 10 } as Dimensions3D,     // 小型产品
+    SMALL: { length: 50, width: 50, height: 25 } as Dimensions3D,    // 标准小产品
+    MEDIUM: { length: 100, width: 100, height: 50 } as Dimensions3D, // 中型产品
+    LARGE: { length: 200, width: 200, height: 100 } as Dimensions3D, // 大型产品
+    WIDE: { length: 200, width: 100, height: 50 } as Dimensions3D,   // 宽型产品
+    TALL: { length: 100, width: 100, height: 200 } as Dimensions3D,  // 高型产品
+    LONG: { length: 300, width: 50, height: 50 } as Dimensions3D,    // 长条产品
+    CUBE: { length: 100, width: 100, height: 100 } as Dimensions3D,  // 立方体
+    FLAT: { length: 200, width: 200, height: 20 } as Dimensions3D    // 扁平产品
+  } as const;
 
   // 辅助函数：创建带尺寸的产品
-  const createSizedProduct = (id: number, weight: number, dimensions: Dimensions3D): Product => ({
-    id,
-    weight,
-    dimensions
-  });
+  function createSizedProduct(id: number, weight: number, dimensions: Dimensions3D): Product {
+    return {
+      id,
+      weight,
+      dimensions,  // 这里 dimensions 是必需的
+    };
+  }
 
   describe('基础测试', () => {
     test('空布局返回100分', () => {
