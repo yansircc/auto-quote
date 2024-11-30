@@ -27,46 +27,28 @@ interface SceneProps {
  */
 export function Scene({ product, products, layout }: SceneProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  let animationFrameId: number | null = null;
 
   useEffect(() => {
     if (!containerRef.current) return;
+    
+    // 清理之前的 WebGL 上下文
+    const existingCanvas = containerRef.current.querySelector('canvas');
+    if (existingCanvas) {
+      containerRef.current.removeChild(existingCanvas);
+    }
     
     // 确保数据有效性
     const isSingleProduct = !!product?.dimensions;
     const isMultiProduct = products?.length > 0 && layout?.length === products?.length;
     if (!isSingleProduct && !isMultiProduct) {
-      console.warn('Scene: Invalid data', {
-        isSingleProduct,
-        isMultiProduct,
-        hasProduct: !!product,
-        productsLength: products?.length,
-        layoutLength: layout?.length
-      });
       return;
     }
 
-    // Debug logs
-    console.log('Scene render:', {
-      mode: isSingleProduct ? 'single' : 'multi',
-      productsCount: products?.length,
-      layoutCount: layout?.length,
-      product: product ? { 
-        id: product.id,
-        dimensions: product.dimensions
-      } : null,
-      layout: layout?.map(l => ({ 
-        x: l.x, 
-        y: l.y, 
-        width: l.width, 
-        height: l.height,
-        rotated: l.rotated,
-        originalIndex: l.originalIndex
-      })),
-      products: products?.map(p => ({
-        id: p.id,
-        dimensions: p.dimensions
-      }))
-    });
+    // 检查布局数据
+    if (!layout || !products || layout.length !== products.length) {
+      return;
+    }
 
     // 创建场景
     const scene = new THREE.Scene();
@@ -104,146 +86,65 @@ export function Scene({ product, products, layout }: SceneProps) {
     const gridHelper = new THREE.GridHelper(10, 10, '#cccccc', '#e5e5e5');
     scene.add(gridHelper);
 
-    // 创建产品模型
-    if (product) {
-      // 单个产品视图
-      if (!product.dimensions) return;
-      
-      const size: Point3D = { 
-        x: product.dimensions.length / 100,
+    // 渲染产品
+    products.forEach((product, index) => {
+      const layoutItem = layout[index];
+      if (!layoutItem || !product.dimensions) {
+        return;
+      }
+
+      // 直接使用2D布局数据，只添加高度
+      const size: Point3D = {
+        x: layoutItem.width / 100,
         y: product.dimensions.height / 100,
-        z: product.dimensions.width / 100
+        z: layoutItem.height / 100
       };
-      
+
+      // 位置也直接使用2D布局坐标
+      const position = {
+        x: layoutItem.x / 100,
+        y: size.y / 2,
+        z: layoutItem.y / 100
+      };
+
+      // 创建产品几何体
       const geometry = new THREE.BoxGeometry(size.x, size.y, size.z);
       const material = new THREE.MeshPhysicalMaterial({
-        color: '#64748b',
+        color: `hsl(${(index * 360) / products.length}, 70%, 60%)`,
         metalness: 0.2,
         roughness: 0.4,
         transparent: true,
         opacity: 0.9,
         side: THREE.DoubleSide
       });
-      
+
       const cube = new THREE.Mesh(geometry, material);
+      
+      // 设置产品位置
       cube.position.set(
-        size.x / 2, // 将产品中心放在原点
-        size.y / 2, // 放在地面上
-        -size.z / 2 // Z轴需要取反以保持一致性
+        position.x + size.x / 2,
+        position.y,
+        position.z + size.z / 2
       );
+
       cube.castShadow = true;
       cube.receiveShadow = true;
       scene.add(cube);
 
-      // 添加参考线
-      const lineColor = '#666666';
-      
-      scene.add(createReferenceLine(
-        new THREE.Vector3(0, 0, 0),
-        new THREE.Vector3(size.x, 0, 0),
-        lineColor
-      ));
-      
-      scene.add(createReferenceLine(
-        new THREE.Vector3(0, 0, 0),
-        new THREE.Vector3(0, 0, -size.z),
-        lineColor
-      ));
-      
-      scene.add(createReferenceLine(
-        new THREE.Vector3(0, 0, 0),
-        new THREE.Vector3(0, size.y, 0),
-        lineColor
-      ));
-    } else if (products && layout) {
-      // 多个产品布局视图
-      console.log('Layout dimensions:', { totalWidth, totalHeight });
-      
-      products.forEach((product, index) => {
-        const layoutItem = layout[index];
-        if (!layoutItem || !product.dimensions) {
-          console.warn('Missing data for product', { 
-            productId: product.id, 
-            hasLayout: !!layoutItem,
-            hasDimensions: !!product.dimensions 
-          });
-          return;
-        }
-
-        // 计算3D尺寸和位置
-        const size: Point3D = {
-          x: layoutItem.rotated ? layoutItem.height / 100 : layoutItem.width / 100,   // 如果旋转，height变为x轴尺寸
-          y: product.dimensions.height / 100,  // 产品高度
-          z: layoutItem.rotated ? layoutItem.width / 100 : layoutItem.height / 100    // 如果旋转，width变为z轴尺寸
-        };
-
-        // 计算布局位置（中心点）
-        const position = convertTo3D(layoutItem, size.y / 2);
-        
-        // Debug日志
-        console.log(`Product #${index}:`, {
-          productId: product.id,
-          dimensions: product.dimensions,
-          layout: layoutItem,
-          size,
-          position,
-          rotated: layoutItem.rotated
-        });
-
-        // 创建产品几何体
-        const geometry = new THREE.BoxGeometry(size.x, size.y, size.z);
-        const material = new THREE.MeshPhysicalMaterial({
-          color: `hsl(${(index * 360) / products.length}, 70%, 60%)`,
-          metalness: 0.2,
-          roughness: 0.4,
-          transparent: true,
-          opacity: 0.9,
-          side: THREE.DoubleSide
-        });
-
-        const cube = new THREE.Mesh(geometry, material);
-        
-        // 设置产品位置
-        cube.position.set(
-          position.x + size.x / 2,  // 中心点偏移
-          position.y,               // 高度保持不变
-          position.z + size.z / 2   // 中心点偏移
-        );
-
-        // 如果产品被旋转，进行90度旋转
-        if (layoutItem.rotated) {
-          cube.rotateY(Math.PI / 2);
-        }
-
-        cube.castShadow = true;
-        cube.receiveShadow = true;
-        scene.add(cube);
-
-        // Debug: 添加线框以显示布局边界
-        const wireframeGeometry = new THREE.BoxGeometry(size.x, size.y, size.z);
-        const wireframeMaterial = new THREE.LineBasicMaterial({ 
-          color: '#94a3b8',
-          transparent: true,
-          opacity: 0.5
-        });
-        const wireframe = new THREE.LineSegments(
-          new THREE.WireframeGeometry(wireframeGeometry),
-          wireframeMaterial
-        );
-        wireframe.position.copy(cube.position);
-        if (layoutItem.rotated) {
-          wireframe.rotateY(Math.PI / 2);
-        }
-        scene.add(wireframe);
-
-        // Debug: 添加中心点标记
-        const centerGeometry = new THREE.SphereGeometry(0.02);
-        const centerMaterial = new THREE.MeshBasicMaterial({ color: '#ef4444' });
-        const centerPoint = new THREE.Mesh(centerGeometry, centerMaterial);
-        centerPoint.position.copy(cube.position);
-        scene.add(centerPoint);
+      // 添加线框
+      const wireframeGeometry = new THREE.BoxGeometry(size.x, size.y, size.z);
+      const wireframeMaterial = new THREE.LineBasicMaterial({ 
+        color: '#94a3b8',
+        transparent: true,
+        opacity: 0.5
       });
-    }
+      const wireframe = new THREE.LineSegments(
+        new THREE.WireframeGeometry(wireframeGeometry),
+        wireframeMaterial
+      );
+      wireframe.position.copy(cube.position);
+      scene.add(wireframe);
+    });
 
     // 添加光源
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
@@ -263,7 +164,7 @@ export function Scene({ product, products, layout }: SceneProps) {
 
     // 渲染循环
     function animate() {
-      requestAnimationFrame(animate);
+      animationFrameId = requestAnimationFrame(animate);
       controls.update();
       renderer.render(scene, camera);
     }
@@ -282,21 +183,32 @@ export function Scene({ product, products, layout }: SceneProps) {
 
     // 清理函数
     return () => {
-      window.removeEventListener('resize', handleResize);
-      if (containerRef.current) {
-        containerRef.current.removeChild(renderer.domElement);
+      // 停止动画循环
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
       }
-      renderer.dispose();
+      
+      // 释放资源
       scene.traverse((object) => {
         if (object instanceof THREE.Mesh) {
-          if (object.geometry instanceof THREE.BufferGeometry) {
-            object.geometry.dispose();
-          }
+          object.geometry.dispose();
           if (object.material instanceof THREE.Material) {
             object.material.dispose();
+          } else if (Array.isArray(object.material)) {
+            object.material.forEach(material => material.dispose());
           }
         }
       });
+      
+      // 销毁渲染器
+      renderer.dispose();
+      
+      // 移除 canvas
+      if (containerRef.current?.contains(renderer.domElement)) {
+        containerRef.current.removeChild(renderer.domElement);
+      }
+      
+      window.removeEventListener('resize', handleResize);
     };
   }, [product, products, layout]);
 

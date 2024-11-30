@@ -1,15 +1,15 @@
 import React, { useMemo } from 'react';
-import { 
-  type BaseVisualizerProps, 
-  useViewBoxCalculation, 
-  Legend, 
-  type LegendConfig,
+import { calculateRectCenter } from '@/lib/algorithm/balance';
+import { calculateDistributionScore } from '@/lib/algorithm/balance/scores/distribution';
+import { COLORS } from '@/lib/constants/colors';
+import {
+  type BaseVisualizerProps,
   Annotation,
   type AnnotationConfig,
+  Legend,
+  type LegendConfig,
+  useViewBoxCalculation,
 } from './base/BaseScoreVisualizer';
-import { calculateDistributionScore } from '@/lib/algorithm/balance/score';
-import { calculateRectCenter } from '@/lib/algorithm/balance/utils/geometry';
-import { COLORS } from '@/lib/constants/colors';
 
 export const DistributionScoreVisualizer: React.FC<BaseVisualizerProps> = ({
   layout,

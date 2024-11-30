@@ -1,61 +1,43 @@
 import React, { useMemo } from 'react';
-import { calculateRectCenter, calculateDistance } from '@/lib/algorithm/balance/utils/geometry';
+import { calculateRectCenter, calculateDistance } from '@/lib/algorithm/balance';
 import { COLORS } from '@/lib/constants/colors';
+import type { Product, Rectangle, Point2D } from '@/types/geometry';
+import { useBalanceStore } from '@/stores/useBalanceStore';
 import {
-  type BaseVisualizerProps,
+
   type LayoutItem,
   type LegendConfig,
   useViewBoxCalculation,
-  useQuadrantCalculation,
-  QuadrantLines,
-  QuadrantWeightLabels,
   Legend,
 } from './base/BaseScoreVisualizer';
-import type { Point2D } from '@/types/geometry';
 
-interface FlowVisualizerProps extends BaseVisualizerProps {
+interface FlowScoreVisualizerProps {
+  layout: Rectangle[];
+  products: Product[];
   injectionPoint: Point2D;
+  width?: number;
+  height?: number;
 }
 
-export const FlowScoreVisualizer: React.FC<FlowVisualizerProps> = ({
+export const FlowScoreVisualizer: React.FC<FlowScoreVisualizerProps> = ({
   layout,
   products,
   injectionPoint,
   width = 800,
   height = 600,
 }) => {
+  // Get score from store
+  const { flowScore } = useBalanceStore();
+
   // Calculate visualization parameters
   const viewBoxData = useViewBoxCalculation(layout, width, height);
   
   // Calculate centers and weights
   const centers: LayoutItem[] = useMemo(() => {
     if (layout.length !== products.length) {
-      console.error('Layout and products arrays must have the same length');
       return [];
     }
     
-    // First pass: calculate all flow lengths
-    const flowLengths = layout.map((rect, i) => {
-      const product = products[i];
-      if (!product) return 0;
-      
-      const center = calculateRectCenter(rect);
-      const calculatedLength = calculateDistance(injectionPoint, center);
-      const flowLength = product.flowLength ?? calculatedLength;
-      
-      console.log('Flow length calculation:', {
-        productId: product.id,
-        rect,
-        center,
-        injectionPoint,
-        calculatedLength,
-        flowLength
-      });
-      
-      return flowLength;
-    });
-    
-    // Second pass: create layout items with actual flow lengths as weights
     return layout.map((rect, i) => {
       const product = products[i];
       if (!product) {
@@ -65,116 +47,104 @@ export const FlowScoreVisualizer: React.FC<FlowVisualizerProps> = ({
           dimensions: rect,
         };
       }
-      
+
       const center = calculateRectCenter(rect);
-      const flowLength = flowLengths[i] ?? 0;
-      
+      const flowLength = product.flowLength ?? calculateDistance(injectionPoint, center);
+
       return {
         center,
-        weight: flowLength, // Use actual flow length as weight, not normalized
+        weight: product.weight ?? 1,
         dimensions: rect,
+        flowLength,
       };
     });
   }, [layout, products, injectionPoint]);
 
-  // Calculate quadrant data
-  const { quadrantWeights } = useQuadrantCalculation(centers, viewBoxData.originPoint);
-
   // Legend configuration
   const legendConfig: LegendConfig = {
     items: [
-      { color: '#22C55E', label: '注塑点' },  // green-500
-      { color: '#3B82F6', label: '产品中心' },  // blue-500
-      { color: '#F59E0B', label: '流动路径' },  // amber-500
+      {
+        color: COLORS.visualization.accent,
+        label: '产品重心',
+      },
+      {
+        color: COLORS.visualization.highlight,
+        label: '注塑点',
+      },
+      {
+        color: COLORS.visualization.gray,
+        label: '流道长度',
+      },
     ]
   };
 
   return (
-    <div className="relative" style={{ width, height }}>
+    <div className="relative w-full">
       <svg
         width={width}
         height={height}
         viewBox={`${viewBoxData.viewBox.x} ${viewBoxData.viewBox.y} ${viewBoxData.viewBox.width} ${viewBoxData.viewBox.height}`}
-        className="absolute inset-0"
+        className="border border-slate-300"
       >
-        <QuadrantLines
-          centerPoint={injectionPoint}
-          viewBox={viewBoxData.viewBox}
-          scale={viewBoxData.scale}
-        />
-
-        {/* Draw product outlines */}
-        {layout.map((rect, i) => (
-          <rect
-            key={i}
-            x={rect.x}
-            y={rect.y}
-            width={rect.width}
-            height={rect.height}
-            className="stroke-blue-500"
-            fill={COLORS.primary.light}
-            strokeWidth={1/viewBoxData.scale}
-            fillOpacity={0.2}
-          />
-        ))}
-
-        {/* Draw flow paths */}
-        {centers.map((c, i) => (
-          <g key={i}>
-            {/* Flow path line */}
-            <line
-              x1={injectionPoint.x}
-              y1={injectionPoint.y}
-              x2={c.center.x}
-              y2={c.center.y}
-              className="stroke-amber-500"
+        {/* 布局矩形 */}
+        {layout.map((rect, index) => (
+          <g key={`rect-${index}`}>
+            <rect
+              x={rect.x}
+              y={rect.y}
+              width={rect.width}
+              height={rect.height}
+              className="stroke-green-500"
+              fill={COLORS.success.light}
               strokeWidth={1/viewBoxData.scale}
-              strokeDasharray={`${4/viewBoxData.scale},${4/viewBoxData.scale}`}
-              strokeOpacity={0.6}
+              fillOpacity={0.2}
             />
-
-            {/* Product center */}
-            <circle
-              cx={c.center.x}
-              cy={c.center.y}
-              r={3/viewBoxData.scale}
-              className="fill-blue-500"
-              fillOpacity={0.6}
-            />
-            
-            {/* Flow length label */}
-            <text
-              x={c.center.x}
-              y={c.center.y}
-              style={{
-                fontSize: `${10/viewBoxData.scale}px`,
-                textAnchor: 'middle',
-              }}
-            >
-              {c.weight.toFixed(1)}mm
-            </text>
           </g>
         ))}
 
-        {/* Draw injection point */}
+        {/* 注塑点 */}
         <circle
           cx={injectionPoint.x}
           cy={injectionPoint.y}
           r={5/viewBoxData.scale}
-          className="fill-green-500 stroke-white"
-          strokeWidth={2/viewBoxData.scale}
+          fill={COLORS.visualization.highlight}
         />
 
-        <QuadrantWeightLabels
-          centerPoint={injectionPoint}
-          quadrantWeights={quadrantWeights}
-          viewBox={viewBoxData.viewBox}
-          scale={viewBoxData.scale}
-          showLabels={false}  // 不显示四象限权重标签
-        />
+        {/* 流道长度线 */}
+        {centers.map((item, index) => (
+          <g key={`flow-${index}`}>
+            <line
+              x1={injectionPoint.x}
+              y1={injectionPoint.y}
+              x2={item.center.x}
+              y2={item.center.y}
+              stroke={COLORS.visualization.gray}
+              strokeWidth={1/viewBoxData.scale}
+              strokeDasharray={`${4/viewBoxData.scale},${4/viewBoxData.scale}`}
+            />
+            <circle
+              cx={item.center.x}
+              cy={item.center.y}
+              r={3/viewBoxData.scale}
+              fill={COLORS.visualization.accent}
+            />
+          </g>
+        ))}
       </svg>
 
       <Legend config={legendConfig} />
+
+      {/* 分数展示 */}
+      {flowScore && (
+        <div className="absolute top-4 right-4 bg-white/80 p-4 rounded shadow-sm">
+          <div className="text-sm space-y-2">
+            <div>流道平衡: {flowScore.flowPathBalance.toFixed(1)}</div>
+            <div>表面积平衡: {flowScore.surfaceAreaBalance.toFixed(1)}</div>
+            <div>体积平衡: {flowScore.volumeBalance.toFixed(1)}</div>
+            <div className="font-bold">总分: {flowScore.overall.toFixed(1)}</div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

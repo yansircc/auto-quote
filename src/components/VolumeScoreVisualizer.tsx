@@ -7,7 +7,7 @@ import {
   Annotation,
   type AnnotationConfig,
 } from './base/BaseScoreVisualizer';
-import { calculateVolumeScore } from '@/lib/algorithm/balance/score';
+import { calculateVolumeScore } from '@/lib/algorithm/balance/scores/volume';
 import { COLORS } from '@/lib/constants/colors';
 
 export const VolumeScoreVisualizer: React.FC<BaseVisualizerProps> = ({

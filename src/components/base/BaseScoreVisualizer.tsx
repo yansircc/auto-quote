@@ -135,16 +135,22 @@ export const useQuadrantCalculation = (
     // Calculate quadrant weights
     const quads: [number, number, number, number] = [0, 0, 0, 0]; // Q1, Q2, Q3, Q4
     
-    centers.forEach(c => {
-      if (c.center.x >= centerOfMass.x && c.center.y < centerOfMass.y) 
-        quads[0] += (c.weight / totalWeight) * 100;
-      else if (c.center.x < centerOfMass.x && c.center.y < centerOfMass.y) 
-        quads[1] += (c.weight / totalWeight) * 100;
-      else if (c.center.x < centerOfMass.x && c.center.y >= centerOfMass.y) 
-        quads[2] += (c.weight / totalWeight) * 100;
-      else 
-        quads[3] += (c.weight / totalWeight) * 100;
-    });
+    if (totalWeight > 0) {
+      centers.forEach(c => {
+        // 第一象限：x > 0, y > 0
+        if (c.center.x >= centerOfMass.x && c.center.y >= centerOfMass.y) 
+          quads[0] += (c.weight / totalWeight) * 100;
+        // 第二象限：x < 0, y > 0
+        else if (c.center.x < centerOfMass.x && c.center.y >= centerOfMass.y) 
+          quads[1] += (c.weight / totalWeight) * 100;
+        // 第三象限：x < 0, y < 0
+        else if (c.center.x < centerOfMass.x && c.center.y < centerOfMass.y) 
+          quads[2] += (c.weight / totalWeight) * 100;
+        // 第四象限：x > 0, y < 0
+        else 
+          quads[3] += (c.weight / totalWeight) * 100;
+      });
+    }
 
     return {
       centerOfMass,

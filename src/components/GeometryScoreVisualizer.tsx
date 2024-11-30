@@ -1,8 +1,8 @@
 import React, { useMemo } from 'react';
-import { calculateRectCenter } from '@/lib/algorithm/balance/utils/geometry';
+import { calculateRectCenter } from '@/lib/algorithm/balance';
 import { COLORS } from '@/lib/constants/colors';
 import type { Product, Rectangle } from '@/types/geometry';
-import type { DetailedGeometryScore } from '@/types/balance';
+import { useBalanceStore } from '@/stores/useBalanceStore';
 import {
   useViewBoxCalculation,
   useQuadrantCalculation,
@@ -16,7 +16,6 @@ import {
 interface GeometryScoreVisualizerProps {
   layout: Rectangle[];
   products: Product[];
-  score?: DetailedGeometryScore;
   width?: number;
   height?: number;
 }
@@ -24,32 +23,31 @@ interface GeometryScoreVisualizerProps {
 export const GeometryScoreVisualizer: React.FC<GeometryScoreVisualizerProps> = ({
   layout,
   products,
-  score,
   width = 800,
   height = 600,
 }) => {
+  // Get score from store
+  const { geometryScore } = useBalanceStore();
+
   // Calculate visualization parameters
   const viewBoxData = useViewBoxCalculation(layout, width, height);
-  console.log('debugLayout', layout);
   
   // Calculate centers and weights
   const centers: LayoutItem[] = useMemo(() => {
     if (layout.length !== products.length) {
-      console.error('Layout and products arrays must have the same length');
       return [];
     }
     
     return layout.map((rect, i) => {
       const product = products[i];
       if (!product) {
-        console.error(`No product found at index ${i}`);
         return {
           center: calculateRectCenter(rect),
           weight: 0,
           dimensions: rect,
         };
       }
-      
+
       return {
         center: calculateRectCenter(rect),
         weight: product.weight ?? 0,
@@ -85,21 +83,22 @@ export const GeometryScoreVisualizer: React.FC<GeometryScoreVisualizerProps> = (
         width={width}
         height={height}
         viewBox={`${viewBoxData.viewBox.x} ${viewBoxData.viewBox.y} ${viewBoxData.viewBox.width} ${viewBoxData.viewBox.height}`}
-        className="border rounded bg-white"
+        className="border border-slate-300"
       >
         {/* 布局矩形 */}
         {layout.map((rect, index) => (
-          <rect
-            key={`rect-${index}`}
-            x={rect.x}
-            y={rect.y}
-            width={rect.width}
-            height={rect.height}
-            className="stroke-green-500"
-            fill={COLORS.success.light}
-            strokeWidth={1/viewBoxData.scale}
-            fillOpacity={0.2}
-          />
+          <g key={`rect-${index}`}>
+            <rect
+              x={rect.x}
+              y={rect.y}
+              width={rect.width}
+              height={rect.height}
+              className="stroke-green-500"
+              fill={COLORS.success.light}
+              strokeWidth={1/viewBoxData.scale}
+              fillOpacity={0.2}
+            />
+          </g>
         ))}
 
         {/* 象限分界线 */}
@@ -146,13 +145,13 @@ export const GeometryScoreVisualizer: React.FC<GeometryScoreVisualizerProps> = (
       <Legend config={legendConfig} />
 
       {/* 分数展示 */}
-      {score && (
+      {geometryScore && (
         <div className="absolute top-4 right-4 bg-white/80 p-4 rounded shadow-sm">
           <div className="text-sm space-y-2">
-            <div>径向平衡: {score.radialBalance.toFixed(1)}</div>
-            <div>象限平衡: {score.quadrantBalance.toFixed(1)}</div>
-            <div>中心偏移: {score.centerOffset.toFixed(1)}</div>
-            <div className="font-bold">总分: {score.overall.toFixed(1)}</div>
+            <div>径向平衡: {geometryScore.radialBalance.toFixed(1)}</div>
+            <div>象限平衡: {geometryScore.quadrantBalance.toFixed(1)}</div>
+            <div>中心偏移: {geometryScore.centerOffset.toFixed(1)}</div>
+            <div className="font-bold">总分: {geometryScore.overall.toFixed(1)}</div>
           </div>
         </div>
       )}
