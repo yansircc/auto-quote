@@ -1,12 +1,12 @@
-import type { Point2D } from '@/types/geometry';
+import type { Point2D } from "@/types/core/geometry";
 
 /**
  * Symmetry axis representation
  */
 interface SymmetryAxis {
-  angle: number;      // Angle in radians
-  quality: number;    // Quality score (0-1)
-  origin: Point2D;    // Point the axis passes through
+  angle: number; // Angle in radians
+  quality: number; // Quality score (0-1)
+  origin: Point2D; // Point the axis passes through
 }
 
 /**
@@ -40,33 +40,37 @@ export class SymmetryAnalyzer {
    * @param weights Optional weights for each point
    * @returns Array of detected symmetry axes
    */
-  findSymmetryAxes(
-    points: Point2D[],
-    weights?: number[]
-  ): SymmetryAxis[] {
+  findSymmetryAxes(points: Point2D[], weights?: number[]): SymmetryAxis[] {
     if (points.length < 2) {
       return [];
     }
 
     // Calculate weighted centroid
     const centroid = this.calculateWeightedCentroid(points, weights);
-    
+
     // Only check vertical and horizontal axes
     const axes = [
       {
         angle: 0, // Vertical axis
         origin: centroid,
-        quality: this.evaluateSymmetryQuality(points, weights, 0, centroid)
+        quality: this.evaluateSymmetryQuality(points, weights, 0, centroid),
       },
       {
         angle: Math.PI / 2, // Horizontal axis
         origin: centroid,
-        quality: this.evaluateSymmetryQuality(points, weights, Math.PI / 2, centroid)
-      }
+        quality: this.evaluateSymmetryQuality(
+          points,
+          weights,
+          Math.PI / 2,
+          centroid,
+        ),
+      },
     ];
 
     // Filter by quality threshold
-    return axes.filter(axis => axis.quality > this.config.minQualityThreshold);
+    return axes.filter(
+      (axis) => axis.quality > this.config.minQualityThreshold,
+    );
   }
 
   /**
@@ -75,7 +79,7 @@ export class SymmetryAnalyzer {
    */
   private calculateWeightedCentroid(
     points: Point2D[],
-    weights?: number[]
+    weights?: number[],
   ): Point2D {
     const defaultWeight = 1 / points.length;
     let totalWeight = 0;
@@ -91,7 +95,7 @@ export class SymmetryAnalyzer {
 
     return {
       x: sumX / totalWeight,
-      y: sumY / totalWeight
+      y: sumY / totalWeight,
     };
   }
 
@@ -103,7 +107,7 @@ export class SymmetryAnalyzer {
     points: Point2D[],
     weights: number[] | undefined,
     angle: number,
-    origin: Point2D
+    origin: Point2D,
   ): number {
     if (points.length === 0) return 0;
 
@@ -119,7 +123,8 @@ export class SymmetryAnalyzer {
       // Find closest point to reflection
       let minDistance = Infinity;
       points.forEach((other, j) => {
-        if (i !== j) {  // Don't compare with self
+        if (i !== j) {
+          // Don't compare with self
           const dist = this.pointDistance(reflected, other);
           minDistance = Math.min(minDistance, dist);
         }
@@ -141,25 +146,25 @@ export class SymmetryAnalyzer {
   private reflectPoint(
     point: Point2D,
     angle: number,
-    origin: Point2D
+    origin: Point2D,
   ): Point2D {
     // Translate to origin
     const dx = point.x - origin.x;
     const dy = point.y - origin.y;
-    
+
     // Rotate to align axis with x-axis
     const cos = Math.cos(-angle);
     const sin = Math.sin(-angle);
     const rx = dx * cos - dy * sin;
     const ry = dx * sin + dy * cos;
-    
+
     // Reflect across x-axis
     const reflectedRy = -ry;
-    
+
     // Rotate back and translate
     return {
       x: rx * cos - reflectedRy * sin + origin.x,
-      y: rx * sin + reflectedRy * cos + origin.y
+      y: rx * sin + reflectedRy * cos + origin.y,
     };
   }
 

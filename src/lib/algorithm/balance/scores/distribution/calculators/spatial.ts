@@ -1,5 +1,7 @@
-import type { Rectangle, Product, Bounds } from '@/types/core/geometry';
-import type { DetailedDistributionScore } from '@/types/balance';
+import type { Rectangle } from "@/types/core/geometry";
+import type { Product } from "@/types/domain/product";
+import type { Bounds2D } from "@/types/core/geometry";
+import type { DetailedDistributionScore } from "@/types/algorithm/balance/types";
 
 interface SpatialCalculatorConfig {
   gridSize: number;
@@ -8,7 +10,7 @@ interface SpatialCalculatorConfig {
   weights: {
     uniformity: number;
     density: number;
-  }
+  };
 }
 
 const DEFAULT_CONFIG: SpatialCalculatorConfig = {
@@ -17,8 +19,8 @@ const DEFAULT_CONFIG: SpatialCalculatorConfig = {
   minDensity: 0.1,
   weights: {
     uniformity: 0.6,
-    density: 0.4
-  }
+    density: 0.4,
+  },
 };
 
 interface SpatialAnalysisResult {
@@ -37,8 +39,8 @@ export class SpatialCalculator {
       ...config,
       weights: {
         ...DEFAULT_CONFIG.weights,
-        ...config?.weights
-      }
+        ...config?.weights,
+      },
     };
   }
 
@@ -47,7 +49,7 @@ export class SpatialCalculator {
    */
   calculate(
     layout: Record<number, Rectangle>,
-    products: Product[]
+    products: Product[],
   ): SpatialAnalysisResult {
     // 空布局或单个产品的情况
     if (products.length <= 1) {
@@ -55,7 +57,7 @@ export class SpatialCalculator {
         uniformity: 100,
         density: 100,
         gridCells: 1,
-        occupiedCells: products.length
+        occupiedCells: products.length,
       };
     }
 
@@ -66,16 +68,16 @@ export class SpatialCalculator {
         uniformity: 0,
         density: 0,
         gridCells: 0,
-        occupiedCells: 0
+        occupiedCells: 0,
       };
     }
 
     // 创建网格
     const grid = this.createGrid(bounds, this.config.gridSize);
-    
+
     // 计算每个产品在网格中的占用情况
     let occupiedCells = 0;
-    products.forEach(product => {
+    products.forEach((product) => {
       const rect = layout[product.id];
       if (!rect) return;
 
@@ -86,17 +88,23 @@ export class SpatialCalculator {
     // 计算密度
     const totalCells = grid.length * (grid[0]?.length ?? 0);
     const density = occupiedCells / totalCells;
-    const normalizedDensity = Math.min(100, (density / this.config.minDensity) * 100);
+    const normalizedDensity = Math.min(
+      100,
+      (density / this.config.minDensity) * 100,
+    );
 
     // 计算均匀度
     const uniformity = this.calculateUniformity(layout, products, grid);
-    const normalizedUniformity = Math.min(100, (uniformity / this.config.maxUniformity) * 100);
+    const normalizedUniformity = Math.min(
+      100,
+      (uniformity / this.config.maxUniformity) * 100,
+    );
 
     return {
       uniformity: normalizedUniformity,
       density: normalizedDensity,
       gridCells: totalCells,
-      occupiedCells
+      occupiedCells,
     };
   }
 
@@ -106,7 +114,7 @@ export class SpatialCalculator {
   private calculateUniformity(
     layout: Record<number, Rectangle>,
     products: Product[],
-    grid: boolean[][]
+    grid: boolean[][],
   ): number {
     // 计算每个网格单元的占用密度
     const densities: number[] = [];
@@ -123,7 +131,9 @@ export class SpatialCalculator {
 
     // 计算密度的标准差
     const mean = densities.reduce((sum, d) => sum + d, 0) / densities.length;
-    const variance = densities.reduce((sum, d) => sum + Math.pow(d - mean, 2), 0) / densities.length;
+    const variance =
+      densities.reduce((sum, d) => sum + Math.pow(d - mean, 2), 0) /
+      densities.length;
     const stdDev = Math.sqrt(variance);
 
     // 将标准差转换为均匀度分数
@@ -137,12 +147,12 @@ export class SpatialCalculator {
     row: number,
     col: number,
     layout: Record<number, Rectangle>,
-    products: Product[]
+    products: Product[],
   ): number {
     let totalArea = 0;
     let occupiedArea = 0;
 
-    products.forEach(product => {
+    products.forEach((product) => {
       const rect = layout[product.id];
       if (!rect) return;
 
@@ -151,7 +161,7 @@ export class SpatialCalculator {
       if (overlap > 0) {
         occupiedArea += overlap;
       }
-      totalArea += rect.width * rect.height;
+      totalArea += rect.width * rect.length;
     });
 
     return totalArea > 0 ? occupiedArea / totalArea : 0;
@@ -165,8 +175,15 @@ export class SpatialCalculator {
     const cellX = col * cellSize;
     const cellY = row * cellSize;
 
-    const overlapX = Math.max(0, Math.min(rect.x + rect.width, cellX + cellSize) - Math.max(rect.x, cellX));
-    const overlapY = Math.max(0, Math.min(rect.y + rect.height, cellY + cellSize) - Math.max(rect.y, cellY));
+    const overlapX = Math.max(
+      0,
+      Math.min(rect.x + rect.width, cellX + cellSize) - Math.max(rect.x, cellX),
+    );
+    const overlapY = Math.max(
+      0,
+      Math.min(rect.y + rect.length, cellY + cellSize) -
+        Math.max(rect.y, cellY),
+    );
 
     return overlapX * overlapY;
   }
@@ -174,12 +191,15 @@ export class SpatialCalculator {
   /**
    * 获取矩形覆盖的网格单元
    */
-  private getCellsForRect(rect: Rectangle, grid: boolean[][]): [number, number][] {
+  private getCellsForRect(
+    rect: Rectangle,
+    grid: boolean[][],
+  ): [number, number][] {
     const cells: [number, number][] = [];
     const cellSize = this.config.gridSize;
 
     const startRow = Math.floor(rect.y / cellSize);
-    const endRow = Math.floor((rect.y + rect.height) / cellSize);
+    const endRow = Math.floor((rect.y + rect.length) / cellSize);
     const startCol = Math.floor(rect.x / cellSize);
     const endCol = Math.floor((rect.x + rect.width) / cellSize);
 
@@ -187,7 +207,7 @@ export class SpatialCalculator {
       for (let j = startCol; j <= endCol; j++) {
         if (i >= 0 && i < grid.length && j >= 0 && j < (grid[i]?.length ?? 0)) {
           cells.push([i, j]);
-          grid[i][j] = true;
+          grid[i]![j] = true;
         }
       }
     }
@@ -198,20 +218,19 @@ export class SpatialCalculator {
   /**
    * 创建网格
    */
-  private createGrid(bounds: Bounds, cellSize: number): boolean[][] {
+  private createGrid(bounds: Bounds2D, cellSize: number): boolean[][] {
     const rows = Math.ceil((bounds.maxY - bounds.minY) / cellSize);
     const cols = Math.ceil((bounds.maxX - bounds.minX) / cellSize);
-    
-    return Array.from<unknown, boolean[]>(
-      { length: rows },
-      () => Array.from<unknown, boolean>({ length: cols }, () => false)
+
+    return Array.from<unknown, boolean[]>({ length: rows }, () =>
+      Array.from<unknown, boolean>({ length: cols }, () => false),
     );
   }
 
   /**
    * 获取布局边界
    */
-  private getLayoutBounds(layout: Record<number, Rectangle>): Bounds | null {
+  private getLayoutBounds(layout: Record<number, Rectangle>): Bounds2D | null {
     let minX = Infinity;
     let minY = Infinity;
     let maxX = -Infinity;
@@ -226,7 +245,7 @@ export class SpatialCalculator {
       minX = Math.min(minX, rect.x);
       minY = Math.min(minY, rect.y);
       maxX = Math.max(maxX, rect.x + rect.width);
-      maxY = Math.max(maxY, rect.y + rect.height);
+      maxY = Math.max(maxY, rect.y + rect.length);
     }
 
     return { minX, minY, maxX, maxY };
@@ -235,10 +254,12 @@ export class SpatialCalculator {
   /**
    * 将分析结果转换为详细分数
    */
-  toScoreDetails(analysis: SpatialAnalysisResult): Partial<DetailedDistributionScore['details']['volumeBalance']> {
+  toScoreDetails(
+    analysis: SpatialAnalysisResult,
+  ): Partial<DetailedDistributionScore["details"]["volumeBalance"]> {
     return {
       densityVariance: analysis.density,
-      symmetry: analysis.uniformity
+      symmetry: analysis.uniformity,
     };
   }
 }

@@ -1,5 +1,4 @@
-import type { Point3D } from '@/types/core/geometry';
-import type { SymmetryAnalysis3D } from '@/types/core/physics';
+import type { Point3D } from "@/types/core/geometry";
 
 /**
  * 对称性分析结果
@@ -7,35 +6,39 @@ import type { SymmetryAnalysis3D } from '@/types/core/physics';
 interface SymmetryAnalysis {
   // 轴对称性
   axial: {
-    x: number;  // x轴对称性 (0-1)
-    y: number;  // y轴对称性 (0-1)
-    z: number;  // z轴对称性 (0-1)
+    x: number; // x轴对称性 (0-1)
+    y: number; // y轴对称性 (0-1)
+    z: number; // z轴对称性 (0-1)
   };
   // 面对称性
   planar: {
-    xy: number;  // xy平面对称性 (0-1)
-    xz: number;  // xz平面对称性 (0-1)
-    yz: number;  // yz平面对称性 (0-1)
+    xy: number; // xy平面对称性 (0-1)
+    xz: number; // xz平面对称性 (0-1)
+    yz: number; // yz平面对称性 (0-1)
   };
   // 点对称性（中心对称）
-  central: number;  // 中心对称性 (0-1)
+  central: number; // 中心对称性 (0-1)
   // 整体对称性
-  overall: number;  // 综合对称性得分 (0-1)
+  overall: number; // 综合对称性得分 (0-1)
 }
 
 /**
  * 计算点关于平面的镜像点
  */
-function mirrorPoint(point: Point3D, plane: 'xy' | 'xz' | 'yz', center: Point3D): Point3D {
+function mirrorPoint(
+  point: Point3D,
+  plane: "xy" | "xz" | "yz",
+  center: Point3D,
+): Point3D {
   const mirrored = { ...point };
   switch (plane) {
-    case 'xy':
+    case "xy":
       mirrored.z = 2 * center.z - point.z;
       break;
-    case 'xz':
+    case "xz":
       mirrored.y = 2 * center.y - point.y;
       break;
-    case 'yz':
+    case "yz":
       mirrored.x = 2 * center.x - point.x;
       break;
   }
@@ -47,32 +50,48 @@ function mirrorPoint(point: Point3D, plane: 'xy' | 'xz' | 'yz', center: Point3D)
  * 对于模具，只需要考虑Z轴（垂直轴）的90度旋转
  * 因为模具只在水平面内旋转，高度不参与旋转
  */
-function rotatePoints(point: Point3D, axis: 'x' | 'y' | 'z', center: Point3D): Point3D[] {
+function rotatePoints(
+  point: Point3D,
+  axis: "x" | "y" | "z",
+  center: Point3D,
+): Point3D[] {
   const rotated: Point3D[] = [];
-  
+
   // 只有在Z轴旋转时才生成旋转点
-  if (axis === 'z') {
+  if (axis === "z") {
     // 90度旋转
     const angle = Math.PI / 2;
-    const rotatedPoint: Point3D = { 
-      x: center.x + (point.x - center.x) * Math.cos(angle) - (point.y - center.y) * Math.sin(angle),
-      y: center.y + (point.x - center.x) * Math.sin(angle) + (point.y - center.y) * Math.cos(angle),
-      z: point.z  // 保持Z坐标不变
+    const rotatedPoint: Point3D = {
+      x:
+        center.x +
+        (point.x - center.x) * Math.cos(angle) -
+        (point.y - center.y) * Math.sin(angle),
+      y:
+        center.y +
+        (point.x - center.x) * Math.sin(angle) +
+        (point.y - center.y) * Math.cos(angle),
+      z: point.z, // 保持Z坐标不变
     };
     rotated.push(rotatedPoint);
 
     // 180度旋转
-    const rotatedPoint180: Point3D = { 
-      x: center.x + (point.x - center.x) * Math.cos(Math.PI) - (point.y - center.y) * Math.sin(Math.PI),
-      y: center.y + (point.x - center.x) * Math.sin(Math.PI) + (point.y - center.y) * Math.cos(Math.PI),
-      z: point.z  // 保持Z坐标不变
+    const rotatedPoint180: Point3D = {
+      x:
+        center.x +
+        (point.x - center.x) * Math.cos(Math.PI) -
+        (point.y - center.y) * Math.sin(Math.PI),
+      y:
+        center.y +
+        (point.x - center.x) * Math.sin(Math.PI) +
+        (point.y - center.y) * Math.cos(Math.PI),
+      z: point.z, // 保持Z坐标不变
     };
     rotated.push(rotatedPoint180);
   }
-  
+
   // 添加原始点作为0度旋转的情况
   rotated.unshift({ ...point });
-  
+
   return rotated;
 }
 
@@ -83,7 +102,7 @@ function centralSymmetryPoint(point: Point3D, center: Point3D): Point3D {
   return {
     x: 2 * center.x - point.x,
     y: 2 * center.y - point.y,
-    z: 2 * center.z - point.z
+    z: 2 * center.z - point.z,
   };
 }
 
@@ -103,7 +122,7 @@ function distance3D(p1: Point3D | undefined, p2: Point3D | undefined): number {
  */
 function findMinDistance(point: Point3D, points: Point3D[]): number {
   if (!points.length) return Infinity;
-  return Math.min(...points.map(p => distance3D(point, p)));
+  return Math.min(...points.map((p) => distance3D(point, p)));
 }
 
 /**
@@ -113,28 +132,28 @@ function findMinDistance(point: Point3D, points: Point3D[]): number {
 function calculateAxialSymmetry(
   points: Point3D[],
   masses: number[],
-  center: Point3D
-): Pick<SymmetryAnalysis, 'axial'> {
+  center: Point3D,
+): Pick<SymmetryAnalysis, "axial"> {
   let zAxisSymmetry = 0;
   let totalMass = 0;
 
   for (let i = 0; i < points.length; i++) {
     const point = points[i];
-    const mass = masses[i];
+    const mass = masses[i] ?? 0;
     if (!point || mass <= 0) continue;
 
     totalMass += mass;
-    const rotated = rotatePoints(point, 'z', center);
+    const rotated = rotatePoints(point, "z", center);
     const minDistance = findMinDistance(point, rotated);
     zAxisSymmetry += (1 - minDistance) * mass;
   }
 
   return {
     axial: {
-      x: 0,  // 不考虑X轴旋转
-      y: 0,  // 不考虑Y轴旋转
-      z: totalMass > 0 ? zAxisSymmetry / totalMass : 1  // 只考虑Z轴旋转
-    }
+      x: 0, // 不考虑X轴旋转
+      y: 0, // 不考虑Y轴旋转
+      z: totalMass > 0 ? zAxisSymmetry / totalMass : 1, // 只考虑Z轴旋转
+    },
   };
 }
 
@@ -144,10 +163,10 @@ function calculateAxialSymmetry(
 function calculatePlanarSymmetry(
   points: Point3D[],
   masses: number[],
-  center: Point3D
-): Pick<SymmetryAnalysis, 'planar'> {
-  const planes: Array<'xy' | 'xz' | 'yz'> = ['xy', 'xz', 'yz'];
-  const symmetryScores = planes.map(plane => {
+  center: Point3D,
+): Pick<SymmetryAnalysis, "planar"> {
+  const planes: Array<"xy" | "xz" | "yz"> = ["xy", "xz", "yz"];
+  const symmetryScores = planes.map((plane) => {
     let totalScore = 0;
     let totalMass = 0;
 
@@ -157,7 +176,7 @@ function calculatePlanarSymmetry(
       const maxDimension = Math.max(
         Math.abs(point.x - center.x),
         Math.abs(point.y - center.y),
-        Math.abs(point.z - center.z)
+        Math.abs(point.z - center.z),
       );
       const score = Math.max(0, 1 - minDistance / (2 * maxDimension || 1));
       totalScore += score * (masses[i] ?? 0);
@@ -171,8 +190,8 @@ function calculatePlanarSymmetry(
     planar: {
       xy: symmetryScores[0] ?? 1,
       xz: symmetryScores[1] ?? 1,
-      yz: symmetryScores[2] ?? 1
-    }
+      yz: symmetryScores[2] ?? 1,
+    },
   };
 }
 
@@ -182,8 +201,8 @@ function calculatePlanarSymmetry(
 function calculateCentralSymmetry(
   points: Point3D[],
   masses: number[],
-  center: Point3D
-): Pick<SymmetryAnalysis, 'central'> {
+  center: Point3D,
+): Pick<SymmetryAnalysis, "central"> {
   let totalScore = 0;
   let totalMass = 0;
 
@@ -193,7 +212,7 @@ function calculateCentralSymmetry(
     const maxDimension = Math.max(
       Math.abs(point.x - center.x),
       Math.abs(point.y - center.y),
-      Math.abs(point.z - center.z)
+      Math.abs(point.z - center.z),
     );
     const score = Math.max(0, 1 - minDistance / (2 * maxDimension || 1));
     totalScore += score * (masses[i] ?? 0);
@@ -201,7 +220,7 @@ function calculateCentralSymmetry(
   });
 
   return {
-    central: totalMass > 0 ? totalScore / totalMass : 1
+    central: totalMass > 0 ? totalScore / totalMass : 1,
   };
 }
 
@@ -211,7 +230,7 @@ function calculateCentralSymmetry(
 export function analyzeSymmetry(
   points: Point3D[],
   masses: number[],
-  center: Point3D
+  center: Point3D,
 ): SymmetryAnalysis {
   const axial = calculateAxialSymmetry(points, masses, center);
   const planar = calculatePlanarSymmetry(points, masses, center);
@@ -222,17 +241,17 @@ export function analyzeSymmetry(
   // - 面对称性：60%（xy和xz各25%，yz 10%）
   // - 轴对称性：30%（z轴旋转）
   // - 中心对称性：10%
-  const overall = 
-    (planar.planar.xy * 0.25 +
-     planar.planar.xz * 0.25 +
-     planar.planar.yz * 0.10) +
-    (axial.axial.z * 0.30) +
-    (central.central * 0.10);
+  const overall =
+    planar.planar.xy * 0.25 +
+    planar.planar.xz * 0.25 +
+    planar.planar.yz * 0.1 +
+    axial.axial.z * 0.3 +
+    central.central * 0.1;
 
   return {
     ...axial,
     ...planar,
     ...central,
-    overall
+    overall,
   };
 }

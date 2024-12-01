@@ -1,40 +1,13 @@
-import type { Point3D } from '@/types/core/geometry';
-import type { SpatialStatistics3D } from '@/types/core/physics';
-
-/**
- * 空间统计分析结果
- */
-interface SpatialStatistics {
-  // Ripley's K函数分析结果
-  ripleyK: {
-    observed: number;    // 观察值
-    expected: number;    // 期望值
-    isCluster: boolean;  // 是否为聚集分布
-  };
-  // 最近邻分析
-  nearestNeighbor: {
-    averageDistance: number;  // 平均最近邻距离
-    expectedDistance: number; // 期望最近邻距离
-    ratio: number;           // 最近邻指数(R)，R<1表示聚集，R>1表示分散
-  };
-  // 空间熵
-  entropy: {
-    value: number;      // 熵值 (0-1)
-    normalized: number; // 归一化熵值
-  };
-  // 四分位距
-  quartiles: {
-    q1: number;  // 第一四分位
-    q2: number;  // 中位数
-    q3: number;  // 第三四分位
-    iqr: number; // 四分位距
-  };
-}
+import type { Point3D } from "@/types/core/geometry";
+import type { SpatialStatistics3D } from "@/types/core/physics";
 
 /**
  * 计算两点之间的3D欧氏距离
  */
-function calculate3DDistance(p1: Point3D | undefined, p2: Point3D | undefined): number {
+function calculate3DDistance(
+  p1: Point3D | undefined,
+  p2: Point3D | undefined,
+): number {
   if (!p1 || !p2) return 0;
   const dx = p1.x - p2.x;
   const dy = p1.y - p2.y;
@@ -49,8 +22,8 @@ function calculate3DDistance(p1: Point3D | undefined, p2: Point3D | undefined): 
 export function calculateRipleyK(
   points: Point3D[],
   radius: number,
-  volume: number
-): Pick<SpatialStatistics, 'ripleyK'> {
+  volume: number,
+): Pick<SpatialStatistics3D, "ripleyK"> {
   let count = 0;
   const n = points.length;
 
@@ -72,8 +45,8 @@ export function calculateRipleyK(
     ripleyK: {
       observed,
       expected,
-      isCluster: observed > expected
-    }
+      isCluster: observed > expected,
+    },
   };
 }
 
@@ -83,25 +56,25 @@ export function calculateRipleyK(
  */
 export function calculateNearestNeighbor(
   points: Point3D[],
-  volume: number
-): Pick<SpatialStatistics, 'nearestNeighbor'> {
+  volume: number,
+): Pick<SpatialStatistics3D, "nearestNeighbor"> {
   const n = points.length;
   if (n < 2) {
     return {
       nearestNeighbor: {
         averageDistance: 0,
         expectedDistance: 0,
-        ratio: 1
-      }
+        ratio: 1,
+      },
     };
   }
 
   // 计算每个点到其最近邻的距离
-  const distances = points.map(p1 => {
+  const distances = points.map((p1) => {
     const nearestDistance = Math.min(
       ...points
-        .filter(p2 => p2 !== p1)
-        .map(p2 => calculate3DDistance(p1, p2))
+        .filter((p2) => p2 !== p1)
+        .map((p2) => calculate3DDistance(p1, p2)),
     );
     return nearestDistance;
   });
@@ -113,7 +86,7 @@ export function calculateNearestNeighbor(
   const density = n / volume;
 
   // 计算期望最近邻距离（完全随机分布）
-  const expectedDistance = 0.554 / Math.pow(density, 1/3);
+  const expectedDistance = 0.554 / Math.pow(density, 1 / 3);
 
   // 计算最近邻指数
   const ratio = averageDistance / expectedDistance;
@@ -122,8 +95,8 @@ export function calculateNearestNeighbor(
     nearestNeighbor: {
       averageDistance,
       expectedDistance,
-      ratio
-    }
+      ratio,
+    },
   };
 }
 
@@ -133,33 +106,33 @@ export function calculateNearestNeighbor(
  */
 export function calculateSpatialEntropy(
   points: Point3D[],
-  gridSize: number
-): Pick<SpatialStatistics, 'entropy'> {
+  gridSize: number,
+): Pick<SpatialStatistics3D, "entropy"> {
   // 创建3D网格
   const grid = new Map<string, number>();
-  
+
   // 找到空间范围
-  const bounds = points.reduce<{min: Point3D; max: Point3D}>(
+  const bounds = points.reduce<{ min: Point3D; max: Point3D }>(
     (acc, p) => ({
       min: {
         x: Math.min(acc.min.x, p.x),
         y: Math.min(acc.min.y, p.y),
-        z: Math.min(acc.min.z, p.z)
+        z: Math.min(acc.min.z, p.z),
       },
       max: {
         x: Math.max(acc.max.x, p.x),
         y: Math.max(acc.max.y, p.y),
-        z: Math.max(acc.max.z, p.z)
-      }
+        z: Math.max(acc.max.z, p.z),
+      },
     }),
     {
       min: { x: Infinity, y: Infinity, z: Infinity },
-      max: { x: -Infinity, y: -Infinity, z: -Infinity }
-    }
+      max: { x: -Infinity, y: -Infinity, z: -Infinity },
+    },
   );
 
   // 将点分配到网格中
-  points.forEach(p => {
+  points.forEach((p) => {
     const gridX = Math.floor((p.x - bounds.min.x) / gridSize);
     const gridY = Math.floor((p.y - bounds.min.y) / gridSize);
     const gridZ = Math.floor((p.z - bounds.min.z) / gridSize);
@@ -170,7 +143,7 @@ export function calculateSpatialEntropy(
   // 计算熵
   let entropy = 0;
   const totalPoints = points.length;
-  grid.forEach(count => {
+  grid.forEach((count) => {
     const p = count / totalPoints;
     entropy -= p * Math.log2(p);
   });
@@ -184,8 +157,8 @@ export function calculateSpatialEntropy(
   return {
     entropy: {
       value: entropy,
-      normalized
-    }
+      normalized,
+    },
   };
 }
 
@@ -195,11 +168,11 @@ export function calculateSpatialEntropy(
  */
 export function calculateQuartiles(
   points: Point3D[],
-  centerOfMass: Point3D
-): Pick<SpatialStatistics, 'quartiles'> {
+  centerOfMass: Point3D,
+): Pick<SpatialStatistics3D, "quartiles"> {
   // 计算到质心的距离
   const distances = points
-    .map(p => calculate3DDistance(p, centerOfMass))
+    .map((p) => calculate3DDistance(p, centerOfMass))
     .sort((a, b) => a - b);
 
   const n = distances.length;
@@ -209,8 +182,8 @@ export function calculateQuartiles(
         q1: 0,
         q2: 0,
         q3: 0,
-        iqr: 0
-      }
+        iqr: 0,
+      },
     };
   }
 
@@ -230,8 +203,8 @@ export function calculateQuartiles(
       q1,
       q2,
       q3,
-      iqr
-    }
+      iqr,
+    },
   };
 }
 
@@ -243,12 +216,12 @@ export function analyzeSpatialDistribution(
   centerOfMass: Point3D,
   volume: number,
   gridSize = 1,
-  radius = 1
-): SpatialStatistics {
+  radius = 1,
+): SpatialStatistics3D {
   return {
     ...calculateRipleyK(points, radius, volume),
     ...calculateNearestNeighbor(points, volume),
     ...calculateSpatialEntropy(points, gridSize),
-    ...calculateQuartiles(points, centerOfMass)
+    ...calculateQuartiles(points, centerOfMass),
   };
 }

@@ -1,4 +1,4 @@
-import type { Point2D } from '@/types/geometry';
+import type { Point2D } from "@/types/core/geometry";
 
 /**
  * Calculate inertia tensor for a rectangular element
@@ -14,11 +14,11 @@ export function calculateRectangleInertia(
   y: number,
   width: number,
   height: number,
-  mass: number
+  mass: number,
 ): [number, number, number] {
   // Calculate moments of inertia using parallel axis theorem
-  const Ixx = (mass * (height ** 2)) / 12 + mass * y ** 2;
-  const Iyy = (mass * (width ** 2)) / 12 + mass * x ** 2;
+  const Ixx = (mass * height ** 2) / 12 + mass * y ** 2;
+  const Iyy = (mass * width ** 2) / 12 + mass * x ** 2;
   const Ixy = mass * x * y;
 
   return [Ixx, Iyy, Ixy];
@@ -34,7 +34,7 @@ export function calculateRectangleInertia(
 export function calculatePrincipalComponents(
   Ixx: number,
   Iyy: number,
-  Ixy: number
+  Ixy: number,
 ): {
   moments: [number, number];
   axes: [[number, number], [number, number]];
@@ -51,13 +51,13 @@ export function calculatePrincipalComponents(
   // Calculate principal axes
   const cos = Math.cos(theta);
   const sin = Math.sin(theta);
-  
+
   return {
     moments: [I1, I2],
     axes: [
-      [cos, -sin],  // First principal axis
-      [sin, cos]    // Second principal axis
-    ]
+      [cos, -sin], // First principal axis
+      [sin, cos], // Second principal axis
+    ],
   };
 }
 
@@ -69,7 +69,7 @@ export function calculatePrincipalComponents(
  */
 export function calculateGyrationRadius(
   moments: [number, number],
-  totalMass: number
+  totalMass: number,
 ): number {
   // Gyration radius is sqrt(trace(I)/mass)
   return Math.sqrt((moments[0] + moments[1]) / totalMass);
@@ -85,7 +85,7 @@ export function calculateCenterOfMass(
     x: number;
     y: number;
     mass: number;
-  }>
+  }>,
 ): Point2D {
   let totalMass = 0;
   let sumX = 0;
@@ -99,7 +99,7 @@ export function calculateCenterOfMass(
 
   return {
     x: sumX / totalMass,
-    y: sumY / totalMass
+    y: sumY / totalMass,
   };
 }
 
@@ -115,9 +115,9 @@ export function calculateMassDistribution(
     y: number;
     mass: number;
   }>,
-  centerOfMass: Point2D
+  centerOfMass: Point2D,
 ): number[] {
-  return elements.map(element => {
+  return elements.map((element) => {
     const dx = element.x - centerOfMass.x;
     const dy = element.y - centerOfMass.y;
     return Math.sqrt(dx * dx + dy * dy);

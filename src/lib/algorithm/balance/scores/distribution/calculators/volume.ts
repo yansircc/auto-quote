@@ -1,6 +1,7 @@
-import type { Rectangle, Product } from '@/types/geometry';
-import { DistributionBalanceConfig as Config } from '../config';
-import { SymmetryAnalyzer } from '../utils/symmetry';
+import type { Rectangle } from "@/types/core/geometry";
+import type { Product } from "@/types/domain/product";
+import { DistributionBalanceConfig as Config } from "../config";
+import { SymmetryAnalyzer } from "../utils/symmetry";
 
 /**
  * Calculator for volume distribution analysis
@@ -25,12 +26,12 @@ export class VolumeCalculator {
       ...DEFAULT_VOLUME_DISTRIBUTION_CONFIG,
       weights: {
         ...DEFAULT_VOLUME_DISTRIBUTION_CONFIG.weights,
-        ...(config.weights ?? {})
-      }
+        ...(config.weights ?? {}),
+      },
     };
     this.symmetryAnalyzer = new SymmetryAnalyzer({
       minQualityThreshold: this.config.minSymmetryQuality,
-      distanceDecayFactor: this.config.symmetryDistanceDecay
+      distanceDecayFactor: this.config.symmetryDistanceDecay,
     });
   }
 
@@ -39,7 +40,7 @@ export class VolumeCalculator {
    */
   calculate(
     layout: Record<number, Rectangle>,
-    products: Product[]
+    products: Product[],
   ): VolumeCalculatorResult {
     // Handle empty case
     if (products.length === 0) {
@@ -49,8 +50,8 @@ export class VolumeCalculator {
           densityVariance: 1,
           heightBalance: 1,
           massDistribution: 1,
-          symmetry: 1
-        }
+          symmetry: 1,
+        },
       };
     }
 
@@ -64,16 +65,17 @@ export class VolumeCalculator {
             densityVariance: 0,
             heightBalance: 0,
             massDistribution: 0,
-            symmetry: 0
-          }
+            symmetry: 0,
+          },
         };
       }
 
       // For single product, calculate based on center position
       const centerX = rect.x + rect.width / 2;
-      const centerY = rect.y + rect.height / 2;
-      const maxDimension = Math.max(rect.width, rect.height);
-      const centerDeviation = Math.sqrt(centerX * centerX + centerY * centerY) / maxDimension;
+      const centerY = rect.y + rect.length / 2;
+      const maxDimension = Math.max(rect.width, rect.length);
+      const centerDeviation =
+        Math.sqrt(centerX * centerX + centerY * centerY) / maxDimension;
 
       // More lenient scoring for single product
       const score = Math.max(0, Math.min(100, (1 - centerDeviation) * 100));
@@ -84,8 +86,8 @@ export class VolumeCalculator {
           densityVariance: score / 100,
           heightBalance: 1, // Single product is always height balanced
           massDistribution: score / 100,
-          symmetry: score / 100
-        }
+          symmetry: score / 100,
+        },
       };
     }
 
@@ -101,14 +103,15 @@ export class VolumeCalculator {
       densityVariance: 0.3,
       heightBalance: 0.2,
       massDistribution: 0.3,
-      symmetry: 0.2
+      symmetry: 0.2,
     };
 
-    const score = Math.min(100,
+    const score = Math.min(
+      100,
       densityVariance * weights.densityVariance * 100 +
-      heightBalance * weights.heightBalance * 100 +
-      massDistribution * weights.massDistribution * 100 +
-      symmetry * weights.symmetry * 100
+        heightBalance * weights.heightBalance * 100 +
+        massDistribution * weights.massDistribution * 100 +
+        symmetry * weights.symmetry * 100,
     );
 
     return {
@@ -117,8 +120,8 @@ export class VolumeCalculator {
         densityVariance,
         heightBalance,
         massDistribution,
-        symmetry
-      }
+        symmetry,
+      },
     };
   }
 
@@ -129,16 +132,22 @@ export class VolumeCalculator {
   private calculateDensityVariance(volumes: number[]): number {
     if (volumes.length <= 1) return 1;
 
-    const mean = volumes.reduce((sum, volume) => sum + volume, 0) / volumes.length;
+    const mean =
+      volumes.reduce((sum, volume) => sum + volume, 0) / volumes.length;
     if (mean === 0) return 0;
 
-    const variance = volumes.reduce((sum, volume) => sum + Math.pow(volume - mean, 2), 0) / volumes.length;
+    const variance =
+      volumes.reduce((sum, volume) => sum + Math.pow(volume - mean, 2), 0) /
+      volumes.length;
     const stdDev = Math.sqrt(variance);
     const coefficientOfVariation = stdDev / mean;
-    
+
     // Convert coefficient of variation to score
     const maxAcceptableCV = this.config.maxAcceptableCV;
-    return Math.max(0, Math.min(1, 1 - coefficientOfVariation / maxAcceptableCV));
+    return Math.max(
+      0,
+      Math.min(1, 1 - coefficientOfVariation / maxAcceptableCV),
+    );
   }
 
   /**
@@ -147,19 +156,21 @@ export class VolumeCalculator {
    */
   private calculateHeightBalance(
     layout: Record<number, Rectangle>,
-    products: Product[]
+    products: Product[],
   ): number {
     if (products.length <= 1) return 1;
 
-    const heights = products.map(product => {
+    const heights = products.map((product) => {
       const rect = layout[product.id];
-      return rect ? rect.height : 0;
+      return rect ? rect.length : 0;
     });
 
     const mean = heights.reduce((sum, h) => sum + h, 0) / heights.length;
     if (mean === 0) return 0;
 
-    const variance = heights.reduce((sum, h) => sum + Math.pow(h - mean, 2), 0) / heights.length;
+    const variance =
+      heights.reduce((sum, h) => sum + Math.pow(h - mean, 2), 0) /
+      heights.length;
     const stdDev = Math.sqrt(variance);
     const coefficientOfVariation = stdDev / mean;
 
@@ -173,7 +184,7 @@ export class VolumeCalculator {
    */
   private calculateMassDistribution(
     layout: Record<number, Rectangle>,
-    products: Product[]
+    products: Product[],
   ): number {
     if (products.length <= 1) return 1;
 
@@ -187,14 +198,15 @@ export class VolumeCalculator {
     const geometricCenterX = (bounds.maxX + bounds.minX) / 2;
     const geometricCenterY = (bounds.maxY + bounds.minY) / 2;
 
-    const maxDistance = Math.sqrt(
-      Math.pow(bounds.maxX - bounds.minX, 2) +
-      Math.pow(bounds.maxY - bounds.minY, 2)
-    ) / 2;
+    const maxDistance =
+      Math.sqrt(
+        Math.pow(bounds.maxX - bounds.minX, 2) +
+          Math.pow(bounds.maxY - bounds.minY, 2),
+      ) / 2;
 
     const distance = Math.sqrt(
       Math.pow(centerOfMass.x - geometricCenterX, 2) +
-      Math.pow(centerOfMass.y - geometricCenterY, 2)
+        Math.pow(centerOfMass.y - geometricCenterY, 2),
     );
 
     // More lenient scoring for mass distribution
@@ -207,18 +219,22 @@ export class VolumeCalculator {
    */
   private calculateSymmetryScore(
     layout: Record<number, Rectangle>,
-    products: Product[]
+    products: Product[],
   ): number {
     if (products.length <= 1) return 1;
 
-    const points = products.map(product => {
-      const rect = layout[product.id];
-      return rect ? {
-        x: rect.x + rect.width / 2,
-        y: rect.y + rect.height / 2,
-        weight: rect.width * rect.height
-      } : null;
-    }).filter((p): p is NonNullable<typeof p> => p !== null);
+    const points = products
+      .map((product) => {
+        const rect = layout[product.id];
+        return rect
+          ? {
+              x: rect.x + rect.width / 2,
+              y: rect.y + rect.length / 2,
+              weight: rect.width * rect.length,
+            }
+          : null;
+      })
+      .filter((p): p is NonNullable<typeof p> => p !== null);
 
     if (points.length === 0) return 0;
 
@@ -238,8 +254,8 @@ export class VolumeCalculator {
    * @private
    */
   private getLayoutBounds(
-    layout: Record<number, Rectangle>
-  ): { minX: number; maxX: number; minY: number; maxY: number; } | null {
+    layout: Record<number, Rectangle>,
+  ): { minX: number; maxX: number; minY: number; maxY: number } | null {
     const positions = Object.values(layout);
     if (!positions || positions.length === 0) return null;
 
@@ -250,7 +266,7 @@ export class VolumeCalculator {
       minX: firstPos.x,
       maxX: firstPos.x + firstPos.width,
       minY: firstPos.y,
-      maxY: firstPos.y + firstPos.height
+      maxY: firstPos.y + firstPos.length,
     };
 
     return positions.reduce(
@@ -258,9 +274,9 @@ export class VolumeCalculator {
         minX: Math.min(bounds.minX, pos.x),
         maxX: Math.max(bounds.maxX, pos.x + pos.width),
         minY: Math.min(bounds.minY, pos.y),
-        maxY: Math.max(bounds.maxY, pos.y + pos.height)
+        maxY: Math.max(bounds.maxY, pos.y + pos.length),
       }),
-      initialBounds
+      initialBounds,
     );
   }
 
@@ -277,12 +293,11 @@ export class VolumeCalculator {
       minY: number;
       maxY: number;
     },
-    gridSize: number
+    gridSize: number,
   ): number[][] {
     // Initialize grid with explicit typing
-    const grid: number[][] = Array.from(
-      { length: gridSize },
-      () => Array.from({ length: gridSize }, () => 0)
+    const grid: number[][] = Array.from({ length: gridSize }, () =>
+      Array.from({ length: gridSize }, () => 0),
     );
 
     // Calculate cell size
@@ -292,24 +307,25 @@ export class VolumeCalculator {
     const cellHeight = height / gridSize;
 
     // Fill grid with product volumes
-    products.forEach(product => {
+    products.forEach((product) => {
       const rect = layout[product.id];
       if (!rect) return; // Skip if no layout position found
 
-      const volume = (product.dimensions?.width ?? 0) * 
-                    (product.dimensions?.length ?? 0) * 
-                    (product.dimensions?.height ?? 0);
+      const volume =
+        (product.dimensions?.width ?? 0) *
+        (product.dimensions?.length ?? 0) *
+        (product.dimensions?.height ?? 0);
 
       // Calculate grid cells covered by this product
       const startX = Math.floor((rect.x - bounds.minX) / cellWidth);
       const startY = Math.floor((rect.y - bounds.minY) / cellHeight);
       const endX = Math.min(
         gridSize - 1,
-        Math.floor((rect.x + rect.width - bounds.minX) / cellWidth)
+        Math.floor((rect.x + rect.width - bounds.minX) / cellWidth),
       );
       const endY = Math.min(
         gridSize - 1,
-        Math.floor((rect.y + rect.height - bounds.minY) / cellHeight)
+        Math.floor((rect.y + rect.length - bounds.minY) / cellHeight),
       );
 
       // Add volume to covered cells
@@ -321,9 +337,9 @@ export class VolumeCalculator {
               bounds.minX + x * cellWidth,
               bounds.minY + y * cellHeight,
               cellWidth,
-              cellHeight
+              cellHeight,
             );
-            grid[y][x] += volume * coverage;
+            grid[y]![x]! += volume * coverage;
           }
         }
       }
@@ -341,41 +357,45 @@ export class VolumeCalculator {
     cellX: number,
     cellY: number,
     cellWidth: number,
-    cellHeight: number
+    cellHeight: number,
   ): number {
     const overlapX = Math.min(
       rect.x + rect.width - cellX,
       cellWidth,
       rect.width,
-      rect.x + rect.width - cellX
+      rect.x + rect.width - cellX,
     );
     const overlapY = Math.min(
-      rect.y + rect.height - cellY,
+      rect.y + rect.length - cellY,
       cellHeight,
-      rect.height,
-      rect.y + rect.height - cellY
+      rect.length,
+      rect.y + rect.length - cellY,
     );
 
-    return Math.max(0, overlapX) * Math.max(0, overlapY) / (cellWidth * cellHeight);
+    return (
+      (Math.max(0, overlapX) * Math.max(0, overlapY)) / (cellWidth * cellHeight)
+    );
   }
 
   private calculateVolumes(
     layout: Record<number, Rectangle>,
-    products: Product[]
+    products: Product[],
   ): number[] {
-    return products.map(product => {
+    return products.map((product) => {
       const rect = layout[product.id];
       if (!rect || !product.dimensions) return 0;
-      
-      return (product.dimensions?.width ?? 0) * 
-             (product.dimensions?.length ?? 0) * 
-             (product.dimensions?.height ?? 0);
+
+      return (
+        (product.dimensions?.width ?? 0) *
+        (product.dimensions?.length ?? 0) *
+        (product.dimensions?.height ?? 0)
+      );
     });
   }
 
   private calculateCenterOfMass(
     layout: Record<number, Rectangle>,
-    products: Product[]
+    products: Product[],
   ): { x: number; y: number } | null {
     let totalMass = 0;
     let centerX = 0;
@@ -384,8 +404,8 @@ export class VolumeCalculator {
     products.forEach((product, i) => {
       const rect = layout[i];
       if (!rect || !product.dimensions) return;
-      
-      const mass = product.weight || 1; // Default to 1 if weight not specified
+
+      const mass = product.weight ?? 1; // Default to 1 if weight not specified
       totalMass += mass;
       centerX += rect.x * mass;
       centerY += rect.y * mass;
@@ -399,13 +419,18 @@ export class VolumeCalculator {
     return { x: centerX, y: centerY };
   }
 
-  private findPrincipalAxes(points: { x: number; y: number; weight: number }[]): { x: number; y: number }[] | null {
+  private findPrincipalAxes(
+    points: { x: number; y: number; weight: number }[],
+  ): { x: number; y: number }[] | null {
     // Implement principal axes calculation
     // For demonstration purposes, return a simple axis
     return [{ x: 0, y: 1 }];
   }
 
-  private calculateSymmetryQuality(points: { x: number; y: number; weight: number }[], axes: { x: number; y: number }[]): number {
+  private calculateSymmetryQuality(
+    points: { x: number; y: number; weight: number }[],
+    axes: { x: number; y: number }[],
+  ): number {
     // Implement symmetry quality calculation
     // For demonstration purposes, return a simple quality score
     return 0.5;
@@ -434,6 +459,6 @@ const DEFAULT_VOLUME_DISTRIBUTION_CONFIG: VolumeDistributionConfig = {
   weights: {
     heightBalance: 0.4,
     symmetry: 0.4,
-    details: 0.2
-  }
+    details: 0.2,
+  },
 };
