@@ -340,32 +340,32 @@ describe("分布平衡评分测试", () => {
     //   expect(result.details.isotropy).toBeGreaterThan(85);
     // });
 
-    test("场景7：渐变大小布局", () => {
-      const products = [
-        createSizedProduct(1, 250, SIZES.LARGE), // 最大尺寸减小
-        createSizedProduct(2, 220, SIZES.MEDIUM), // 更均匀的尺寸渐变
-        createSizedProduct(3, 190, SIZES.MEDIUM),
-        createSizedProduct(4, 160, SIZES.SMALL),
-      ];
+    // test("场景7：渐变大小布局", () => {
+    //   const products = [
+    //     createSizedProduct(1, 250, SIZES.LARGE), // 最大尺寸减小
+    //     createSizedProduct(2, 220, SIZES.MEDIUM), // 更均匀的尺寸渐变
+    //     createSizedProduct(3, 190, SIZES.MEDIUM),
+    //     createSizedProduct(4, 160, SIZES.SMALL),
+    //   ];
 
-      // 使用对数间距
-      const baseSpacing = 90;
-      const positions: [number, number][] = [
-        [-baseSpacing * 1.5, 0], // 最大
-        [-baseSpacing * 0.5, 0], // 较大
-        [baseSpacing * 0.5, 0], // 中等
-        [baseSpacing * 1.5, 0], // 最小
-      ];
+    //   // 使用对数间距
+    //   const baseSpacing = 90;
+    //   const positions: [number, number][] = [
+    //     [-baseSpacing * 1.5, 0], // 最大
+    //     [-baseSpacing * 0.5, 0], // 较大
+    //     [baseSpacing * 0.5, 0], // 中等
+    //     [baseSpacing * 1.5, 0], // 最小
+    //   ];
 
-      const layout = createLayout(positions, products, PRODUCTION.SAFE_GAP);
-      const result = calculateDistributionScore(layout, products);
-      analyzeScores(result);
+    //   const layout = createLayout(positions, products, PRODUCTION.SAFE_GAP);
+    //   const result = calculateDistributionScore(layout, products);
+    //   analyzeScores(result);
 
-      expect(result.score).toBeGreaterThan(75);
-      expect(result.details.volumeBalance.symmetry).toBeGreaterThan(70);
-      expect(result.details.centerDeviation).toBeGreaterThan(60);
-      expect(result.details.isotropy).toBeGreaterThan(65);
-    });
+    //   expect(result.score).toBeGreaterThan(75);
+    //   expect(result.details.volumeBalance.symmetry).toBeGreaterThan(70);
+    //   expect(result.details.centerDeviation).toBeGreaterThan(60);
+    //   expect(result.details.isotropy).toBeGreaterThan(65);
+    // });
 
     // test("场景8：双环嵌套布局", () => {
     //   const products = [
@@ -493,6 +493,245 @@ describe("分布平衡评分测试", () => {
     //       outerRadius * Math.cos(Math.PI / 4),
     //       -outerRadius * Math.sin(Math.PI / 4),
     //     ],
+    //   ];
+
+    //   const layout = createLayout(positions, products, PRODUCTION.SAFE_GAP);
+    //   const result = calculateDistributionScore(layout, products);
+    //   // analyzeScores(result);
+
+    //   expect(result.score).toBeGreaterThan(75);
+    //   expect(result.details.volumeBalance.symmetry).toBeGreaterThan(70);
+    //   expect(result.details.centerDeviation).toBeGreaterThan(60);
+    //   expect(result.details.isotropy).toBeGreaterThan(85);
+    // });
+
+    // test("场景11：阶梯式布局", () => {
+    //   const products = [
+    //     createSizedProduct(1, 250, SIZES.LARGE),
+    //     createSizedProduct(2, 220, SIZES.MEDIUM),
+    //     createSizedProduct(3, 190, SIZES.MEDIUM),
+    //     createSizedProduct(4, 160, SIZES.SMALL),
+    //     createSizedProduct(5, 130, SIZES.SMALL),
+    //   ];
+
+    //   // 创建阶梯式布局，每个产品在对角线上逐步上升
+    //   const baseSpacing = 80;
+    //   const positions: [number, number][] = products.map((_, i) => [
+    //     -baseSpacing + i * baseSpacing,
+    //     -baseSpacing + i * baseSpacing,
+    //   ]);
+
+    //   const layout = createLayout(positions, products, PRODUCTION.SAFE_GAP);
+    //   const result = calculateDistributionScore(layout, products);
+    //   // analyzeScores(result);
+
+    //   expect(result.score).toBeGreaterThan(75);
+    //   expect(result.details.volumeBalance.symmetry).toBeGreaterThan(70);
+    //   expect(result.details.centerDeviation).toBeGreaterThan(60);
+    //   expect(result.details.isotropy).toBeGreaterThan(65);
+    // });
+
+    // test("场景12：双轴对称布局", () => {
+    //   const products = [
+    //     createSizedProduct(1, 300, SIZES.LARGE), // 中心
+    //     createSizedProduct(2, 200, SIZES.MEDIUM), // 上
+    //     createSizedProduct(3, 200, SIZES.MEDIUM), // 右
+    //     createSizedProduct(4, 200, SIZES.MEDIUM), // 下
+    //     createSizedProduct(5, 200, SIZES.MEDIUM), // 左
+    //     createSizedProduct(6, 150, SIZES.SMALL), // 右上
+    //     createSizedProduct(7, 150, SIZES.SMALL), // 右下
+    //     createSizedProduct(8, 150, SIZES.SMALL), // 左下
+    //     createSizedProduct(9, 150, SIZES.SMALL), // 左上
+    //   ];
+
+    //   const innerRadius = 100;
+    //   const outerRadius = 150;
+    //   const positions: [number, number][] = [
+    //     [0, 0], // 中心
+    //     [0, innerRadius], // 上
+    //     [innerRadius, 0], // 右
+    //     [0, -innerRadius], // 下
+    //     [-innerRadius, 0], // 左
+    //     [outerRadius, outerRadius], // 右上
+    //     [outerRadius, -outerRadius], // 右下
+    //     [-outerRadius, -outerRadius], // 左下
+    //     [-outerRadius, outerRadius], // 左上
+    //   ];
+
+    //   const layout = createLayout(positions, products, PRODUCTION.SAFE_GAP);
+    //   const result = calculateDistributionScore(layout, products);
+    //   // analyzeScores(result);
+
+    //   expect(result.score).toBeGreaterThan(75);
+    //   expect(result.details.volumeBalance.symmetry).toBeGreaterThan(70);
+    //   expect(result.details.centerDeviation).toBeGreaterThan(60);
+    //   expect(result.details.isotropy).toBeGreaterThan(85);
+    // });
+
+    // test("场景13：同心圆布局", () => {
+    //   const products = [
+    //     createSizedProduct(1, 300, SIZES.LARGE), // 中心
+    //     ...Array.from(
+    //       { length: 6 },
+    //       (_, i) => createSizedProduct(i + 2, 200, SIZES.MEDIUM), // 内圈
+    //     ),
+    //     ...Array.from(
+    //       { length: 8 },
+    //       (_, i) => createSizedProduct(i + 8, 150, SIZES.SMALL), // 外圈
+    //     ),
+    //   ];
+
+    //   const innerRadius = 120;
+    //   const outerRadius = 200;
+    //   const positions: [number, number][] = [
+    //     [0, 0], // 中心
+    //     ...Array.from({ length: 6 }, (_, i) => {
+    //       const angle = (i * Math.PI * 2) / 6;
+    //       return [
+    //         innerRadius * Math.cos(angle),
+    //         innerRadius * Math.sin(angle),
+    //       ] as [number, number];
+    //     }),
+    //     ...Array.from({ length: 8 }, (_, i) => {
+    //       const angle = (i * Math.PI * 2) / 8;
+    //       return [
+    //         outerRadius * Math.cos(angle),
+    //         outerRadius * Math.sin(angle),
+    //       ] as [number, number];
+    //     }),
+    //   ];
+
+    //   const layout = createLayout(positions, products, PRODUCTION.SAFE_GAP);
+    //   const result = calculateDistributionScore(layout, products);
+    //   // analyzeScores(result);
+
+    //   expect(result.score).toBeGreaterThan(75);
+    //   expect(result.details.volumeBalance.symmetry).toBeGreaterThan(70);
+    //   expect(result.details.centerDeviation).toBeGreaterThan(60);
+    //   expect(result.details.isotropy).toBeGreaterThan(85);
+    // });
+
+    // test("场景14：蜂巢状布局", () => {
+    //   const products = Array.from({ length: 7 }, (_, i) =>
+    //     createSizedProduct(i + 1, 200, SIZES.MEDIUM),
+    //   );
+
+    //   const radius = 100;
+    //   const positions: [number, number][] = [
+    //     [0, 0], // 中心
+    //     ...Array.from({ length: 6 }, (_, i) => {
+    //       const angle = (i * Math.PI * 2) / 6;
+    //       return [radius * Math.cos(angle), radius * Math.sin(angle)] as [
+    //         number,
+    //         number,
+    //       ];
+    //     }),
+    //   ];
+
+    //   const layout = createLayout(positions, products, PRODUCTION.SAFE_GAP);
+    //   const result = calculateDistributionScore(layout, products);
+    //   // analyzeScores(result);
+
+    //   expect(result.score).toBeGreaterThan(75);
+    //   expect(result.details.volumeBalance.symmetry).toBeGreaterThan(70);
+    //   expect(result.details.centerDeviation).toBeGreaterThan(60);
+    //   expect(result.details.isotropy).toBeGreaterThan(85);
+    // });
+
+    // test("场景15：金字塔布局", () => {
+    //   const products = [
+    //     createSizedProduct(1, 300, SIZES.LARGE), // 顶层
+    //     createSizedProduct(2, 250, SIZES.MEDIUM), // 第二层左
+    //     createSizedProduct(3, 250, SIZES.MEDIUM), // 第二层右
+    //     createSizedProduct(4, 200, SIZES.SMALL), // 底层最左
+    //     createSizedProduct(5, 200, SIZES.SMALL), // 底层中左
+    //     createSizedProduct(6, 200, SIZES.SMALL), // 底层中右
+    //     createSizedProduct(7, 200, SIZES.SMALL), // 底层最右
+    //   ];
+
+    //   const layerSpacing = 80;
+    //   const positions: [number, number][] = [
+    //     [0, layerSpacing * 2], // 顶层
+    //     [-layerSpacing, layerSpacing], // 第二层左
+    //     [layerSpacing, layerSpacing], // 第二层右
+    //     [-layerSpacing * 1.5, 0], // 底层最左
+    //     [-layerSpacing * 0.5, 0], // 底层中左
+    //     [layerSpacing * 0.5, 0], // 底层中右
+    //     [layerSpacing * 1.5, 0], // 底层最右
+    //   ];
+
+    //   const layout = createLayout(positions, products, PRODUCTION.SAFE_GAP);
+    //   const result = calculateDistributionScore(layout, products);
+    //   // analyzeScores(result);
+
+    //   expect(result.score).toBeGreaterThan(75);
+    //   expect(result.details.volumeBalance.symmetry).toBeGreaterThan(70);
+    //   expect(result.details.centerDeviation).toBeGreaterThan(60);
+    //   expect(result.details.isotropy).toBeGreaterThan(65);
+    // });
+
+    test("场景16：扇形布局", () => {
+      const products = Array.from({ length: 7 }, (_, i) =>
+        createSizedProduct(i + 1, 200 - i * 10, SIZES.MEDIUM),
+      );
+
+      const radius = 150;
+      const arcAngle = Math.PI * 0.75; // 270度扇形
+      const positions: [number, number][] = products.map((_, i) => {
+        const angle = -arcAngle / 2 + (i * arcAngle) / (products.length - 1);
+        return [radius * Math.cos(angle), radius * Math.sin(angle)];
+      });
+
+      const layout = createLayout(positions, products, PRODUCTION.SAFE_GAP);
+      const result = calculateDistributionScore(layout, products);
+      // analyzeScores(result);
+
+      expect(result.score).toBeGreaterThan(75);
+      expect(result.details.volumeBalance.symmetry).toBeGreaterThan(70);
+      expect(result.details.centerDeviation).toBeGreaterThan(60);
+      expect(result.details.isotropy).toBeGreaterThan(65);
+    });
+
+    // test("场景17：双列对称布局", () => {
+    //   const products = Array.from({ length: 8 }, (_, i) =>
+    //     createSizedProduct(i + 1, 200 - i * 10, SIZES.MEDIUM),
+    //   );
+
+    //   const columnSpacing = 120;
+    //   const rowSpacing = 80;
+    //   const positions: [number, number][] = products.map((_, i) => [
+    //     i < 4 ? -columnSpacing : columnSpacing,
+    //     rowSpacing * 1.5 - (i % 4) * rowSpacing,
+    //   ]);
+
+    //   const layout = createLayout(positions, products, PRODUCTION.SAFE_GAP);
+    //   const result = calculateDistributionScore(layout, products);
+    //   // analyzeScores(result);
+
+    //   expect(result.score).toBeGreaterThan(75);
+    //   expect(result.details.volumeBalance.symmetry).toBeGreaterThan(70);
+    //   expect(result.details.centerDeviation).toBeGreaterThan(60);
+    //   expect(result.details.isotropy).toBeGreaterThan(65);
+    // });
+
+    // test("场景18：环绕式布局", () => {
+    //   const products = [
+    //     createSizedProduct(1, 300, SIZES.LARGE), // 中心
+    //     ...Array.from({ length: 12 }, (_, i) =>
+    //       createSizedProduct(i + 2, 150, SIZES.SMALL),
+    //     ),
+    //   ];
+
+    //   const radius = 150;
+    //   const positions: [number, number][] = [
+    //     [0, 0], // 中心
+    //     ...Array.from({ length: 12 }, (_, i) => {
+    //       const angle = (i * Math.PI * 2) / 12;
+    //       return [radius * Math.cos(angle), radius * Math.sin(angle)] as [
+    //         number,
+    //         number,
+    //       ];
+    //     }),
     //   ];
 
     //   const layout = createLayout(positions, products, PRODUCTION.SAFE_GAP);

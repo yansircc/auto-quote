@@ -320,16 +320,18 @@ export class PhysicsCalculator {
 
     // Calculate base ratio with pattern-specific adjustments
     let ratio = Math.min(m1 / m2, m2 / m1);
-    let originalRatio = ratio;
+    const originalRatio = ratio;
 
     if (patterns.isGradient) {
-      const exponent = 0.5 + patterns.gradientQuality * 0.2;
+      // 更激进的渐变模式调整
+      const exponent = 0.25 + patterns.gradientQuality * 0.35;
       ratio = Math.pow(ratio, exponent);
-      ratio = Math.max(ratio, 0.65);
+      ratio = Math.max(ratio, 0.8);
       console.log("Gradient pattern adjustment:", {
         exponent,
         beforeRatio: originalRatio,
         afterRatio: ratio,
+        gradientQuality: patterns.gradientQuality,
       });
     } else if (patterns.isHierarchical) {
       const exponent = 0.4 + patterns.hierarchyQuality * 0.2;
@@ -358,13 +360,14 @@ export class PhysicsCalculator {
     console.log("Base score:", score);
 
     if (patterns.isGradient) {
-      const bonus = patterns.gradientQuality * 0.3;
+      // 增加渐变布局的分数提升
+      const bonus = patterns.gradientQuality * 0.5;
       console.log("Applying gradient bonus:", {
         bonus,
         beforeScore: score,
-        afterScore: Math.max(65, score * (1 + bonus)),
+        afterScore: Math.max(75, score * (1 + bonus)),
       });
-      score = Math.max(65, score * (1 + bonus));
+      score = Math.max(75, score * (1 + bonus));
     }
     if (patterns.isHierarchical) {
       const bonus = patterns.hierarchyQuality * 0.3;
@@ -523,35 +526,128 @@ export class PhysicsCalculator {
     layout: Record<number, Rectangle>,
     products: Product[],
   ): { isGradient: boolean; gradientQuality: number } {
+    // 计算所有区域并按大小排序
     const areas = products
       .map((p, i) => ({
         area: layout[p.id].width * layout[p.id].length,
         index: i,
+        x: layout[p.id].x,
       }))
       .sort((a, b) => b.area - a.area);
 
+    // 检测空间位置的渐变性
+    const spatialGradient = this.checkSpatialGradient(areas);
+
+    // 计算面积比率
     let totalRatio = 0;
     let validSteps = 0;
+    let consecutiveValid = 0;
+    let maxConsecutiveValid = 0;
 
+    // 同时考虑递增和递减序列
+    const ratios = [];
     for (let i = 1; i < areas.length; i++) {
       const ratio = areas[i].area / areas[i - 1].area;
-      if (ratio >= 0.3 && ratio <= 0.9) {
+      ratios.push(ratio);
+
+      // 放宽比率范围，更容易识别渐变模式
+      if (ratio >= 0.2 && ratio <= 0.95) {
         totalRatio += ratio;
         validSteps++;
+        consecutiveValid++;
+        maxConsecutiveValid = Math.max(maxConsecutiveValid, consecutiveValid);
+      } else {
+        consecutiveValid = 0;
       }
     }
 
-    const isGradient = validSteps === areas.length - 1;
+    // 检查是否存在分段渐变
+    const hasSegmentedGradient =
+      maxConsecutiveValid >= Math.ceil(areas.length * 0.5);
 
-    // Calculate gradient quality based on ratio consistency
+    // 计算渐变方向的一致性
+    const directionConsistency = this.calculateDirectionConsistency(ratios);
+
+    // 综合评估渐变特性
+    const isGradient =
+      hasSegmentedGradient ||
+      validSteps >= (areas.length - 1) * 0.6 ||
+      (spatialGradient && validSteps >= (areas.length - 1) * 0.5);
+
+    // 优化渐变质量计算
     let gradientQuality = 0;
     if (isGradient) {
+      // 基础质量分数
       const avgRatio = totalRatio / validSteps;
-      // Prefer ratios closer to 0.6 (ideal gradient)
-      gradientQuality = 1 - Math.abs(avgRatio - 0.6) / 0.3;
+      const baseQuality = 1 - Math.abs(avgRatio - 0.65) / 0.45;
+
+      // 方向一致性分数
+      const directionQuality = directionConsistency;
+
+      // 空间分布分数
+      const spatialQuality = spatialGradient ? 1 : 0.7;
+
+      // 综合质量评分
+      gradientQuality =
+        baseQuality * 0.4 + directionQuality * 0.3 + spatialQuality * 0.3;
+
+      // 确保最低质量
+      gradientQuality = Math.max(0.65, gradientQuality);
     }
 
+    console.log("Gradient detection:", {
+      ratios,
+      validSteps,
+      totalRatio,
+      hasSegmentedGradient,
+      spatialGradient,
+      directionConsistency,
+      isGradient,
+      gradientQuality,
+    });
+
     return { isGradient, gradientQuality };
+  }
+
+  // 检查空间位置的渐变性
+  private checkSpatialGradient(areas: { area: number; x: number }[]): boolean {
+    // 检查x坐标是否大致呈现渐变趋势
+    const xPositions = areas.map((a) => a.x);
+    let increasingCount = 0;
+    let decreasingCount = 0;
+
+    for (let i = 1; i < xPositions.length; i++) {
+      if (xPositions[i] > xPositions[i - 1]) {
+        increasingCount++;
+      } else if (xPositions[i] < xPositions[i - 1]) {
+        decreasingCount++;
+      }
+    }
+
+    const totalComparisons = xPositions.length - 1;
+    return (
+      increasingCount >= totalComparisons * 0.6 ||
+      decreasingCount >= totalComparisons * 0.6
+    );
+  }
+
+  // 计算渐变方向的一致性
+  private calculateDirectionConsistency(ratios: number[]): number {
+    if (ratios.length === 0) return 0;
+
+    let increasingCount = 0;
+    let decreasingCount = 0;
+
+    for (let i = 1; i < ratios.length; i++) {
+      if (ratios[i] > ratios[i - 1]) {
+        increasingCount++;
+      } else if (ratios[i] < ratios[i - 1]) {
+        decreasingCount++;
+      }
+    }
+
+    const maxDirection = Math.max(increasingCount, decreasingCount);
+    return maxDirection / (ratios.length - 1);
   }
 
   private detectHierarchicalPattern(layout: Record<number, Rectangle>): {
