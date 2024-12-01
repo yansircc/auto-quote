@@ -44,7 +44,7 @@ export class PhysicsCalculator {
   ): PhysicsResult {
     // Handle empty or single product case
     if (products.length <= 1) {
-      console.log("Empty or single product case, returning perfect score");
+      // console.log("Empty or single product case, returning perfect score");
       return {
         isotropy: 100,
         centerDeviation: 0,
@@ -68,22 +68,22 @@ export class PhysicsCalculator {
       const { isAligned, alignmentQuality } =
         this.detectAlignmentPattern(layout);
 
-      console.log("Layout pattern detection results:", {
-        gradient: { isGradient, quality: gradientQuality },
-        hierarchical: { isHierarchical, quality: hierarchyQuality },
-        aligned: { isAligned, quality: alignmentQuality },
-      });
+      // console.log("Layout pattern detection results:", {
+      //   gradient: { isGradient, quality: gradientQuality },
+      //   hierarchical: { isHierarchical, quality: hierarchyQuality },
+      //   aligned: { isAligned, quality: alignmentQuality },
+      // });
 
       // Calculate basic physical properties
       const elements = this.createMassElements(layout, products);
       const centerOfMass = this.calculateCenterOfMass(elements);
       const inertia = this.calculateInertia(elements, centerOfMass);
 
-      console.log("Basic physical properties:", {
-        centerOfMass,
-        principalMoments: inertia.moments,
-        gyrationRadius: inertia.gyrationRadius,
-      });
+      // console.log("Basic physical properties:", {
+      //   centerOfMass,
+      //   principalMoments: inertia.moments,
+      //   gyrationRadius: inertia.gyrationRadius,
+      // });
 
       // Calculate normalized scores with pattern adjustments
       const isotropyScore = this.calculateIsotropyScore(inertia, {
@@ -108,10 +108,10 @@ export class PhysicsCalculator {
         },
       );
 
-      console.log("Initial scores:", {
-        isotropy: isotropyScore,
-        centerDeviation: centerDeviationScore,
-      });
+      // console.log("Initial scores:", {
+      //   isotropy: isotropyScore,
+      //   centerDeviation: centerDeviationScore,
+      // });
 
       // Apply pattern-specific adjustments
       let finalIsotropy = isotropyScore;
@@ -120,12 +120,12 @@ export class PhysicsCalculator {
       if (isGradient) {
         const isotropyBonus = gradientQuality * 0.3;
         const deviationBonus = gradientQuality * 0.2;
-        console.log("Applying gradient bonuses:", {
-          isotropyBonus,
-          deviationBonus,
-          beforeIsotropy: finalIsotropy,
-          beforeDeviation: finalCenterDeviation,
-        });
+        // console.log("Applying gradient bonuses:", {
+        //   isotropyBonus,
+        //   deviationBonus,
+        //   beforeIsotropy: finalIsotropy,
+        //   beforeDeviation: finalCenterDeviation,
+        // });
         finalIsotropy = Math.max(65, finalIsotropy * (1 + isotropyBonus));
         finalCenterDeviation *= 1 + deviationBonus;
       }
@@ -133,12 +133,12 @@ export class PhysicsCalculator {
       if (isHierarchical) {
         const isotropyBonus = hierarchyQuality * 0.3;
         const deviationBonus = hierarchyQuality * 0.2;
-        console.log("Applying hierarchical bonuses:", {
-          isotropyBonus,
-          deviationBonus,
-          beforeIsotropy: finalIsotropy,
-          beforeDeviation: finalCenterDeviation,
-        });
+        // console.log("Applying hierarchical bonuses:", {
+        //   isotropyBonus,
+        //   deviationBonus,
+        //   beforeIsotropy: finalIsotropy,
+        //   beforeDeviation: finalCenterDeviation,
+        // });
         finalIsotropy = Math.max(65, finalIsotropy * (1 + isotropyBonus));
         finalCenterDeviation *= 1 + deviationBonus;
       }
@@ -146,20 +146,20 @@ export class PhysicsCalculator {
       if (isAligned) {
         const isotropyBonus = alignmentQuality * 0.2;
         const deviationBonus = alignmentQuality * 0.1;
-        console.log("Applying alignment bonuses:", {
-          isotropyBonus,
-          deviationBonus,
-          beforeIsotropy: finalIsotropy,
-          beforeDeviation: finalCenterDeviation,
-        });
+        // console.log("Applying alignment bonuses:", {
+        //   isotropyBonus,
+        //   deviationBonus,
+        //   beforeIsotropy: finalIsotropy,
+        //   beforeDeviation: finalCenterDeviation,
+        // });
         finalIsotropy *= 1 + isotropyBonus;
         finalCenterDeviation *= 1 + deviationBonus;
       }
 
-      console.log("Final scores:", {
-        isotropy: finalIsotropy,
-        centerDeviation: finalCenterDeviation,
-      });
+      // console.log("Final scores:", {
+      //   isotropy: finalIsotropy,
+      //   centerDeviation: finalCenterDeviation,
+      // });
 
       return {
         isotropy: Math.min(100, finalIsotropy),
@@ -234,13 +234,13 @@ export class PhysicsCalculator {
     const isHorizontal = this.isHorizontallyDominant(elements);
     const hasGradient = this.hasSizeGradient(elements);
 
-    console.log("Layout characteristics:", {
-      isVertical,
-      isHorizontal,
-      hasGradient,
-      elementCount: elements.length,
-      totalMass,
-    });
+    // console.log("Layout characteristics:", {
+    //   isVertical,
+    //   isHorizontal,
+    //   hasGradient,
+    //   elementCount: elements.length,
+    //   totalMass,
+    // });
 
     // 计算质量分布的连续性
     const massDistribution = this.calculateMassDistribution(elements);
@@ -264,20 +264,20 @@ export class PhysicsCalculator {
         (dx * dx * correctionFactor + (element.width * element.width) / 12);
       const elementIxy = element.mass * dx * dy * correctionFactor;
 
-      console.log("Element contribution:", {
-        position: { dx, dy },
-        mass: element.mass,
-        dimensions: { width: element.width, length: element.length },
-        inertia: { Ixx: elementIxx, Iyy: elementIyy, Ixy: elementIxy },
-        correctionFactor,
-      });
+      // console.log("Element contribution:", {
+      //   position: { dx, dy },
+      //   mass: element.mass,
+      //   dimensions: { width: element.width, length: element.length },
+      //   inertia: { Ixx: elementIxx, Iyy: elementIyy, Ixy: elementIxy },
+      //   correctionFactor,
+      // });
 
       Ixx += elementIxx;
       Iyy += elementIyy;
       Ixy += elementIxy;
     });
 
-    console.log("Total inertia components:", { Ixx, Iyy, Ixy });
+    // console.log("Total inertia components:", { Ixx, Iyy, Ixy });
 
     const avg = (Ixx + Iyy) / 2;
     const diff = Math.sqrt(((Ixx - Iyy) * (Ixx - Iyy)) / 4 + Ixy * Ixy);
@@ -293,12 +293,12 @@ export class PhysicsCalculator {
 
     const gyrationRadius = Math.sqrt((moments[0] + moments[1]) / totalMass);
 
-    console.log("Inertia calculation results:", {
-      moments,
-      principalAngle: (theta * 180) / Math.PI,
-      gyrationRadius,
-      continuityFactor,
-    });
+    // console.log("Inertia calculation results:", {
+    //   moments,
+    //   principalAngle: (theta * 180) / Math.PI,
+    //   gyrationRadius,
+    //   continuityFactor,
+    // });
 
     return { moments, axes, gyrationRadius };
   }
@@ -317,10 +317,10 @@ export class PhysicsCalculator {
     const [m1, m2] = inertia.moments;
     if (m1 === 0 || m2 === 0) return 0;
 
-    console.log("Calculating isotropy score:", {
-      moments: [m1, m2],
-      ratio: Math.min(m1 / m2, m2 / m1),
-    });
+    // console.log("Calculating isotropy score:", {
+    //   moments: [m1, m2],
+    //   ratio: Math.min(m1 / m2, m2 / m1),
+    // });
 
     // 计算基础比率
     let ratio = Math.min(m1 / m2, m2 / m1);
@@ -328,10 +328,10 @@ export class PhysicsCalculator {
 
     // 计算分布因子
     const distributionFactor = this.calculateDistributionFactor(inertia);
-    console.log("Distribution factor:", {
-      factor: distributionFactor,
-      axes: inertia.axes,
-    });
+    // console.log("Distribution factor:", {
+    //   factor: distributionFactor,
+    //   axes: inertia.axes,
+    // });
 
     // 使用更合理的评分曲线
     if (ratio >= 0.1) {
@@ -350,11 +350,11 @@ export class PhysicsCalculator {
       }
     }
 
-    console.log("Base ratio adjustment:", {
-      originalRatio,
-      adjustedRatio: ratio,
-      distributionFactor,
-    });
+    // console.log("Base ratio adjustment:", {
+    //   originalRatio,
+    //   adjustedRatio: ratio,
+    //   distributionFactor,
+    // });
 
     let score = ratio * 100;
 
@@ -362,30 +362,30 @@ export class PhysicsCalculator {
     if (patterns.isGradient) {
       const bonus = patterns.gradientQuality * 0.3;
       score = Math.max(70, score * (1 + bonus));
-      console.log("Gradient adjustment:", {
-        bonus,
-        beforeScore: ratio * 100,
-        afterScore: score,
-      });
+      // console.log("Gradient adjustment:", {
+      //   bonus,
+      //   beforeScore: ratio * 100,
+      //   afterScore: score,
+      // });
     } else if (patterns.isHierarchical) {
       const bonus = patterns.hierarchyQuality * 0.3;
       score = Math.max(70, score * (1 + bonus));
-      console.log("Hierarchy adjustment:", {
-        bonus,
-        beforeScore: ratio * 100,
-        afterScore: score,
-      });
+      // console.log("Hierarchy adjustment:", {
+      //   bonus,
+      //   beforeScore: ratio * 100,
+      //   afterScore: score,
+      // });
     }
 
     // 应用分布因子的最终调整
     const finalBonus = Math.max(0, distributionFactor - 0.5) * 0.4;
     score *= 1 + finalBonus;
 
-    console.log("Final score calculation:", {
-      baseScore: ratio * 100,
-      distributionBonus: finalBonus,
-      finalScore: Math.min(100, score),
-    });
+    // console.log("Final score calculation:", {
+    //   baseScore: ratio * 100,
+    //   distributionBonus: finalBonus,
+    //   finalScore: Math.min(100, score),
+    // });
 
     return Math.min(100, score);
   }
@@ -413,13 +413,13 @@ export class PhysicsCalculator {
     const weightedFactor =
       angleFactor * 0.4 + momentFactor * 0.4 + symmetryFactor * 0.2;
 
-    console.log("Distribution factor components:", {
-      angle: (angle * 180) / Math.PI,
-      angleFactor,
-      momentFactor,
-      symmetryFactor,
-      weightedFactor,
-    });
+    // console.log("Distribution factor components:", {
+    //   angle: (angle * 180) / Math.PI,
+    //   angleFactor,
+    //   momentFactor,
+    //   symmetryFactor,
+    //   weightedFactor,
+    // });
 
     return weightedFactor;
   }
@@ -616,16 +616,16 @@ export class PhysicsCalculator {
       gradientQuality = Math.max(0.65, gradientQuality);
     }
 
-    console.log("Gradient detection:", {
-      ratios,
-      validSteps,
-      totalRatio,
-      hasSegmentedGradient,
-      spatialGradient,
-      directionConsistency,
-      isGradient,
-      gradientQuality,
-    });
+    // console.log("Gradient detection:", {
+    //   ratios,
+    //   validSteps,
+    //   totalRatio,
+    //   hasSegmentedGradient,
+    //   spatialGradient,
+    //   directionConsistency,
+    //   isGradient,
+    //   gradientQuality,
+    // });
 
     return { isGradient, gradientQuality };
   }
@@ -843,12 +843,12 @@ export class PhysicsCalculator {
       elements.length;
     const uniformity = 1 / (1 + massVariance / (avgMass * avgMass));
 
-    console.log("Mass distribution analysis:", {
-      continuity,
-      uniformity,
-      avgMassChange,
-      maxMassChange,
-    });
+    // console.log("Mass distribution analysis:", {
+    //   continuity,
+    //   uniformity,
+    //   avgMassChange,
+    //   maxMassChange,
+    // });
 
     return { continuity, uniformity };
   }

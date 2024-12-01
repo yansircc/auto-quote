@@ -131,33 +131,20 @@ export class VolumeCalculator {
     const maxRadius =
       Math.sqrt(layoutWidth * layoutWidth + layoutLength * layoutLength) / 2;
 
-    // Calculate pattern-specific metrics with improved detection
-    const { isVerticallyAligned, verticalQuality } =
-      this.checkVerticalAlignment(rectangles);
-    const { isHorizontallyAligned, horizontalQuality } =
-      this.checkHorizontalAlignment(rectangles);
-    const { isGradient, gradientQuality } = this.checkSizeGradient(rectangles);
-    const { isHierarchical, hierarchyQuality } =
-      this.checkHierarchicalLevels(rectangles);
-
-    // Calculate axial symmetry with improved pattern-specific weights
+    // Calculate axial symmetry with improved base calculation
     let axialAsymmetry = 0;
     rectangles.forEach((rect1) => {
       const axes = [
-        {
-          flip: (x: number, y: number) => [2 * centerX - x, y],
-          weight: isHorizontallyAligned ? 0.8 + horizontalQuality * 0.2 : 0.5,
-        },
-        {
-          flip: (x: number, y: number) => [x, 2 * centerY - y],
-          weight: isVerticallyAligned ? 0.8 + verticalQuality * 0.2 : 0.5,
-        },
+        { flip: (x: number, y: number) => [2 * centerX - x, y] },
+        { flip: (x: number, y: number) => [x, 2 * centerY - y] },
       ];
 
       const rect1Center = {
         x: rect1.x + rect1.width / 2,
         y: rect1.y + rect1.length / 2,
       };
+
+      const rect1Area = rect1.width * rect1.length;
 
       axes.forEach((axis) => {
         const [mirrorX, mirrorY] = axis.flip(rect1Center.x, rect1Center.y);
@@ -171,60 +158,62 @@ export class VolumeCalculator {
             y: rect2.y + rect2.length / 2,
           };
 
-          // Calculate distance with improved pattern-specific tolerance
+          const rect2Area = rect2.width * rect2.length;
+
+          // Calculate normalized distance
           const dist = Math.sqrt(
             Math.pow(rect2Center.x - mirrorX, 2) +
               Math.pow(rect2Center.y - mirrorY, 2),
           );
+          const normalizedDist = dist / maxRadius;
 
-          // Calculate size difference with improved pattern-specific tolerance
-          const sizeDiff =
-            Math.abs(rect1.width * rect1.length - rect2.width * rect2.length) /
-            (rect1.width * rect1.length);
+          // Calculate relative size difference
+          const avgArea = (rect1Area + rect2Area) / 2;
+          const sizeDiff = Math.abs(rect1Area - rect2Area) / avgArea;
 
-          // Adjust asymmetry calculation with improved pattern handling
-          let asymmetry;
-          if (isGradient) {
-            // For gradient layouts, more lenient size difference based on quality
-            const distWeight = 0.95 - gradientQuality * 0.25; // 0.7-0.95
-            asymmetry =
-              (dist / maxRadius) * distWeight + sizeDiff * (1 - distWeight);
-          } else if (isHierarchical) {
-            // For hierarchical layouts, focus more on position based on quality
-            const distWeight = 0.98 - hierarchyQuality * 0.18; // 0.8-0.98
-            asymmetry =
-              (dist / maxRadius) * distWeight + sizeDiff * (1 - distWeight);
-          } else {
-            // Default weights with slight improvement
-            asymmetry = (dist / maxRadius) * 0.75 + sizeDiff * 0.25;
-          }
+          // Calculate relative position in layout
+          const rect1Radius =
+            Math.sqrt(
+              Math.pow(rect1Center.x - centerX, 2) +
+                Math.pow(rect1Center.y - centerY, 2),
+            ) / maxRadius;
+          const rect2Radius =
+            Math.sqrt(
+              Math.pow(rect2Center.x - centerX, 2) +
+                Math.pow(rect2Center.y - centerY, 2),
+            ) / maxRadius;
+
+          // Dynamic weight based on position and size
+          const positionWeight = Math.min(
+            0.9,
+            Math.max(0.7, 1 - Math.abs(rect1Radius - rect2Radius)),
+          );
+
+          // Combined asymmetry calculation
+          const asymmetry = Math.min(
+            normalizedDist * positionWeight + sizeDiff * (1 - positionWeight),
+            Math.sqrt(normalizedDist * sizeDiff), // Geometric mean of differences
+          );
 
           minAsymmetry = Math.min(minAsymmetry, asymmetry);
         });
 
-        axialAsymmetry += minAsymmetry * axis.weight;
+        axialAsymmetry += minAsymmetry;
       });
     });
 
-    // Normalize axial asymmetry with improved pattern-specific scaling
-    let axialScore = 100 * (1 - axialAsymmetry / (2 * rectangles.length));
+    // Normalize axial asymmetry with improved scaling
+    const axialScore =
+      100 * Math.pow(1 - axialAsymmetry / (2 * rectangles.length), 0.8);
 
-    // Apply improved pattern-specific bonuses to axial score
-    if (isGradient) {
-      axialScore *= 1 + gradientQuality * 0.25; // Up to 25% bonus
-    }
-    if (isHierarchical) {
-      axialScore *= 1 + hierarchyQuality * 0.25; // Up to 25% bonus
-    }
-
-    // Calculate radial distribution with improved pattern-specific weights
+    // Calculate radial distribution with improved normalization
     const angles = rectangles.map((rect) => {
       const x = rect.x + rect.width / 2 - centerX;
       const y = rect.y + rect.length / 2 - centerY;
       return Math.atan2(y, x);
     });
 
-    // Calculate angular spacing score with improved pattern adjustments
+    // Calculate angular spacing score with improved normalization
     angles.sort((a, b) => a - b);
     const idealGap = (2 * Math.PI) / rectangles.length;
     let angleVariance = 0;
@@ -234,92 +223,37 @@ export class VolumeCalculator {
       let gap = angles[j] - angles[i];
       if (gap < 0) gap += 2 * Math.PI;
 
-      // Adjust gap importance with improved pattern handling
-      let gapWeight;
-      if (isHierarchical) {
-        gapWeight = 0.35 + hierarchyQuality * 0.25; // 0.35-0.6 based on quality
-      } else if (isGradient) {
-        gapWeight = 0.55 + gradientQuality * 0.25; // 0.55-0.8 based on quality
-      } else {
-        gapWeight = 1.0;
-      }
-      angleVariance += Math.pow(gap - idealGap, 2) * gapWeight;
+      // Normalize gap difference with improved scaling
+      const normalizedGapDiff = Math.abs(gap - idealGap) / Math.PI;
+      angleVariance += Math.pow(normalizedGapDiff, 1.5); // Reduced penalty for small deviations
     }
 
-    let radialScore = 100 * (1 - Math.sqrt(angleVariance) / (2 * Math.PI));
+    const radialScore =
+      100 * Math.pow(1 - Math.sqrt(angleVariance / rectangles.length), 1.2);
 
-    // Apply improved pattern-specific bonuses to radial score
-    if (isGradient || isHierarchical) {
-      radialScore *= 1.15; // 15% bonus for recognized patterns
-    }
-
-    // Calculate distance from center score with improved pattern adjustments
+    // Calculate distance distribution with improved normalization
     let distanceVariance = 0;
-    rectangles.forEach((rect) => {
+    const distances = rectangles.map((rect) => {
       const x = rect.x + rect.width / 2 - centerX;
       const y = rect.y + rect.length / 2 - centerY;
-      const distance = Math.sqrt(x * x + y * y);
-
-      // Adjust ideal distance with improved pattern handling
-      let idealDistance;
-      if (isHierarchical) {
-        idealDistance = maxRadius * (0.55 + hierarchyQuality * 0.25); // 0.55-0.8 based on quality
-      } else if (isGradient) {
-        idealDistance = maxRadius * (0.35 + gradientQuality * 0.25); // 0.35-0.6 based on quality
-      } else {
-        idealDistance = maxRadius * 0.5;
-      }
-
-      distanceVariance += Math.pow(distance - idealDistance, 2);
+      return Math.sqrt(x * x + y * y);
     });
 
-    let distanceScore =
-      100 * (1 - Math.sqrt(distanceVariance) / (maxRadius * rectangles.length));
+    const avgDistance =
+      distances.reduce((sum, d) => sum + d, 0) / distances.length;
+    distances.forEach((distance) => {
+      const normalizedDeviation = Math.abs(distance - avgDistance) / maxRadius;
+      distanceVariance += Math.pow(normalizedDeviation, 1.5); // Reduced penalty for small deviations
+    });
 
-    // Apply improved pattern-specific bonuses to distance score
-    if (isGradient || isHierarchical) {
-      distanceScore *= 1.15; // 15% bonus for recognized patterns
-    }
+    const distanceScore =
+      100 * Math.pow(1 - Math.sqrt(distanceVariance / rectangles.length), 1.2);
 
-    // Combine scores with improved pattern-specific weights
-    let finalScore;
-    if (isGradient) {
-      // For gradient layouts, improved focus on axial symmetry
-      const axialWeight = 0.45 + gradientQuality * 0.25; // 0.45-0.7 based on quality
-      finalScore =
-        axialScore * axialWeight +
-        radialScore * ((1 - axialWeight) * 0.6) +
-        distanceScore * ((1 - axialWeight) * 0.4);
-    } else if (isHierarchical) {
-      // For hierarchical layouts, improved balance
-      const axialWeight = 0.35 + hierarchyQuality * 0.25; // 0.35-0.6 based on quality
-      finalScore =
-        axialScore * axialWeight +
-        radialScore * ((1 - axialWeight) * 0.4) +
-        distanceScore * ((1 - axialWeight) * 0.6);
-    } else {
-      // Improved default weights
-      finalScore = axialScore * 0.45 + radialScore * 0.3 + distanceScore * 0.25;
-    }
-
-    // Apply improved alignment bonus
-    if (isVerticallyAligned || isHorizontallyAligned) {
-      finalScore *= 1.2; // 20% bonus for good alignment
-    }
-
-    // Apply improved minimum score for recognized patterns
-    if (isGradient || isHierarchical) {
-      finalScore = Math.max(finalScore, 72); // Ensure higher minimum score
-    }
-
-    // Apply final quality boost
-    const qualityBoost = Math.max(
-      gradientQuality || 0,
-      hierarchyQuality || 0,
-      verticalQuality || 0,
-      horizontalQuality || 0,
-    );
-    finalScore *= 1 + qualityBoost * 0.1; // Up to 10% additional boost based on best quality
+    // Combine scores with balanced weights and improved scaling
+    const finalScore =
+      Math.pow(axialScore, 1.2) * 0.4 + // Increased weight for axial symmetry
+      Math.pow(radialScore, 1.1) * 0.35 + // Slightly increased radial importance
+      Math.pow(distanceScore, 1.0) * 0.25; // Maintained distance weight
 
     return Math.max(0, Math.min(100, finalScore));
   }
