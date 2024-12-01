@@ -1,4 +1,4 @@
-import type { Product } from '@/types/geometry';
+import type { Product } from '@/types/domain/product';
 
 // 基础特征
 export interface DimensionFeatures {
@@ -101,6 +101,5 @@ export interface GeometryAnalysis {
     shape: ShapeFeatures[];
     dimension: DimensionFeatures[];
   };
-  normalized: NormalizedProduct[];
-  score: GeometryScore;
+  scores: GeometryScore[];
 }

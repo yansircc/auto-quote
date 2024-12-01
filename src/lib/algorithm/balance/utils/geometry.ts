@@ -1,4 +1,4 @@
-import type { Point2D, Rectangle } from '@/types/geometry';
+import type { Point2D, Rectangle } from "@/types/core/geometry";
 
 /**
  * Calculate distance between two 2D points
@@ -22,7 +22,7 @@ export function calculateRectCenter(rect: Rectangle): Point2D {
   // 对于流动平衡计算，直接使用位置点
   return {
     x: rect.x,
-    y: rect.y
+    y: rect.y,
   };
 }
 
@@ -33,14 +33,24 @@ export function calculateRectCenter(rect: Rectangle): Point2D {
 export function calculateInjectionPoint(layout: Rectangle[]): Point2D {
   // Currently using simple center of mass
   // 目前使用简单的质心计算
-  const totalArea = layout.reduce((sum, rect) => 
-    sum + rect.width * rect.height, 0);
-  
-  const centerX = layout.reduce((sum, rect) => 
-    sum + (rect.x + rect.width/2) * (rect.width * rect.height), 0) / totalArea;
-  
-  const centerY = layout.reduce((sum, rect) => 
-    sum + (rect.y + rect.height/2) * (rect.width * rect.height), 0) / totalArea;
-  
+  const totalArea = layout.reduce(
+    (sum, rect) => sum + rect.width * rect.length,
+    0,
+  );
+
+  const centerX =
+    layout.reduce(
+      (sum, rect) =>
+        sum + (rect.x + rect.width / 2) * (rect.width * rect.length),
+      0,
+    ) / totalArea;
+
+  const centerY =
+    layout.reduce(
+      (sum, rect) =>
+        sum + (rect.y + rect.length / 2) * (rect.width * rect.length),
+      0,
+    ) / totalArea;
+
   return { x: centerX, y: centerY };
 }

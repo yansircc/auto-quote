@@ -1,5 +1,6 @@
 import { calculateDistributionScore } from '../index';
-import type { Product, Dimensions3D, Rectangle } from '@/types/geometry';
+import type { Rectangle } from '@/types/core/geometry';
+import type { Product, Dimensions3D } from '@/types/domain/product';
 import { describe, expect, test } from "vitest";
 
 describe('Distribution Score Calculation', () => {
@@ -99,7 +100,7 @@ describe('Distribution Score Calculation', () => {
       const result = calculateDistributionScore(layout, products);
       
       // 空布局应该得到满分，因为没有任何不平衡
-      expect(result.score).toBe(100);
+      expect(result.score).toBe(1);
       expect(result.details.volumeBalance.heightBalance).toBe(1);
       expect(result.details.volumeBalance.massDistribution).toBe(1);
     });
@@ -123,7 +124,7 @@ describe('Distribution Score Calculation', () => {
       const result = calculateDistributionScore(layout, products);
       
       // 完美对称布局，应该得到较高分数
-      expect(result.score).toBeGreaterThan(75);
+      expect(result.score).toBeGreaterThan(0.75);
       // 体积分布应该非常均匀
       expect(result.details.volumeBalance.heightBalance).toBeGreaterThan(0.8);
       expect(result.details.volumeBalance.massDistribution).toBeGreaterThan(0.8);
@@ -153,11 +154,151 @@ describe('Distribution Score Calculation', () => {
       const result = calculateDistributionScore(layout, products);
       
       // 由于产品尺寸不同，分数应该适中
-      expect(result.score).toBeGreaterThan(50);
+      expect(result.score).toBeGreaterThan(0.5);
       // 高度平衡应该较低，因为产品高度不同
       expect(result.details.volumeBalance.heightBalance).toBeLessThan(0.7);
       // 质量分布应该适中
       expect(result.details.volumeBalance.massDistribution).toBeGreaterThan(0.4);
+    });
+  });
+
+  describe('边界情况测试', () => {
+    test('场景1: 单个产品 - 中心点', () => {
+      const positions: [number, number][] = [[0, 0]];
+      const products = [createSizedProduct(1, 100, SIZES.MEDIUM)];
+      const layout = createLayout(positions, products);
+      
+      const result = calculateDistributionScore(layout, products);
+      
+      // 单个产品在中心点应该得到满分
+      expect(result.score).toBe(1);
+      expect(result.details.volumeBalance.heightBalance).toBe(1);
+      expect(result.details.volumeBalance.massDistribution).toBe(1);
+    });
+
+    test('场景2: 单个产品 - 偏离中心', () => {
+      const positions: [number, number][] = [[100, 100]];
+      const products = [createSizedProduct(1, 100, SIZES.MEDIUM)];
+      const layout = createLayout(positions, products);
+      
+      const result = calculateDistributionScore(layout, products);
+      
+      // 偏离中心应该得到较低分数
+      expect(result.score).toBeLessThan(0.8);
+      expect(result.details.volumeBalance.heightBalance).toBe(1); // 高度平衡仍然完美
+      expect(result.details.volumeBalance.massDistribution).toBeLessThan(0.8);
+    });
+  });
+
+  describe('实际生产场景测试', () => {
+    test('场景1: 大型产品周围环绕小型产品', () => {
+      const positions: [number, number][] = [
+        [0, 0],       // 中心大产品
+        [-150, -150], // 四角小产品
+        [150, -150],
+        [-150, 150],
+        [150, 150]
+      ];
+      
+      const products = [
+        createSizedProduct(1, 400, SIZES.LARGE),
+        ...Array(4).fill(null).map((_, i) => 
+          createSizedProduct(i + 2, 100, SIZES.SMALL)
+        )
+      ];
+
+      const layout = createLayout(positions, products, PRODUCTION.COOLING_GAP);
+      
+      expect(checkMinimumGap(layout)).toBe(true);
+      
+      const result = calculateDistributionScore(layout, products);
+      
+      // 这种布局应该得到较好的分数
+      expect(result.score).toBeGreaterThan(0.7);
+      expect(result.details.volumeBalance.heightBalance).toBeGreaterThan(0.8);
+      expect(result.details.volumeBalance.massDistribution).toBeGreaterThan(0.6);
+    });
+
+    test('场景2: 产品尺寸递增布局', () => {
+      const positions: [number, number][] = [
+        [-200, 0],  // 大
+        [-50, 0],   // 中
+        [100, 0]    // 小
+      ];
+      
+      const products = [
+        createSizedProduct(1, 400, SIZES.LARGE),
+        createSizedProduct(2, 200, SIZES.MEDIUM),
+        createSizedProduct(3, 100, SIZES.SMALL)
+      ];
+
+      const layout = createLayout(positions, products, PRODUCTION.COOLING_GAP);
+      
+      expect(checkMinimumGap(layout)).toBe(true);
+      
+      const result = calculateDistributionScore(layout, products);
+      
+      // 线性布局应该得到中等分数
+      expect(result.score).toBeLessThan(0.7);
+      expect(result.score).toBeGreaterThan(0.4);
+      expect(result.details.volumeBalance.massDistribution).toBeLessThan(0.6);
+    });
+
+    test('场景3: 散热优先布局', () => {
+      const positions: [number, number][] = [
+        [-150, -150], // 第一排
+        [150, -150],
+        [-150, 150],  // 第二排
+        [150, 150]
+      ];
+      
+      const products = Array(4).fill(null).map((_, i) =>
+        createSizedProduct(i + 1, 200, SIZES.LARGE)
+      );
+
+      const layout = createLayout(positions, products, PRODUCTION.COOLING_GAP);
+      
+      expect(checkMinimumGap(layout)).toBe(true);
+      
+      const result = calculateDistributionScore(layout, products);
+      
+      // 散热布局应该在保持较高分数的同时满足间距要求
+      expect(result.score).toBeGreaterThan(0.75);
+      expect(result.details.volumeBalance.heightBalance).toBeGreaterThan(0.9);
+      expect(result.details.volumeBalance.massDistribution).toBeGreaterThan(0.8);
+    });
+  });
+
+  describe('性能边界测试', () => {
+    test('场景1: 大量小型产品均匀分布', () => {
+      const gridSize = 5; // 5x5网格
+      const spacing = SIZES.SMALL.width + PRODUCTION.COOLING_GAP;
+      
+      const positions: [number, number][] = [];
+      for (let i = 0; i < gridSize; i++) {
+        for (let j = 0; j < gridSize; j++) {
+          positions.push([
+            (i - Math.floor(gridSize/2)) * spacing,
+            (j - Math.floor(gridSize/2)) * spacing
+          ]);
+        }
+      }
+      
+      const products = Array(gridSize * gridSize).fill(null).map((_, i) =>
+        createSizedProduct(i + 1, 50, SIZES.SMALL)
+      );
+
+      const layout = createLayout(positions, products, PRODUCTION.COOLING_GAP);
+      
+      expect(checkMinimumGap(layout)).toBe(true);
+      
+      const result = calculateDistributionScore(layout, products);
+      
+      // 均匀网格布局应该得到很高的分数
+      expect(result.score).toBeGreaterThan(0.85);
+      expect(result.details.volumeBalance.heightBalance).toBeGreaterThan(0.9);
+      expect(result.details.volumeBalance.massDistribution).toBeGreaterThan(0.85);
+      expect(result.details.isotropy).toBeGreaterThan(0.9);
     });
   });
 });

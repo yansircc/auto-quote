@@ -1,4 +1,5 @@
-import type { Rectangle, Product, Point2D } from '@/types/geometry';
+import type { Rectangle, Point2D } from '@/types/core/geometry';
+import type { Product } from '@/types/domain/product';
 import { calculateInjectionPoint, calculateDistance, calculateRectCenter } from '@/lib/algorithm/balance/utils/geometry';
 
 // Helper function to calculate flow lengths based on injection point

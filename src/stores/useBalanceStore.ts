@@ -1,13 +1,18 @@
-import { create } from 'zustand';
-import type { Rectangle, Point2D, Product } from '@/types/geometry';
-import type { BalanceScore, DetailedGeometryScore, DetailedFlowScore } from '@/types/balance';
+import { create } from "zustand";
+import type { Product } from "@/types/domain/product";
+import type { Rectangle, Point2D } from "@/types/core/geometry";
+import type {
+  BalanceScore,
+  DetailedGeometryScore,
+  DetailedFlowScore,
+} from "@/types/algorithm";
 import {
   calculateDetailedGeometryScore,
   calculateDetailedFlowScore,
   calculateDistributionScore,
   calculateVolumeScore,
-  calculateBalanceScore
-} from '@/lib/algorithm/balance';
+  calculateBalanceScore,
+} from "@/lib/algorithm/balance";
 
 interface BalanceState {
   // Scores
@@ -16,14 +21,18 @@ interface BalanceState {
   flowScore: DetailedFlowScore | null;
   distributionScore: number | null;
   volumeScore: number | null;
-  
+
   // Input data
   layout: Rectangle[] | null;
   products: Product[] | null;
   injectionPoint: Point2D | null;
 
   // Actions
-  calculateScores: (layout: Rectangle[], products: Product[], injectionPoint: Point2D) => void;
+  calculateScores: (
+    layout: Rectangle[],
+    products: Product[],
+    injectionPoint: Point2D,
+  ) => void;
   resetScores: () => void;
 }
 
@@ -45,10 +54,18 @@ export const useBalanceStore = create<BalanceState>((set) => ({
   // Calculate all scores
   calculateScores: (layout, products, injectionPoint) => {
     const geometryScore = calculateDetailedGeometryScore(layout, products);
-    const flowScore = calculateDetailedFlowScore(layout, products, injectionPoint);
+    const flowScore = calculateDetailedFlowScore(
+      layout,
+      products,
+      injectionPoint,
+    );
     const distributionScore = calculateDistributionScore(layout, products);
     const volumeScore = calculateVolumeScore(layout, products);
-    const overallScore = calculateBalanceScore(layout, products, injectionPoint);
+    const overallScore = calculateBalanceScore(
+      layout,
+      products,
+      injectionPoint,
+    );
 
     set({
       overallScore,
@@ -58,7 +75,7 @@ export const useBalanceStore = create<BalanceState>((set) => ({
       volumeScore,
       layout,
       products,
-      injectionPoint
+      injectionPoint,
     });
   },
 
@@ -72,7 +89,7 @@ export const useBalanceStore = create<BalanceState>((set) => ({
       volumeScore: null,
       layout: null,
       products: null,
-      injectionPoint: null
+      injectionPoint: null,
     });
-  }
+  },
 }));

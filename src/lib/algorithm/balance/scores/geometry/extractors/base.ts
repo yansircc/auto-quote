@@ -1,5 +1,5 @@
-import type { Product } from '@/types/geometry';
-import type { ShapeFeatures, DimensionFeatures, ValidationResult } from '../types';
+import type { Product } from '@/types/domain/product';
+import type { ShapeFeatures, DimensionFeatures, ValidationResult } from '@/types/algorithm/balance/geometry';
 import type { GeometryScoreConfig } from '../config';
 
 export interface FeatureExtractor {

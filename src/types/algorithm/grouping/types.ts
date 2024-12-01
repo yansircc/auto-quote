@@ -1,4 +1,4 @@
-import type { Product } from './geometry';
+import type { Product } from '../../domain/product';
 
 /**
  * 分组信息
@@ -47,15 +47,6 @@ export interface MoldDistribution {
 }
 
 /**
- * 分布方案
- */
-export interface DistributionSolution {
-  solutionId: number;
-  molds: MoldDistribution[];
-  totalMolds: number;
-}
-
-/**
  * 分布结果
  */
 export interface DistributionResult {
@@ -65,4 +56,12 @@ export interface DistributionResult {
     general: string;
     details?: string[];
   };
+}
+
+/**
+ * 分布方案
+ */
+export interface DistributionSolution {
+  solutionId: number;
+  distributions: MoldDistribution[];
 }

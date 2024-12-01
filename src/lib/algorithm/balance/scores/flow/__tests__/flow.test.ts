@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import { calculateDetailedFlowScore } from '../index';
-import type { Rectangle, Point2D, Product } from '@/types/geometry';
+import type { Rectangle, Point2D } from '@/types/core/geometry';
+import type { Product } from '@/types/domain/product';
 
 const createTestProduct = (
   id: number,

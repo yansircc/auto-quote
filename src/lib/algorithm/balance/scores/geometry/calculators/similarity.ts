@@ -1,5 +1,11 @@
 import type { GeometryScoreConfig } from '../config';
-import type { ShapeFeatures, DimensionFeatures, ShapeScore, DimensionScore, NormalizedProduct } from '../types';
+import type { 
+  ShapeFeatures, 
+  DimensionFeatures, 
+  ShapeScore, 
+  DimensionScore, 
+  NormalizedProduct 
+} from '@/types/algorithm/balance/geometry';
 import { areNumbersEqual, applyNonlinearMapping } from '../utils/math';
 
 export class SimilarityCalculator {

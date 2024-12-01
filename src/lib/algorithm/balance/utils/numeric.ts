@@ -21,7 +21,9 @@ export const clamp = (value: number, min: number, max: number): number => {
 export const calculateStdDev = (values: number[]): number => {
   if (!values.length) return 0;
   const mean = values.reduce((a, b) => a + b, 0) / values.length;
-  const variance = values.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / values.length;
+  const variance =
+    values.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) /
+    values.length;
   return Math.sqrt(variance);
 };
 
@@ -45,5 +47,5 @@ export const normalize = (values: number[]): number[] => {
   const max = Math.max(...values);
   const range = max - min;
   if (range === 0) return values.map(() => 0.5);
-  return values.map(v => safeDivide(v - min, range));
+  return values.map((v) => safeDivide(v - min, range));
 };

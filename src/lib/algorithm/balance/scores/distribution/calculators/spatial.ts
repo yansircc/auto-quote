@@ -1,175 +1,244 @@
-import type { Rectangle, Product, Point2D } from '@/types/geometry';
+import type { Rectangle, Product, Bounds } from '@/types/core/geometry';
 import type { DetailedDistributionScore } from '@/types/balance';
-import { DistributionBalanceConfig as Config } from '../config';
-import { SymmetryAnalyzer } from '../utils/symmetry';
 
-/**
- * Internal spatial analysis result
- */
-interface SpatialAnalysis {
-  symmetry: number;
-  uniformity: number;
-  axes: {
-    angle: number;
-    quality: number;
-  }[];
+interface SpatialCalculatorConfig {
+  gridSize: number;
+  maxUniformity: number;
+  minDensity: number;
+  weights: {
+    uniformity: number;
+    density: number;
+  }
 }
 
-/**
- * Calculator for spatial distribution properties
- * Analyzes symmetry, uniformity, and balance of layout
- */
+const DEFAULT_CONFIG: SpatialCalculatorConfig = {
+  gridSize: 10,
+  maxUniformity: 100,
+  minDensity: 0.1,
+  weights: {
+    uniformity: 0.6,
+    density: 0.4
+  }
+};
+
+interface SpatialAnalysisResult {
+  uniformity: number;
+  density: number;
+  gridCells: number;
+  occupiedCells: number;
+}
+
 export class SpatialCalculator {
-  private symmetryAnalyzer = new SymmetryAnalyzer();
+  private config: SpatialCalculatorConfig;
+
+  constructor(config?: Partial<SpatialCalculatorConfig>) {
+    this.config = {
+      ...DEFAULT_CONFIG,
+      ...config,
+      weights: {
+        ...DEFAULT_CONFIG.weights,
+        ...config?.weights
+      }
+    };
+  }
 
   /**
-   * Calculate spatial distribution score
+   * 计算空间分布分数
    */
   calculate(
     layout: Record<number, Rectangle>,
     products: Product[]
-  ): SpatialAnalysis {
-    // Convert layout to points with weights
-    const points: Point2D[] = [];
-    const weights: number[] = [];
-    
-    // Create a map of product IDs to weights for safer lookup
-    const productWeights = new Map(products.map(p => [
-      p.id,
-      p.weight ?? (p.dimensions ? 
-        p.dimensions.width * 
-        p.dimensions.length * 
-        p.dimensions.height : 1)
-    ]));
-
-    // Process each rectangle in the layout
-    for (const [id, rect] of Object.entries(layout)) {
-      const weight = productWeights.get(Number(id));
-      if (weight === undefined) {
-        throw new Error(`Product not found for layout position ${id}`);
-      }
-
-      points.push({
-        x: rect.x + rect.width / 2,
-        y: rect.y + rect.height / 2
-      });
-      weights.push(weight);
+  ): SpatialAnalysisResult {
+    // 空布局或单个产品的情况
+    if (products.length <= 1) {
+      return {
+        uniformity: 100,
+        density: 100,
+        gridCells: 1,
+        occupiedCells: products.length
+      };
     }
 
-    // Find symmetry axes
-    const axes = this.symmetryAnalyzer.findSymmetryAxes(points, weights);
+    // 计算布局边界
+    const bounds = this.getLayoutBounds(layout);
+    if (!bounds) {
+      return {
+        uniformity: 0,
+        density: 0,
+        gridCells: 0,
+        occupiedCells: 0
+      };
+    }
+
+    // 创建网格
+    const grid = this.createGrid(bounds, this.config.gridSize);
     
-    // Calculate symmetry score
-    const symmetry = this.calculateSymmetryScore(axes);
-    
-    // Calculate uniformity score
-    const uniformity = this.calculateUniformityScore(points, weights);
+    // 计算每个产品在网格中的占用情况
+    let occupiedCells = 0;
+    products.forEach(product => {
+      const rect = layout[product.id];
+      if (!rect) return;
+
+      const cells = this.getCellsForRect(rect, grid);
+      occupiedCells += cells.length;
+    });
+
+    // 计算密度
+    const totalCells = grid.length * (grid[0]?.length ?? 0);
+    const density = occupiedCells / totalCells;
+    const normalizedDensity = Math.min(100, (density / this.config.minDensity) * 100);
+
+    // 计算均匀度
+    const uniformity = this.calculateUniformity(layout, products, grid);
+    const normalizedUniformity = Math.min(100, (uniformity / this.config.maxUniformity) * 100);
 
     return {
-      symmetry,
-      uniformity,
-      axes
+      uniformity: normalizedUniformity,
+      density: normalizedDensity,
+      gridCells: totalCells,
+      occupiedCells
     };
   }
 
   /**
-   * Convert spatial analysis to distribution score details
+   * 计算均匀度
    */
-  toScoreDetails(analysis: SpatialAnalysis): Partial<DetailedDistributionScore['details']> {
-    // Convert best symmetry axis to principal axis
-    const bestAxis = analysis.axes.reduce(
-      (best, axis) => axis.quality > best.quality ? axis : best,
-      { angle: 0, quality: 0 }
-    );
-
-    const cos = Math.cos(bestAxis.angle);
-    const sin = Math.sin(bestAxis.angle);
-
-    return {
-      // Use symmetry axis as principal axis if quality is good enough
-      // Otherwise use default axes
-      principalAxes: bestAxis.quality > 0.7 
-        ? [[cos, -sin], [sin, cos]]
-        : [[1, 0], [0, 1]],
-      
-      // Use uniformity as isotropy measure
-      isotropy: analysis.uniformity / 100
-    };
-  }
-
-  /**
-   * Calculate symmetry score based on detected axes
-   * @private
-   */
-  private calculateSymmetryScore(
-    axes: Array<{ angle: number; quality: number; }>
+  private calculateUniformity(
+    layout: Record<number, Rectangle>,
+    products: Product[],
+    grid: boolean[][]
   ): number {
-    if (axes.length === 0) {
-      console.log('No symmetry axes found');
-      return 0;
-    }
-
-    // Calculate score based on best axes
-    const bestQuality = Math.max(...axes.map(axis => axis.quality));
-    const axisCount = Math.min(axes.length, 4);  // Cap at 4 axes
-    
-    // Score combines quality and number of axes
-    const qualityScore = bestQuality * 80;  // Up to 80 points for quality
-    const countScore = (axisCount / 4) * 20;  // Up to 20 points for multiple axes
-    
-    console.log(
-      `Symmetry calculation:`,
-      `\nAxes found: ${axes.length}`,
-      `\nBest quality: ${bestQuality}`,
-      `\nQuality score: ${qualityScore}`,
-      `\nCount score: ${countScore}`,
-      `\nTotal score: ${Math.round(qualityScore + countScore)}`
-    );
-    
-    return Math.round(qualityScore + countScore);
-  }
-
-  /**
-   * Calculate uniformity score based on point distribution
-   * @private
-   */
-  private calculateUniformityScore(
-    points: Point2D[],
-    weights: number[]
-  ): number {
-    if (points.length < 2 || points.length !== weights.length) return 100;
-
-    // Calculate weighted distances between points
-    const distances: number[] = [];
-    const totalWeight = weights.reduce((a, b) => a + b, 0);
-    
-    for (let i = 0; i < points.length; i++) {
-      const p1 = points[i];
-      const w1 = weights[i];
-      if (!p1 || w1 === undefined) continue;
-
-      for (let j = i + 1; j < points.length; j++) {
-        const p2 = points[j];
-        const w2 = weights[j];
-        if (!p2 || w2 === undefined) continue;
-
-        const dx = p2.x - p1.x;
-        const dy = p2.y - p1.y;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        const weight = (w1 + w2) / totalWeight;
-        distances.push(dist * weight);
+    // 计算每个网格单元的占用密度
+    const densities: number[] = [];
+    for (let i = 0; i < grid.length; i++) {
+      for (let j = 0; j < (grid[i]?.length ?? 0); j++) {
+        if (grid[i]?.[j]) {
+          const density = this.calculateCellDensity(i, j, layout, products);
+          densities.push(density);
+        }
       }
     }
 
-    if (distances.length === 0) return 100;
+    if (densities.length === 0) return 0;
 
-    // Calculate coefficient of variation (normalized standard deviation)
-    const mean = distances.reduce((a, b) => a + b, 0) / distances.length;
-    const variance = distances.reduce((a, b) => a + (b - mean) ** 2, 0) / distances.length;
-    const cv = Math.sqrt(variance) / mean;
+    // 计算密度的标准差
+    const mean = densities.reduce((sum, d) => sum + d, 0) / densities.length;
+    const variance = densities.reduce((sum, d) => sum + Math.pow(d - mean, 2), 0) / densities.length;
+    const stdDev = Math.sqrt(variance);
 
-    // Convert to score (lower cv means more uniform)
-    const score = Math.max(0, 100 * (1 - cv / Config.symmetric.max));
-    return Math.round(score);
+    // 将标准差转换为均匀度分数
+    return Math.max(0, 100 - (stdDev / mean) * 100);
+  }
+
+  /**
+   * 计算单个网格单元的密度
+   */
+  private calculateCellDensity(
+    row: number,
+    col: number,
+    layout: Record<number, Rectangle>,
+    products: Product[]
+  ): number {
+    let totalArea = 0;
+    let occupiedArea = 0;
+
+    products.forEach(product => {
+      const rect = layout[product.id];
+      if (!rect) return;
+
+      // 计算矩形与网格单元的重叠面积
+      const overlap = this.calculateOverlap(rect, row, col);
+      if (overlap > 0) {
+        occupiedArea += overlap;
+      }
+      totalArea += rect.width * rect.height;
+    });
+
+    return totalArea > 0 ? occupiedArea / totalArea : 0;
+  }
+
+  /**
+   * 计算矩形与网格单元的重叠面积
+   */
+  private calculateOverlap(rect: Rectangle, row: number, col: number): number {
+    const cellSize = this.config.gridSize;
+    const cellX = col * cellSize;
+    const cellY = row * cellSize;
+
+    const overlapX = Math.max(0, Math.min(rect.x + rect.width, cellX + cellSize) - Math.max(rect.x, cellX));
+    const overlapY = Math.max(0, Math.min(rect.y + rect.height, cellY + cellSize) - Math.max(rect.y, cellY));
+
+    return overlapX * overlapY;
+  }
+
+  /**
+   * 获取矩形覆盖的网格单元
+   */
+  private getCellsForRect(rect: Rectangle, grid: boolean[][]): [number, number][] {
+    const cells: [number, number][] = [];
+    const cellSize = this.config.gridSize;
+
+    const startRow = Math.floor(rect.y / cellSize);
+    const endRow = Math.floor((rect.y + rect.height) / cellSize);
+    const startCol = Math.floor(rect.x / cellSize);
+    const endCol = Math.floor((rect.x + rect.width) / cellSize);
+
+    for (let i = startRow; i <= endRow; i++) {
+      for (let j = startCol; j <= endCol; j++) {
+        if (i >= 0 && i < grid.length && j >= 0 && j < (grid[i]?.length ?? 0)) {
+          cells.push([i, j]);
+          grid[i][j] = true;
+        }
+      }
+    }
+
+    return cells;
+  }
+
+  /**
+   * 创建网格
+   */
+  private createGrid(bounds: Bounds, cellSize: number): boolean[][] {
+    const rows = Math.ceil((bounds.maxY - bounds.minY) / cellSize);
+    const cols = Math.ceil((bounds.maxX - bounds.minX) / cellSize);
+    
+    return Array.from<unknown, boolean[]>(
+      { length: rows },
+      () => Array.from<unknown, boolean>({ length: cols }, () => false)
+    );
+  }
+
+  /**
+   * 获取布局边界
+   */
+  private getLayoutBounds(layout: Record<number, Rectangle>): Bounds | null {
+    let minX = Infinity;
+    let minY = Infinity;
+    let maxX = -Infinity;
+    let maxY = -Infinity;
+
+    const rectangles = Object.values(layout);
+    if (rectangles.length === 0) {
+      return null;
+    }
+
+    for (const rect of rectangles) {
+      minX = Math.min(minX, rect.x);
+      minY = Math.min(minY, rect.y);
+      maxX = Math.max(maxX, rect.x + rect.width);
+      maxY = Math.max(maxY, rect.y + rect.height);
+    }
+
+    return { minX, minY, maxX, maxY };
+  }
+
+  /**
+   * 将分析结果转换为详细分数
+   */
+  toScoreDetails(analysis: SpatialAnalysisResult): Partial<DetailedDistributionScore['details']['volumeBalance']> {
+    return {
+      densityVariance: analysis.density,
+      symmetry: analysis.uniformity
+    };
   }
 }

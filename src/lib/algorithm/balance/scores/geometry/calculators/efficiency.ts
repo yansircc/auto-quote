@@ -1,12 +1,9 @@
-import type { NormalizedProduct } from '../types';
-import type { GeometryScoreConfig } from '../config';
-import { applyNonlinearMapping } from '../utils/math';
-
-export interface EfficiencyScore {
-  planarDensity: number;
-  volumeUtilization: number;
-  heightDistribution: number;
-}
+import type {
+  NormalizedProduct,
+  EfficiencyScore,
+} from "@/types/algorithm/balance/geometry";
+import type { GeometryScoreConfig } from "../config";
+import { applyNonlinearMapping } from "../utils/math";
 
 export class EfficiencyCalculator {
   constructor(private config: GeometryScoreConfig) {}
@@ -16,16 +13,16 @@ export class EfficiencyCalculator {
       return {
         planarDensity: 0,
         volumeUtilization: 0,
-        heightDistribution: 0
+        heightDistribution: 0,
       };
     }
 
     // 1. 计算平面密度
     const planarDensity = this.calculatePlanarDensityScore(products);
-    
+
     // 2. 计算体积利用率
     const volumeUtilization = this.calculateVolumeUtilizationScore(products);
-    
+
     // 3. 计算高度分布
     const heightDistribution = this.calculateHeightDistributionScore(products);
 
@@ -33,7 +30,7 @@ export class EfficiencyCalculator {
     return {
       planarDensity: Math.round(planarDensity * 100),
       volumeUtilization: Math.round(volumeUtilization * 100),
-      heightDistribution: Math.round(heightDistribution * 100)
+      heightDistribution: Math.round(heightDistribution * 100),
     };
   }
 
@@ -48,9 +45,16 @@ export class EfficiencyCalculator {
     return result.score / 100;
   }
 
-  calculatePlanarDensity(products: NormalizedProduct[]): { totalArea: number, boundingArea: number, density: string, score: number } {
-    if (products.length === 0) return { totalArea: 0, boundingArea: 0, density: "0.000", score: 0 };
-    if (products.length === 1) return { totalArea: 0, boundingArea: 0, density: "1.000", score: 100 };
+  calculatePlanarDensity(products: NormalizedProduct[]): {
+    totalArea: number;
+    boundingArea: number;
+    density: string;
+    score: number;
+  } {
+    if (products.length === 0)
+      return { totalArea: 0, boundingArea: 0, density: "0.000", score: 0 };
+    if (products.length === 1)
+      return { totalArea: 0, boundingArea: 0, density: "1.000", score: 100 };
 
     // 计算实际占用面积
     const totalArea = products.reduce((sum, p) => {
@@ -60,8 +64,11 @@ export class EfficiencyCalculator {
     }, 0);
 
     // 如果没有坐标信息，使用最小边界盒估算
-    const hasCoordinates = products.some(p => 
-      p.dimensions && (typeof p.dimensions.x === 'number' && typeof p.dimensions.y === 'number')
+    const hasCoordinates = products.some(
+      (p) =>
+        p.dimensions &&
+        typeof p.dimensions.x === "number" &&
+        typeof p.dimensions.y === "number",
     );
 
     let boundingArea: number;
@@ -72,7 +79,7 @@ export class EfficiencyCalculator {
       let minX = Infinity;
       let minY = Infinity;
 
-      products.forEach(p => {
+      products.forEach((p) => {
         if (!p.dimensions) return;
         const { length = 0, width = 0 } = p.dimensions;
         const x = p.dimensions.x ?? 0;
@@ -91,13 +98,13 @@ export class EfficiencyCalculator {
       let minWidth = Infinity;
       let isUniform = true;
 
-      products.forEach(p => {
+      products.forEach((p) => {
         if (!p.dimensions) return;
         const { length = 0, width = 0 } = p.dimensions;
         totalLength += length;
         maxWidth = Math.max(maxWidth, width);
         minWidth = Math.min(minWidth, width);
-        
+
         // 检查宽度是否一致
         if (width !== 0 && Math.abs(width - maxWidth) > 0.1) {
           isUniform = false;
@@ -105,10 +112,13 @@ export class EfficiencyCalculator {
       });
 
       // 如果所有产品宽度一致，使用更优化的边界盒
-      boundingArea = isUniform ? totalLength * maxWidth : totalLength * maxWidth * 1.1;
+      boundingArea = isUniform
+        ? totalLength * maxWidth
+        : totalLength * maxWidth * 1.1;
     }
 
-    if (boundingArea === 0) return { totalArea: 0, boundingArea: 0, density: "0.000", score: 0 };
+    if (boundingArea === 0)
+      return { totalArea: 0, boundingArea: 0, density: "0.000", score: 0 };
 
     // 计算密度
     const density = totalArea / boundingArea;
@@ -150,7 +160,7 @@ export class EfficiencyCalculator {
       totalArea,
       boundingArea,
       density: density.toFixed(3),
-      score: Math.round(score)
+      score: Math.round(score),
     };
   }
 
@@ -172,7 +182,7 @@ export class EfficiencyCalculator {
       if (!product.dimensions) continue;
       const { length = 0, width = 0, height = 0 } = product.dimensions;
       const volume = product.volume ?? 0;
-      
+
       if (length <= 0 || width <= 0 || height <= 0 || volume <= 0) continue;
 
       totalVolume += volume;
@@ -197,8 +207,9 @@ export class EfficiencyCalculator {
     // 对于一般情况，使用非线性映射
     return applyNonlinearMapping(
       utilization,
-      this.config.curves.volumePenaltyExponent ?? this.config.curves.basePenaltyExponent,
-      this.config
+      this.config.curves.volumePenaltyExponent ??
+        this.config.curves.basePenaltyExponent,
+      this.config,
     );
   }
 
@@ -211,8 +222,8 @@ export class EfficiencyCalculator {
 
     // 提取有效的高度值
     const heights = products
-      .map(p => p.dimensions?.height ?? 0)
-      .filter(h => h > 0);
+      .map((p) => p.dimensions?.height ?? 0)
+      .filter((h) => h > 0);
 
     // 如果没有有效的高度值，返回0分
     if (heights.length === 0) {
@@ -232,8 +243,9 @@ export class EfficiencyCalculator {
     const score = 1 - cv;
     return applyNonlinearMapping(
       score,
-      this.config.curves.heightPenaltyExponent ?? this.config.curves.basePenaltyExponent,
-      this.config
+      this.config.curves.heightPenaltyExponent ??
+        this.config.curves.basePenaltyExponent,
+      this.config,
     );
   }
 
@@ -262,12 +274,13 @@ export class EfficiencyCalculator {
 function calculateCV(values: number[]): number {
   const avg = values.reduce((a, b) => a + b, 0) / values.length;
   if (avg === 0) return 0;
-  
-  const variance = values.reduce((sum, val) => {
-    const diff = val - avg;
-    return sum + (diff * diff);
-  }, 0) / values.length;
-  
+
+  const variance =
+    values.reduce((sum, val) => {
+      const diff = val - avg;
+      return sum + diff * diff;
+    }, 0) / values.length;
+
   const stdDev = Math.sqrt(variance);
   return stdDev / avg;
 }

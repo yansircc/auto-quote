@@ -1,28 +1,31 @@
-import type { Rectangle, Point2D } from '@/types/geometry';
-import { calculateDistance, calculateRectCenter } from './geometry';
-import { calculateCV } from './numeric';
-import { FlowBalanceConfig as Config } from '../config';
+import type { Rectangle, Point2D } from "@/types/core/geometry";
+import { calculateDistance, calculateRectCenter } from "./geometry";
+import { calculateCV } from "./numeric";
+import { FlowBalanceConfig as Config } from "../config";
 
 export interface LayoutComplexity {
-  size: number;               // 布局大小
-  spatialVariation: number;   // 空间分布变异度
-  shapeVariation: number;     // 形状变异度
-  flowVariation: number;      // 流动变异度
-  overallComplexity: number;  // 总体复杂度
+  size: number; // 布局大小
+  spatialVariation: number; // 空间分布变异度
+  shapeVariation: number; // 形状变异度
+  flowVariation: number; // 流动变异度
+  overallComplexity: number; // 总体复杂度
 }
 
 /**
  * Calculate spatial distribution variation
  */
-const calculateSpatialVariation = (layout: Rectangle[], center: Point2D): number => {
+const calculateSpatialVariation = (
+  layout: Rectangle[],
+  center: Point2D,
+): number => {
   if (!layout.length) return 0;
-  
+
   // Calculate distances from center
-  const distances = layout.map(rect => {
+  const distances = layout.map((rect) => {
     const rectCenter = calculateRectCenter(rect);
     return calculateDistance(center, rectCenter);
   });
-  
+
   // Calculate coefficient of variation
   return calculateCV(distances);
 };
@@ -32,10 +35,10 @@ const calculateSpatialVariation = (layout: Rectangle[], center: Point2D): number
  */
 const calculateShapeVariation = (layout: Rectangle[]): number => {
   if (!layout.length) return 0;
-  
+
   // Calculate aspect ratios
-  const aspectRatios = layout.map(rect => rect.width / rect.height);
-  
+  const aspectRatios = layout.map((rect) => rect.width / rect.length);
+
   // Calculate coefficient of variation
   return calculateCV(aspectRatios);
 };
@@ -65,7 +68,7 @@ const getSizeComplexity = (size: number): number => {
 export const calculateLayoutComplexity = (
   layout: Rectangle[],
   flowPaths: number[],
-  center: Point2D
+  center: Point2D,
 ): LayoutComplexity => {
   const size = layout.length;
   if (!size) {
@@ -74,7 +77,7 @@ export const calculateLayoutComplexity = (
       spatialVariation: 0,
       shapeVariation: 0,
       flowVariation: 0,
-      overallComplexity: 0
+      overallComplexity: 0,
     };
   }
 
@@ -82,11 +85,12 @@ export const calculateLayoutComplexity = (
   const spatialVariation = calculateSpatialVariation(layout, center);
   const shapeVariation = calculateShapeVariation(layout);
   const flowVariation = calculateFlowVariation(flowPaths);
-  
+
   // Calculate overall complexity
   const sizeComplexity = getSizeComplexity(size);
-  const variationComplexity = (spatialVariation + shapeVariation + flowVariation) / 3;
-  
+  const variationComplexity =
+    (spatialVariation + shapeVariation + flowVariation) / 3;
+
   // Weighted combination of size and variation complexity
   const overallComplexity = 0.4 * sizeComplexity + 0.6 * variationComplexity;
 
@@ -95,6 +99,6 @@ export const calculateLayoutComplexity = (
     spatialVariation,
     shapeVariation,
     flowVariation,
-    overallComplexity
+    overallComplexity,
   };
 };

@@ -1,5 +1,5 @@
-import type { Rectangle, Product } from '@/types/geometry';
-import type { DetailedDistributionScore } from '@/types/balance';
+import type { Rectangle } from '@/types/core/geometry';
+import type { DetailedDistributionScore } from '@/types/algorithm/balance/types';
 import { PhysicsCalculator } from './calculators/physics';
 import { SpatialCalculator } from './calculators/spatial';
 import { VolumeCalculator } from './calculators/volume';
@@ -20,7 +20,7 @@ export function calculateDistributionScore(
   // Handle empty case
   if (products.length === 0) {
     return {
-      score: 100,
+      score: 1,
       details: {
         principalMoments: [0, 0],
         principalAxes: [[1, 0], [0, 1]],
@@ -28,9 +28,59 @@ export function calculateDistributionScore(
         isotropy: 1,
         centerDeviation: 0,
         volumeBalance: {
-          densityVariance: 0,
+          densityVariance: 1,
           heightBalance: 1,
-          massDistribution: 1
+          massDistribution: 1,
+          symmetry: 1
+        }
+      }
+    };
+  }
+
+  // Handle single product case
+  if (products.length === 1) {
+    const rect = Object.values(layout)[0];
+    if (!rect) {
+      return {
+        score: 0,
+        details: {
+          principalMoments: [0, 0],
+          principalAxes: [[1, 0], [0, 1]],
+          gyrationRadius: 0,
+          isotropy: 0,
+          centerDeviation: 1,
+          volumeBalance: {
+            densityVariance: 0,
+            heightBalance: 0,
+            massDistribution: 0,
+            symmetry: 0
+          }
+        }
+      };
+    }
+
+    // Calculate center deviation
+    const centerX = rect.x + rect.width / 2;
+    const centerY = rect.y + rect.height / 2;
+    const maxDimension = Math.max(rect.width, rect.height);
+    const centerDeviation = Math.sqrt(centerX * centerX + centerY * centerY) / maxDimension;
+
+    // Score based on center deviation
+    const score = Math.max(0, Math.min(1, 1 - centerDeviation / 2));
+
+    return {
+      score,
+      details: {
+        principalMoments: [0, 0],
+        principalAxes: [[1, 0], [0, 1]],
+        gyrationRadius: 0,
+        isotropy: score,
+        centerDeviation,
+        volumeBalance: {
+          densityVariance: score,
+          heightBalance: score,
+          massDistribution: score,
+          symmetry: score
         }
       }
     };
@@ -41,50 +91,59 @@ export function calculateDistributionScore(
   const spatialCalc = new SpatialCalculator();
   const volumeCalc = new VolumeCalculator();
 
-  // Calculate physical properties
-  const physicalAnalysis = physicsCalc.calculate(layout, products);
-  const physicalDetails = physicsCalc.toScoreDetails(physicalAnalysis);
+  try {
+    // Calculate physical properties
+    const physicalAnalysis = physicsCalc.calculate(layout, products);
+    const physicalDetails = physicsCalc.toScoreDetails(physicalAnalysis);
 
-  // Calculate spatial properties
-  const spatialAnalysis = spatialCalc.calculate(layout, products);
-  const spatialDetails = spatialCalc.toScoreDetails(spatialAnalysis);
+    // Calculate spatial properties
+    const spatialAnalysis = spatialCalc.calculate(layout, products);
+    const spatialDetails = spatialCalc.toScoreDetails(spatialAnalysis);
 
-  // Calculate volume properties
-  const volumeAnalysis = volumeCalc.calculate(layout, products);
+    // Calculate volume properties
+    const volumeDetails = volumeCalc.calculate(layout, products);
 
-  // Combine scores with weights
-  const physicalScore = physicalDetails.isotropy * 0.25;  // 物理分数权重
-  const symmetryScore = (spatialAnalysis.symmetry / 100) * 0.35;  // 对称性权重
-  const uniformityScore = (spatialAnalysis.uniformity / 100) * 0.2;  // 均匀性权重
-  const volumeScore = (volumeAnalysis.score / 100) * 0.2;  // 体积分数权重
-  
-  console.log(
-    `Raw scores before normalization:`,
-    `\nphysical=${physicalDetails.isotropy}`,
-    `\nsymmetry=${spatialAnalysis.symmetry}`,
-    `\nuniformity=${spatialAnalysis.uniformity}`,
-    `\nvolume=${volumeAnalysis.score}`
-  );
+    // Combine scores with weights
+    const weights = {
+      physical: 0.35,
+      spatial: 0.35,
+      volume: 0.3
+    };
 
-  console.log(
-    `Weighted scores:`,
-    `\nphysical=${(physicalScore*100).toFixed(1)}%`,
-    `\nsymmetry=${(symmetryScore*100).toFixed(1)}%`,
-    `\nuniformity=${(uniformityScore*100).toFixed(1)}%`,
-    `\nvolume=${(volumeScore*100).toFixed(1)}%`,
-    `\ntotal=${Math.round((physicalScore + symmetryScore + uniformityScore + volumeScore) * 100)}%`
-  );
+    const finalScore = Math.min(1,
+      physicalDetails.isotropy * weights.physical +
+      (spatialAnalysis.uniformity / 100) * weights.spatial +
+      volumeDetails.score * weights.volume / 100 // Convert volume score from 0-100 to 0-1
+    );
 
-  const score = Math.round(
-    (physicalScore + symmetryScore + uniformityScore + volumeScore) * 100
-  );  // 先乘以100再取整，避免小数被舍入为0
-
-  return {
-    score,
-    details: {
-      ...physicalDetails,
-      ...spatialDetails,
-      volumeBalance: volumeAnalysis.details
-    }
-  };
+    return {
+      score: finalScore,
+      details: {
+        principalMoments: physicalDetails.principalMoments,
+        principalAxes: physicalDetails.principalAxes,
+        gyrationRadius: physicalDetails.gyrationRadius,
+        isotropy: physicalDetails.isotropy,
+        centerDeviation: physicalDetails.centerDeviation,
+        volumeBalance: volumeDetails.details
+      }
+    };
+  } catch (error) {
+    console.error('Error calculating distribution score:', error);
+    return {
+      score: 0,
+      details: {
+        principalMoments: [0, 0],
+        principalAxes: [[1, 0], [0, 1]],
+        gyrationRadius: 0,
+        isotropy: 0,
+        centerDeviation: 1,
+        volumeBalance: {
+          densityVariance: 0,
+          heightBalance: 0,
+          massDistribution: 0,
+          symmetry: 0
+        }
+      }
+    };
+  }
 }

@@ -10,9 +10,30 @@ interface SymmetryAxis {
 }
 
 /**
+ * Configuration for symmetry analysis
+ */
+export interface SymmetryConfig {
+  /** Minimum quality threshold for accepting a symmetry axis (0-1) */
+  minQualityThreshold: number;
+  /** Distance decay factor for quality calculation */
+  distanceDecayFactor: number;
+}
+
+const DEFAULT_CONFIG: SymmetryConfig = {
+  minQualityThreshold: 0.35,
+  distanceDecayFactor: 100,
+};
+
+/**
  * Utility class for symmetry analysis
  */
 export class SymmetryAnalyzer {
+  private config: SymmetryConfig;
+
+  constructor(config: Partial<SymmetryConfig> = {}) {
+    this.config = { ...DEFAULT_CONFIG, ...config };
+  }
+
   /**
    * Find potential symmetry axes for a set of points
    * @param points Array of 2D points to analyze
@@ -24,36 +45,28 @@ export class SymmetryAnalyzer {
     weights?: number[]
   ): SymmetryAxis[] {
     if (points.length < 2) {
-      console.log('Not enough points for symmetry analysis');
       return [];
     }
 
     // Calculate weighted centroid
     const centroid = this.calculateWeightedCentroid(points, weights);
-    console.log('Centroid:', centroid);
     
-    // Get candidate angles from point pairs
-    const angles = this.getCandidateAngles(points, centroid);
-    console.log('Candidate angles:', angles.map(a => (a * 180 / Math.PI).toFixed(1) + '°'));
-    
-    // Evaluate each candidate angle
-    const axes = angles.map(angle => ({
-      angle,
-      origin: centroid,
-      quality: this.evaluateSymmetryQuality(points, weights, angle, centroid)
-    }));
+    // Only check vertical and horizontal axes
+    const axes = [
+      {
+        angle: 0, // Vertical axis
+        origin: centroid,
+        quality: this.evaluateSymmetryQuality(points, weights, 0, centroid)
+      },
+      {
+        angle: Math.PI / 2, // Horizontal axis
+        origin: centroid,
+        quality: this.evaluateSymmetryQuality(points, weights, Math.PI / 2, centroid)
+      }
+    ];
 
-    // Filter out low quality axes
-    const goodAxes = axes.filter(axis => axis.quality > 0.35);
-    console.log(
-      'Symmetry axes found:',
-      goodAxes.map(a => ({
-        angle: (a.angle * 180 / Math.PI).toFixed(1) + '°',
-        quality: a.quality.toFixed(2)
-      }))
-    );
-
-    return goodAxes;
+    // Filter by quality threshold
+    return axes.filter(axis => axis.quality > this.config.minQualityThreshold);
   }
 
   /**
@@ -65,9 +78,9 @@ export class SymmetryAnalyzer {
     weights?: number[]
   ): Point2D {
     const defaultWeight = 1 / points.length;
+    let totalWeight = 0;
     let sumX = 0;
     let sumY = 0;
-    let totalWeight = 0;
 
     points.forEach((point, i) => {
       const weight = weights?.[i] ?? defaultWeight;
@@ -80,58 +93,6 @@ export class SymmetryAnalyzer {
       x: sumX / totalWeight,
       y: sumY / totalWeight
     };
-  }
-
-  /**
-   * Get candidate angles for symmetry axes
-   * @private
-   */
-  private getCandidateAngles(
-    points: Point2D[],
-    centroid: Point2D
-  ): number[] {
-    const angles = new Set<number>();
-    
-    if (!points || points.length === 0 || !centroid) {
-      return [];
-    }
-
-    // Consider angles between each point and centroid
-    points.forEach(point => {
-      if (typeof point?.x !== 'number' || typeof point?.y !== 'number') {
-        return;
-      }
-
-      const dx = point.x - centroid.x;
-      const dy = point.y - centroid.y;
-      const angle = Math.atan2(dy, dx);
-      
-      // Add both perpendicular and parallel angles
-      angles.add(angle);
-      angles.add(angle + Math.PI / 2);
-    });
-
-    // Consider angles between point pairs
-    for (let i = 0; i < points.length; i++) {
-      const point1 = points[i];
-      if (typeof point1?.x !== 'number' || typeof point1?.y !== 'number') {
-        continue;
-      }
-
-      for (let j = i + 1; j < points.length; j++) {
-        const point2 = points[j];
-        if (typeof point2?.x !== 'number' || typeof point2?.y !== 'number') {
-          continue;
-        }
-
-        const dx = point2.x - point1.x;
-        const dy = point2.y - point1.y;
-        const angle = Math.atan2(dy, dx);
-        angles.add(angle);
-      }
-    }
-
-    return Array.from(angles);
   }
 
   /**
@@ -165,21 +126,12 @@ export class SymmetryAnalyzer {
       });
 
       // Convert distance to quality score (0-1)
-      // Use exponential decay for smoother scoring
-      const quality = Math.exp(-minDistance / 100);  // Increase decay factor from 50 to 100 for more leniency
+      const quality = Math.exp(-minDistance / this.config.distanceDecayFactor);
       totalQuality += quality * weight;
       totalWeight += weight;
     });
 
-    const avgQuality = totalQuality / totalWeight;
-    console.log(
-      `Quality for angle ${(angle * 180 / Math.PI).toFixed(1)}°:`,
-      `\nTotal quality: ${totalQuality.toFixed(2)}`,
-      `\nTotal weight: ${totalWeight.toFixed(2)}`,
-      `\nAverage quality: ${avgQuality.toFixed(2)}`
-    );
-
-    return avgQuality;
+    return totalQuality / totalWeight;
   }
 
   /**

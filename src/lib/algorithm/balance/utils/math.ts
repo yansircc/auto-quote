@@ -4,12 +4,12 @@
  */
 export function calculateWeightedVariance(
   values: number[],
-  weights: number[]
+  weights: number[],
 ): number {
   if (!values.length || !weights.length) return 0;
 
   if (values.length !== weights.length) {
-    throw new Error('Values and weights arrays must be of the same length.');
+    throw new Error("Values and weights arrays must be of the same length.");
   }
 
   const totalWeight = weights.reduce((sum, w) => sum + w, 0);
@@ -21,7 +21,7 @@ export function calculateWeightedVariance(
   return (
     values.reduce(
       (sum, v, i) => sum + weights[i]! * Math.pow(v - weightedMean, 2),
-      0
+      0,
     ) / totalWeight
   );
 }
@@ -32,12 +32,12 @@ export function calculateWeightedVariance(
  */
 export function calculateWeightedMean(
   values: number[],
-  weights: number[]
+  weights: number[],
 ): number {
   if (!values.length || !weights.length) return 0;
 
   if (values.length !== weights.length) {
-    throw new Error('Values and weights arrays must be of the same length.');
+    throw new Error("Values and weights arrays must be of the same length.");
   }
 
   const totalWeight = weights.reduce((sum, w) => sum + w, 0);
@@ -59,10 +59,10 @@ export function normalizeToRange(
   value: number,
   min: number,
   max: number,
-  invert = false
+  invert = false,
 ): number {
   if (min === max) return 50; // 当最大值等于最小值时返回中间值
-  
+
   const normalized = (value - min) / (max - min);
   const score = invert ? 1 - normalized : normalized;
   return Math.max(0, Math.min(100, score * 100));
@@ -75,10 +75,7 @@ export function normalizeToRange(
  * @param maxVariance The maximum acceptable variance (will result in score 0)
  * @returns Normalized score between 0 and 100
  */
-export function normalizeScore(
-  value: number,
-  maxVariance = 1000
-): number {
+export function normalizeScore(value: number, maxVariance = 1000): number {
   return normalizeToRange(value, 0, maxVariance, true);
 }
 
@@ -88,18 +85,16 @@ export function normalizeScore(
  * @param scoreWeightPairs 分数和权重对数组 [[score, weight], ...]
  * @returns 加权平均分（0-100）
  */
-export function weightedAverage(
-  scoreWeightPairs: [number, number][]
-): number {
+export function weightedAverage(scoreWeightPairs: [number, number][]): number {
   if (!scoreWeightPairs.length) return 0;
-  
+
   const totalWeight = scoreWeightPairs.reduce((sum, [_, w]) => sum + w, 0);
   if (totalWeight === 0) return 0;
-  
+
   const weightedSum = scoreWeightPairs.reduce(
     (sum, [score, weight]) => sum + Math.max(0, Math.min(100, score)) * weight,
-    0
+    0,
   );
-  
+
   return Math.max(0, Math.min(100, weightedSum / totalWeight));
 }

@@ -1,5 +1,5 @@
-import type { Product } from '@/types/geometry';
-import type { ValidationResult } from '../types';
+import type { Product } from '@/types/domain/product';
+import type { ValidationResult } from '@/types/algorithm/balance/geometry';
 import type { GeometryScoreConfig } from '../config';
 
 export class ProductValidator {

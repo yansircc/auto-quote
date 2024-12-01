@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { calculateBalanceScore } from '../score';
-import type { Rectangle, Product, Point2D } from '@/types/geometry';
+import type { Rectangle, Point2D } from '@/types/core/geometry';
+import type { Product } from '@/types/domain/product';
 import {
   perfectSquareLayout,
   linearLayout,

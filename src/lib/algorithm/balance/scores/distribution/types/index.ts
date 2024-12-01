@@ -1,4 +1,4 @@
-import type { Point2D } from '@/types/geometry';
+import type { Point2D } from '@/types/core/geometry';
 
 /**
  * Distribution score configuration
