@@ -29,6 +29,74 @@ export interface DetailedDistributionScore {
 }
 
 /**
+ * 几何特征评分
+ */
+export interface GeometryScore {
+  score: number;          // 总体几何分数 (0-100)
+  details: {
+    // 形状评分
+    shapeScore: {
+      aspectRatio: number;     // 长宽比评分 (0-100)
+      symmetry: number;        // 对称性评分 (0-100)
+      complexity: number;      // 复杂度评分 (0-100)
+      uniformity: number;      // 一致性评分 (0-100)
+    };
+    
+    // 尺寸评分
+    dimensionScore: {
+      sizeVariation: number;   // 尺寸变化评分 (0-100)
+      scaleRatio: number;      // 比例关系评分 (0-100)
+      consistency: number;     // 一致性评分 (0-100)
+    };
+    
+    // 产品相似度评分
+    similarityScore: {
+      shapeHomogeneity: number;    // 形状相似度 (0-100)
+      dimensionHomogeneity: number; // 尺寸相似度 (0-100)
+    };
+    
+    // 空间效率评分
+    efficiencyScore: {
+      packingDensity: number;       // 空间利用率 (0-100)
+      boundingBoxEfficiency: number; // 包围盒利用率 (0-100)
+    };
+  };
+}
+
+/**
+ * 几何特征分析
+ */
+export interface GeometryAnalysis {
+  // 形状特征
+  shape: {
+    aspectRatios: number[];        // 每个产品的长宽比
+    symmetryAxes: number[];        // 每个产品的对称轴数量
+    complexityMetrics: number[];   // 每个产品的复杂度指标
+  };
+  
+  // 尺寸特征
+  dimensions: {
+    volumes: number[];            // 体积
+    surfaceAreas: number[];       // 表面积
+    boundingBoxVolumes: number[]; // 包围盒体积
+    wallThicknesses?: number[];   // 壁厚（如果可用）
+  };
+  
+  // 相似度特征
+  similarity: {
+    shapeMatrix: number[][];     // 形状相似度矩阵
+    dimensionMatrix: number[][]; // 尺寸相似度矩阵
+  };
+  
+  // 空间效率
+  efficiency: {
+    totalVolume: number;         // 总体积
+    boundingBoxVolume: number;   // 包围盒体积
+    packingRatio: number;        // 填充率
+  };
+}
+
+/**
  * 详细的流动平衡分数，用于可视化展示
  */
 export interface DetailedFlowScore {
