@@ -306,3 +306,5 @@ describe('Geometry Score Calculation', () => {
     });
   });
 });
+
+// bun test src/lib/algorithm/balance/scores/geometry/__tests__/geometry.test.ts

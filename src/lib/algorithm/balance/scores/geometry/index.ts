@@ -1,5 +1,6 @@
 import type { Rectangle, Product, Point2D } from '@/types/geometry';
 import type { DetailedGeometryScore } from '@/types/balance';
+import { GeometryBalanceConfig as Config } from '../../config';
 
 /**
  * 计算几何平衡分数
@@ -92,31 +93,46 @@ export function calculateGeometryScore(
 
   // 5. 计算最终分数
   // 调整评分参数，使分数更合理
-  // 5.1 各向同性分数（40分）- 使用更温和的幂函数
-  const isotropyScore = 40 * (0.4 + 0.6 * Math.pow(isotropy, 0.05));  // 进一步提高基础分，更温和的惩罚
+  // 5.1 各向同性分数
+  const isotropyScore = Config.WEIGHTS.ISOTROPY * (
+    Config.ISOTROPY.BASE_SCORE + 
+    (1 - Config.ISOTROPY.BASE_SCORE) * Math.pow(isotropy, Config.ISOTROPY.POWER)
+  );
   
-  // 5.2 陀螺半径分数（30分）- 减小衰减速率
-  const gyrationScore = 30 * (0.2 + 0.8 * Math.exp(-0.8 * gyrationRadius));  // 保持不变
+  // 5.2 陀螺半径分数
+  const gyrationScore = Config.WEIGHTS.GYRATION * (
+    Config.GYRATION.BASE_SCORE + 
+    (1 - Config.GYRATION.BASE_SCORE) * Math.exp(-Config.GYRATION.DECAY * gyrationRadius)
+  );
   
-  // 5.3 质心偏移分数（30分）- 减小衰减速率并提高基础分
-  const centerScore = 30 * (0.2 + 0.8 * Math.exp(-2 * centerDeviation));  // 降低基础分，增加衰减系数
+  // 5.3 质心偏移分数
+  const centerScore = Config.WEIGHTS.CENTER * (
+    Config.CENTER.BASE_SCORE + 
+    (1 - Config.CENTER.BASE_SCORE) * Math.exp(-Config.CENTER.DECAY * centerDeviation)
+  );
 
   // 对于单个产品的特殊处理
   const finalScore = products.length === 1 
-    ? 95  // 单个产品默认给95分
+    ? Config.SPECIAL.SINGLE_PRODUCT
     : Math.min(100, Math.round(isotropyScore + gyrationScore + centerScore));
 
   // 对于完美对称布局的特殊处理
-  const isNearPerfect = isotropy > 0.95 && centerDeviation < 0.1 && gyrationRadius < 0.8;
-  const isSymmetric = isotropy > 0.8 && centerDeviation < 0.2;  // 新增：检测对称布局
+  const isNearPerfect = 
+    isotropy > Config.PATTERNS.PERFECT.ISOTROPY && 
+    centerDeviation < Config.PATTERNS.PERFECT.CENTER_DEV && 
+    gyrationRadius < Config.PATTERNS.PERFECT.GYRATION;
+
+  const isSymmetric = 
+    isotropy > Config.PATTERNS.SYMMETRIC.ISOTROPY && 
+    centerDeviation < Config.PATTERNS.SYMMETRIC.CENTER_DEV;
   
   let finalScoreWithBonus = finalScore;
   if (isNearPerfect) {
-    finalScoreWithBonus = Math.min(100, finalScore + 5);
+    finalScoreWithBonus = Math.min(100, finalScore + Config.PATTERNS.PERFECT.BONUS);
   } else if (isSymmetric) {
-    finalScoreWithBonus = Math.min(100, finalScore + 3);
+    finalScoreWithBonus = Math.min(100, finalScore + Config.PATTERNS.SYMMETRIC.BONUS);
   }
-  
+
   return {
     score: finalScoreWithBonus,
     details: {

@@ -1,6 +1,9 @@
 import type { Rectangle, Point2D, Product } from '@/types/geometry';
 import type { DetailedFlowScore } from '@/types/balance';
 import { calculateDistance, calculateRectCenter } from '../../utils/geometry';
+import { safeDivide, clamp } from '../../utils/numeric';
+import { calculateLayoutComplexity } from '../../utils/complexity';
+import { FlowBalanceConfig as Config } from '../../config';
 
 /**
  * Calculate basic flow score
@@ -24,7 +27,7 @@ export function calculateDetailedFlowScore(
   products: Product[],
   injectionPoint: Point2D
 ): DetailedFlowScore {
-  if (!layout.length || !products.length) {
+  if (!layout.length || !products.length || layout.length !== products.length) {
     return {
       flowPathBalance: 0,
       surfaceAreaBalance: 0,
@@ -33,7 +36,7 @@ export function calculateDetailedFlowScore(
     };
   }
 
-  // Calculate flow paths
+  // Calculate flow paths with safe distance calculation
   const flowPaths = products.map((product, i) => {
     if (product.flowLength != null) {
       return product.flowLength;
@@ -41,125 +44,180 @@ export function calculateDetailedFlowScore(
     const center = calculateRectCenter(layout[i]!);
     return calculateDistance(injectionPoint, center);
   });
-
+  
+  // Calculate layout complexity
+  const complexity = calculateLayoutComplexity(layout, flowPaths, injectionPoint);
+  
+  // Calculate flow statistics with safe operations
   const maxFlow = Math.max(...flowPaths);
   const minFlow = Math.min(...flowPaths);
-  const avgFlow = flowPaths.reduce((a, b) => a + b, 0) / flowPaths.length;
+  const avgFlow = safeDivide(flowPaths.reduce((a, b) => a + b, 0), flowPaths.length);
   
-  // Calculate normalized standard deviation for flow paths
-  const flowVariance = flowPaths.reduce((sum, flow) => 
-    sum + Math.pow(flow - avgFlow, 2), 0) / flowPaths.length;
-  const normalizedVariance = maxFlow === 0 ? 0 : flowVariance / (maxFlow * maxFlow);
+  // Calculate normalized variance with protection
+  const flowVariance = safeDivide(
+    flowPaths.reduce((sum, flow) => sum + Math.pow(flow - avgFlow, 2), 0),
+    flowPaths.length
+  );
+  const normalizedVariance = safeDivide(flowVariance, avgFlow * avgFlow);
   
-  // Detect layout patterns
+  // Detect layout patterns with dynamic thresholds
   const sortedFlows = [...flowPaths].sort((a, b) => a - b);
   
-  // Check for progressive pattern (like Z-shape)
-  const isProgressive = sortedFlows.every((flow, i) => 
-    i === 0 || (flow - sortedFlows[i-1]!) / maxFlow < 0.4  // More lenient threshold
+  // Check for symmetric pattern
+  const flowDeviations = flowPaths.map(flow => 
+    safeDivide(Math.abs(flow - avgFlow), Math.max(avgFlow, 0.001))
+  );
+  const maxFlowDiff = Math.max(...flowDeviations);
+  const symmetricThreshold = clamp(
+    Config.SYMMETRIC.DEFAULT * (1 + complexity.overallComplexity),
+    Config.SYMMETRIC.MIN,
+    Config.SYMMETRIC.MAX
+  );
+  const isSymmetric = maxFlowDiff < symmetricThreshold;
+  
+  // Check for progressive pattern
+  const normalizedDiffs = sortedFlows.slice(1).map((flow, i) => 
+    safeDivide(flow - sortedFlows[i]!, Math.max(maxFlow, 0.001))
   );
   
-  // Check for spiral pattern
-  const flowDiffs = sortedFlows.slice(1).map((flow, i) => 
-    flow - sortedFlows[i]!
+  const avgNormalizedDiff = safeDivide(
+    normalizedDiffs.reduce((sum, diff) => sum + diff, 0),
+    Math.max(normalizedDiffs.length, 1)
   );
-  const avgDiff = flowDiffs.reduce((a, b) => a + b, 0) / flowDiffs.length;
-  const diffVariance = flowDiffs.reduce((sum, diff) => 
-    sum + Math.pow(diff - avgDiff, 2), 0) / flowDiffs.length;
-  const isSpiral = diffVariance < avgDiff * 0.2;  // Stricter spiral detection
   
-  // Adjust penalties based on layout pattern
+  const diffVariation = normalizedDiffs.length > 0 ? 
+    Math.max(0, ...normalizedDiffs.map(diff => 
+      safeDivide(Math.abs(diff - avgNormalizedDiff), Math.max(avgNormalizedDiff, 0.001))
+    )) : 0;
+  
+  const progressiveThreshold = clamp(
+    Config.PROGRESSIVE.DEFAULT * (1 + complexity.overallComplexity),
+    Config.PROGRESSIVE.MIN,
+    Config.PROGRESSIVE.MAX
+  );
+  
+  const isProgressive = flowPaths.length <= 2 || (
+    avgNormalizedDiff > 0 && 
+    avgNormalizedDiff < progressiveThreshold &&
+    diffVariation < 0.5
+  );
+  
+  // Calculate penalties
   let rangePenalty = 0;
   let variancePenalty = 0;
   
   if (maxFlow > 0) {
-    // Range penalty based on max-min difference
-    rangePenalty = 100 * (maxFlow - minFlow) / maxFlow;
+    const relativeRange = safeDivide(maxFlow - minFlow, maxFlow);
+    const complexityFactor = 1 + complexity.overallComplexity * 0.3;
     
-    // Variance penalty based on normalized variance
-    variancePenalty = 100 * normalizedVariance;
+    if (isSymmetric) {
+      // Very low penalties for symmetric layouts
+      rangePenalty = 20 * Math.pow(relativeRange, 1.2) * complexityFactor;
+      variancePenalty = 25 * Math.pow(normalizedVariance, 1.2) * complexityFactor;
+    } else if (isProgressive) {
+      // Low penalties for progressive layouts
+      const progressiveQuality = clamp(1 - diffVariation, 0, 1);
+      rangePenalty = 35 * Math.pow(relativeRange, 1.2) * complexityFactor * (1 - progressiveQuality * 0.6);
+      variancePenalty = 45 * Math.pow(normalizedVariance, 1.2) * complexityFactor * (1 - progressiveQuality * 0.6);
+    } else {
+      // Standard penalties for other layouts
+      rangePenalty = 90 * Math.pow(relativeRange, 1.5) * complexityFactor;
+      variancePenalty = 110 * Math.pow(normalizedVariance, 1.5) * complexityFactor;
+    }
     
-    // Adjust penalties based on layout pattern
-    if (isProgressive) {
-      rangePenalty *= 0.5;  // Reduce range penalty for progressive layouts
-      variancePenalty *= 0.7;  // Slightly reduce variance penalty
-    } else if (isSpiral) {
-      rangePenalty *= 0.7;  // Moderately reduce range penalty for spiral layouts
-      variancePenalty *= 0.8;  // Moderately reduce variance penalty
+    // Apply pattern-based reductions
+    if (isSymmetric) {
+      const reductionFactor = clamp(0.15 * (1 + complexity.overallComplexity), 0.1, 0.25);
+      rangePenalty *= reductionFactor;
+      variancePenalty *= reductionFactor;
+    } else if (isProgressive) {
+      const progressiveQuality = clamp(1 - diffVariation, 0, 1);
+      const reductionFactor = clamp(
+        0.25 + 0.5 * progressiveQuality * (1 - complexity.overallComplexity),
+        0.2,
+        0.5
+      );
+      rangePenalty *= reductionFactor;
+      variancePenalty *= reductionFactor;
     }
   }
   
-  const flowPathBalance = Math.max(0, 100 - variancePenalty - rangePenalty);
-
-  // Calculate surface area balance using actual product surface area
+  // Calculate component scores
+  const flowPathBalance = clamp(100 - rangePenalty - variancePenalty, 0, 100);
+  
+  // Calculate surface area balance
   const surfaceAreas = products.map(p => p.cadData?.surfaceArea ?? 0);
-  console.log('Surface Areas:', surfaceAreas);
-  
-  const avgArea = surfaceAreas.reduce((a, b) => a + b, 0) / surfaceAreas.length;
-  console.log('Average Area:', avgArea);
-  
-  // Calculate normalized deviation for surface areas with higher tolerance
-  const areaDeviations = surfaceAreas.map(area => Math.abs(area - avgArea) / avgArea);
+  const avgArea = safeDivide(surfaceAreas.reduce((a, b) => a + b, 0), surfaceAreas.length);
+  const areaDeviations = surfaceAreas.map(area => 
+    safeDivide(Math.abs(area - avgArea), Math.max(avgArea, 0.001))
+  );
   const maxAreaDev = Math.max(...areaDeviations);
-  console.log('Area Deviations:', areaDeviations);
-  console.log('Max Area Deviation:', maxAreaDev);
-  // Allow up to 200% deviation before score goes to 0
-  const surfaceAreaBalance = Math.max(0, Math.min(100, 100 * (1 - maxAreaDev / 2)));
-  console.log('Surface Area Balance:', surfaceAreaBalance);
-
+  const surfaceAreaBalance = clamp(100 * (1 - maxAreaDev / 2), 0, 100);
+  
   // Calculate volume balance
   const volumes = products.map(p => p.cadData?.volume ?? 0);
-  console.log('Volumes:', volumes);
-  
-  const avgVolume = volumes.reduce((a, b) => a + b, 0) / volumes.length;
-  console.log('Average Volume:', avgVolume);
-  
-  // Calculate normalized deviation for volumes with higher tolerance
-  const volumeDeviations = volumes.map(vol => Math.abs(vol - avgVolume) / avgVolume);
+  const avgVolume = safeDivide(volumes.reduce((a, b) => a + b, 0), volumes.length);
+  const volumeDeviations = volumes.map(vol => 
+    safeDivide(Math.abs(vol - avgVolume), Math.max(avgVolume, 0.001))
+  );
   const maxVolDev = Math.max(...volumeDeviations);
-  console.log('Volume Deviations:', volumeDeviations);
-  console.log('Max Volume Deviation:', maxVolDev);
-  // Allow up to 200% deviation before score goes to 0
-  const volumeBalance = Math.max(0, Math.min(100, 100 * (1 - maxVolDev / 2)));
-  console.log('Volume Balance:', volumeBalance);
-
-  // Dynamic weights based on layout pattern - prioritize flow path more
+  const volumeBalance = clamp(100 * (1 - maxVolDev / 2), 0, 100);
+  
+  // Calculate weights with complexity adjustment
   const weights = {
-    flowPathBalance: 0.6,    // Increased from 0.4
-    surfaceAreaBalance: 0.2, // Decreased from 0.3
-    volumeBalance: 0.2       // Decreased from 0.3
+    flowPathBalance: clamp(
+      Config.WEIGHTS.FLOW_PATH.DEFAULT + complexity.overallComplexity * 0.1,
+      Config.WEIGHTS.FLOW_PATH.MIN,
+      Config.WEIGHTS.FLOW_PATH.MAX
+    ),
+    surfaceAreaBalance: clamp(
+      Config.WEIGHTS.SURFACE_AREA.DEFAULT - complexity.overallComplexity * 0.05,
+      Config.WEIGHTS.SURFACE_AREA.MIN,
+      Config.WEIGHTS.SURFACE_AREA.MAX
+    ),
+    volumeBalance: clamp(
+      Config.WEIGHTS.VOLUME.DEFAULT - complexity.overallComplexity * 0.05,
+      Config.WEIGHTS.VOLUME.MIN,
+      Config.WEIGHTS.VOLUME.MAX
+    )
   };
-
-  // Calculate total score
-  const totalScore = Math.min(100,
+  
+  // Normalize weights
+  const totalWeight = weights.flowPathBalance + weights.surfaceAreaBalance + weights.volumeBalance;
+  weights.flowPathBalance = safeDivide(weights.flowPathBalance, totalWeight);
+  weights.surfaceAreaBalance = safeDivide(weights.surfaceAreaBalance, totalWeight);
+  weights.volumeBalance = safeDivide(weights.volumeBalance, totalWeight);
+  
+  // Calculate weighted score
+  const weightedScore = 
     weights.flowPathBalance * flowPathBalance +
     weights.surfaceAreaBalance * surfaceAreaBalance +
-    weights.volumeBalance * volumeBalance
-  );
-
-  // Progressive boost based on layout type
-  let boostedTotalScore = totalScore;
-  if (isProgressive) {
-    // Z-shape layouts get more generous boost
-    if (totalScore > 85) boostedTotalScore = 95;
-    else if (totalScore > 70) boostedTotalScore = totalScore + 20;  // More aggressive boost
-    else if (totalScore > 50) boostedTotalScore = totalScore + 15;  // More aggressive lower tier boost
-  } else if (isSpiral) {
-    // Spiral layouts get reduced boost
-    if (totalScore > 92) boostedTotalScore = 95;
-    else if (totalScore > 85) boostedTotalScore = 87;  // Reduced high-end boost
-    else if (totalScore > 80) boostedTotalScore = totalScore + 2;  // Further reduced boost
-  } else {
-    // Other layouts get normal boost
-    if (totalScore > 95) boostedTotalScore = 100;
-    else if (totalScore > 90) boostedTotalScore = 95;
-    else if (totalScore > 85) boostedTotalScore = totalScore + 5;
+    weights.volumeBalance * volumeBalance;
+  
+  let finalScore = clamp(weightedScore, 0, 100);
+  
+  // Apply pattern-based boost
+  if (isSymmetric && finalScore > 70) {
+    const boostFactor = clamp(
+      1.15 - complexity.overallComplexity * 0.1,
+      1.05,
+      1.15
+    );
+    finalScore = clamp(finalScore * boostFactor, 0, 100);
+  } else if (isProgressive && finalScore > 60) {
+    const progressiveQuality = clamp(1 - diffVariation, 0, 1);
+    const boostFactor = clamp(
+      1.1 + 0.1 * progressiveQuality * (1 - complexity.overallComplexity),
+      1.05,
+      1.2
+    );
+    finalScore = clamp(finalScore * boostFactor, 0, 100);
   }
-
+  
   return {
     flowPathBalance,
     surfaceAreaBalance,
     volumeBalance,
-    overall: boostedTotalScore
+    overall: finalScore
   };
 }

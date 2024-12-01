@@ -5,10 +5,10 @@ import type { Point2D, Rectangle } from '@/types/geometry';
  * 计算两点间距离，单位为毫米
  */
 export function calculateDistance(p1: Point2D, p2: Point2D): number {
-  // Convert to millimeters
-  // 转换为毫米
-  const dx = p2.x - p1.x;
-  const dy = p2.y - p1.y;
+  // Convert to millimeters and use absolute values
+  // 转换为毫米并使用绝对值
+  const dx = Math.abs(p2.x - p1.x);
+  const dy = Math.abs(p2.y - p1.y);
   const distanceInMm = Math.sqrt(dx * dx + dy * dy);
   return distanceInMm;
 }
@@ -18,9 +18,11 @@ export function calculateDistance(p1: Point2D, p2: Point2D): number {
  * 计算矩形中心点
  */
 export function calculateRectCenter(rect: Rectangle): Point2D {
+  // For flow balance calculation, we use the position point directly
+  // 对于流动平衡计算，直接使用位置点
   return {
-    x: rect.x + rect.width / 2,
-    y: rect.y + rect.height / 2
+    x: rect.x,
+    y: rect.y
   };
 }
 
