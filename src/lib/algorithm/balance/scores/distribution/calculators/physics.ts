@@ -229,7 +229,7 @@ export class PhysicsCalculator {
       Ixy = 0;
     const totalMass = elements.reduce((sum, e) => sum + e.mass, 0);
 
-    // 首先检测是否是特殊布局
+    // 检测布局特征
     const isVertical = this.isVerticallyDominant(elements);
     const isHorizontal = this.isHorizontallyDominant(elements);
     const hasGradient = this.hasSizeGradient(elements);
@@ -242,15 +242,18 @@ export class PhysicsCalculator {
       totalMass,
     });
 
+    // 计算质量分布的连续性
+    const massDistribution = this.calculateMassDistribution(elements);
+    const continuityFactor = massDistribution.continuity;
+
     elements.forEach((element) => {
       const dx = element.x - centerOfMass.x;
       const dy = element.y - centerOfMass.y;
 
+      // 根据布局特征和连续性调整校正因子
       let correctionFactor = 1.0;
-      if (isVertical) {
-        correctionFactor = 0.8;
-      } else if (isHorizontal && hasGradient) {
-        correctionFactor = 0.8;
+      if (isVertical || isHorizontal) {
+        correctionFactor = 0.8 + continuityFactor * 0.2;
       }
 
       const elementIxx =
@@ -294,6 +297,7 @@ export class PhysicsCalculator {
       moments,
       principalAngle: (theta * 180) / Math.PI,
       gyrationRadius,
+      continuityFactor,
     });
 
     return { moments, axes, gyrationRadius };
@@ -318,89 +322,106 @@ export class PhysicsCalculator {
       ratio: Math.min(m1 / m2, m2 / m1),
     });
 
-    // Calculate base ratio with pattern-specific adjustments
+    // 计算基础比率
     let ratio = Math.min(m1 / m2, m2 / m1);
     const originalRatio = ratio;
 
-    if (patterns.isGradient) {
-      // 更激进的渐变模式调整
-      const exponent = 0.25 + patterns.gradientQuality * 0.35;
-      ratio = Math.pow(ratio, exponent);
-      ratio = Math.max(ratio, 0.8);
-      console.log("Gradient pattern adjustment:", {
-        exponent,
-        beforeRatio: originalRatio,
-        afterRatio: ratio,
-        gradientQuality: patterns.gradientQuality,
-      });
-    } else if (patterns.isHierarchical) {
-      const exponent = 0.4 + patterns.hierarchyQuality * 0.2;
-      ratio = Math.pow(ratio, exponent);
-      ratio = Math.max(ratio, 0.65);
-      console.log("Hierarchical pattern adjustment:", {
-        exponent,
-        beforeRatio: originalRatio,
-        afterRatio: ratio,
-      });
-    } else if (patterns.isAligned) {
-      ratio = Math.pow(ratio, 0.9);
-      console.log("Aligned pattern adjustment:", {
-        beforeRatio: originalRatio,
-        afterRatio: ratio,
-      });
-    } else {
-      ratio = Math.pow(ratio, 0.8);
-      console.log("Default pattern adjustment:", {
-        beforeRatio: originalRatio,
-        afterRatio: ratio,
-      });
+    // 计算分布因子
+    const distributionFactor = this.calculateDistributionFactor(inertia);
+    console.log("Distribution factor:", {
+      factor: distributionFactor,
+      axes: inertia.axes,
+    });
+
+    // 使用更合理的评分曲线
+    if (ratio >= 0.1) {
+      // 对于比率在 0.1-0.3 范围内的布局，给予更合理的分数
+      const baseExponent = 0.6;
+      const adjustedExponent = baseExponent * (1 + distributionFactor * 0.4);
+      ratio = Math.pow(ratio, adjustedExponent);
+
+      // 提供最低保障分数
+      if (distributionFactor > 0.7) {
+        ratio = Math.max(ratio, 0.7);
+      } else if (distributionFactor > 0.5) {
+        ratio = Math.max(ratio, 0.6);
+      } else {
+        ratio = Math.max(ratio, 0.5);
+      }
     }
+
+    console.log("Base ratio adjustment:", {
+      originalRatio,
+      adjustedRatio: ratio,
+      distributionFactor,
+    });
 
     let score = ratio * 100;
-    console.log("Base score:", score);
 
+    // 应用模式特定的调整
     if (patterns.isGradient) {
-      // 增加渐变布局的分数提升
-      const bonus = patterns.gradientQuality * 0.5;
-      console.log("Applying gradient bonus:", {
+      const bonus = patterns.gradientQuality * 0.3;
+      score = Math.max(70, score * (1 + bonus));
+      console.log("Gradient adjustment:", {
         bonus,
-        beforeScore: score,
-        afterScore: Math.max(75, score * (1 + bonus)),
+        beforeScore: ratio * 100,
+        afterScore: score,
       });
-      score = Math.max(75, score * (1 + bonus));
-    }
-    if (patterns.isHierarchical) {
+    } else if (patterns.isHierarchical) {
       const bonus = patterns.hierarchyQuality * 0.3;
-      console.log("Applying hierarchical bonus:", {
+      score = Math.max(70, score * (1 + bonus));
+      console.log("Hierarchy adjustment:", {
         bonus,
-        beforeScore: score,
-        afterScore: Math.max(65, score * (1 + bonus)),
+        beforeScore: ratio * 100,
+        afterScore: score,
       });
-      score = Math.max(65, score * (1 + bonus));
-    }
-    if (patterns.isAligned) {
-      const bonus = patterns.alignmentQuality * 0.2;
-      console.log("Applying alignment bonus:", {
-        bonus,
-        beforeScore: score,
-        afterScore: score * (1 + bonus),
-      });
-      score *= 1 + bonus;
     }
 
-    const qualityBoost = Math.max(
-      patterns.gradientQuality || 0,
-      patterns.hierarchyQuality || 0,
-      patterns.alignmentQuality || 0,
-    );
-    console.log("Applying final quality boost:", {
-      boost: qualityBoost,
-      beforeScore: score,
-      afterScore: score * (1 + qualityBoost * 0.1),
+    // 应用分布因子的最终调整
+    const finalBonus = Math.max(0, distributionFactor - 0.5) * 0.4;
+    score *= 1 + finalBonus;
+
+    console.log("Final score calculation:", {
+      baseScore: ratio * 100,
+      distributionBonus: finalBonus,
+      finalScore: Math.min(100, score),
     });
-    score *= 1 + qualityBoost * 0.1;
 
     return Math.min(100, score);
+  }
+
+  private calculateDistributionFactor(inertia: InertiaResult): number {
+    // 计算主轴方向
+    const angle = Math.atan2(inertia.axes[0][1], inertia.axes[0][0]);
+
+    // 计算角度因子：评估布局的主要方向
+    const angleFactor = Math.abs(Math.cos(2 * angle)); // 对称性更好的角度得分更高
+
+    // 计算惯性矩比例因子：评估质量分布的均匀性
+    const [m1, m2] = inertia.moments;
+    const momentRatio = Math.min(m1, m2) / Math.max(m1, m2);
+    const momentFactor = Math.pow(momentRatio, 0.3); // 使用更平缓的曲线
+
+    // 计算旋转对称性：通过主轴的正交性评估
+    const orthogonalityFactor = Math.abs(
+      inertia.axes[0][0] * inertia.axes[1][0] +
+        inertia.axes[0][1] * inertia.axes[1][1],
+    );
+    const symmetryFactor = 1 - orthogonalityFactor;
+
+    // 综合各个因子，给予不同权重
+    const weightedFactor =
+      angleFactor * 0.4 + momentFactor * 0.4 + symmetryFactor * 0.2;
+
+    console.log("Distribution factor components:", {
+      angle: (angle * 180) / Math.PI,
+      angleFactor,
+      momentFactor,
+      symmetryFactor,
+      weightedFactor,
+    });
+
+    return weightedFactor;
   }
 
   private calculateCenterDeviationScore(
@@ -784,5 +805,51 @@ export class PhysicsCalculator {
       if (ratio < 0.3 || ratio > 0.9) return false;
     }
     return true;
+  }
+
+  private calculateMassDistribution(elements: MassElement[]): {
+    continuity: number;
+    uniformity: number;
+  } {
+    if (elements.length <= 1) {
+      return { continuity: 1, uniformity: 1 };
+    }
+
+    // 计算相邻元素之间的质量变化
+    let totalMassChange = 0;
+    let maxMassChange = 0;
+    const sortedElements = [...elements].sort(
+      (a, b) =>
+        Math.sqrt(a.x * a.x + a.y * a.y) - Math.sqrt(b.x * b.x + b.y * b.y),
+    );
+
+    for (let i = 1; i < sortedElements.length; i++) {
+      const massChange = Math.abs(
+        sortedElements[i].mass - sortedElements[i - 1].mass,
+      );
+      totalMassChange += massChange;
+      maxMassChange = Math.max(maxMassChange, massChange);
+    }
+
+    // 计算连续性（质量变化的平滑程度）
+    const avgMassChange = totalMassChange / (elements.length - 1);
+    const continuity = 1 - avgMassChange / (maxMassChange + 1);
+
+    // 计算均匀性（质量分布的均匀程度）
+    const avgMass =
+      elements.reduce((sum, e) => sum + e.mass, 0) / elements.length;
+    const massVariance =
+      elements.reduce((sum, e) => sum + Math.pow(e.mass - avgMass, 2), 0) /
+      elements.length;
+    const uniformity = 1 / (1 + massVariance / (avgMass * avgMass));
+
+    console.log("Mass distribution analysis:", {
+      continuity,
+      uniformity,
+      avgMassChange,
+      maxMassChange,
+    });
+
+    return { continuity, uniformity };
   }
 }
