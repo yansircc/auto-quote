@@ -67,7 +67,7 @@ export const FlowBalanceConfig = {
 /**
  * 几何平衡算法配置
  */
-export const GeometryBalanceConfig = {
+export const DistributionBalanceConfig = {
   // 最终分数的组件权重
   WEIGHTS: {
     ISOTROPY: 40,     // 各向同性分数权重

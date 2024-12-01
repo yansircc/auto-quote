@@ -17,7 +17,7 @@ export interface BalanceScore {
 /**
  * 详细的几何平衡分数，用于可视化展示
  */
-export interface DetailedGeometryScore {
+export interface DetailedDistributionScore {
   score: number;          // 总体几何分数 (0-100)
   details: {
     principalMoments: [number, number];  // 主惯性矩（特征值）

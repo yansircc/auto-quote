@@ -1,8 +1,8 @@
-import { calculateGeometryScore } from '../index';
+import { calculateDistributionScore } from '../index';
 import type { Product, Dimensions3D, Rectangle } from '@/types/geometry';
 import { describe, expect, test } from "vitest";
 
-describe('Geometry Score Calculation', () => {
+describe('Distribution Score Calculation', () => {
   // 辅助函数：创建布局
   const createLayout = (positions: [number, number][]): Record<number, Rectangle> => {
     return positions.reduce((layout, [x, y], index) => {
@@ -37,7 +37,7 @@ describe('Geometry Score Calculation', () => {
     test('空布局返回100分', () => {
       const layout = {};
       const products: Product[] = [];
-      const result = calculateGeometryScore(layout, products);
+      const result = calculateDistributionScore(layout, products);
       expect(result.score).toBe(100);
     });
 
@@ -46,7 +46,7 @@ describe('Geometry Score Calculation', () => {
       const products = [
         createSizedProduct(1, 100, SIZES.MEDIUM)  // 使用中型产品
       ];
-      const result = calculateGeometryScore(layout, products);
+      const result = calculateDistributionScore(layout, products);
       expect(result.score).toBe(95);  // 单个产品固定95分
     });
 
@@ -60,7 +60,7 @@ describe('Geometry Score Calculation', () => {
         createSizedProduct(3, 100, SIZES.SMALL),
         createSizedProduct(4, 100, SIZES.SMALL),
       ];
-      const result = calculateGeometryScore(layout, products);
+      const result = calculateDistributionScore(layout, products);
       expect(result.score).toBeGreaterThan(85);  // 降低期望分数
     });
   });
@@ -76,7 +76,7 @@ describe('Geometry Score Calculation', () => {
         createSizedProduct(3, 100, SIZES.MEDIUM),
         createSizedProduct(4, 100, SIZES.MEDIUM),
       ];
-      const result = calculateGeometryScore(layout, products);
+      const result = calculateDistributionScore(layout, products);
       expect(result.score).toBeGreaterThan(85);  // 降低期望分数
     });
 
@@ -88,7 +88,7 @@ describe('Geometry Score Calculation', () => {
         createSizedProduct(1, 100, SIZES.LONG),  // 使用长条产品
         createSizedProduct(2, 100, SIZES.LONG),
       ];
-      const result = calculateGeometryScore(layout, products);
+      const result = calculateDistributionScore(layout, products);
       expect(result.score).toBeGreaterThan(60);  // 降低期望分数
     });
 
@@ -101,7 +101,7 @@ describe('Geometry Score Calculation', () => {
         createSizedProduct(2, 100, SIZES.LONG),
         createSizedProduct(3, 100, SIZES.LONG),
       ];
-      const result = calculateGeometryScore(layout, products);
+      const result = calculateDistributionScore(layout, products);
       expect(result.score).toBeGreaterThan(60);  // 降低期望分数
     });
   });
@@ -116,7 +116,7 @@ describe('Geometry Score Calculation', () => {
         createSizedProduct(2, 100, SIZES.MEDIUM),
         createSizedProduct(3, 100, SIZES.SMALL),
       ];
-      const result = calculateGeometryScore(layout, products);
+      const result = calculateDistributionScore(layout, products);
       expect(result.score).toBeLessThan(80);  // 提高分数上限
     });
 
@@ -129,7 +129,7 @@ describe('Geometry Score Calculation', () => {
         createSizedProduct(2, 100, SIZES.WIDE),
         createSizedProduct(3, 100, SIZES.FLAT),
       ];
-      const result = calculateGeometryScore(layout, products);
+      const result = calculateDistributionScore(layout, products);
       expect(result.score).toBeGreaterThan(50);
     });
   });
@@ -147,7 +147,7 @@ describe('Geometry Score Calculation', () => {
         createSizedProduct(5, 100, SIZES.CUBE),  // 立方体
         createSizedProduct(6, 100, SIZES.FLAT),  // 扁平产品
       ];
-      const result = calculateGeometryScore(layout, products);
+      const result = calculateDistributionScore(layout, products);
       expect(result.score).toBeGreaterThan(75);  // 降低期望分数
       expect(result.details.gyrationRadius).toBeLessThan(1.0);  // 提高陀螺半径容忍度
     });
@@ -161,7 +161,7 @@ describe('Geometry Score Calculation', () => {
         createSizedProduct(2, 100, SIZES.CUBE),
         createSizedProduct(3, 100, SIZES.CUBE),
       ];
-      const result = calculateGeometryScore(layout, products);
+      const result = calculateDistributionScore(layout, products);
       expect(result.score).toBeGreaterThan(70);
     });
   });
@@ -181,7 +181,7 @@ describe('Geometry Score Calculation', () => {
       const products = Array(8).fill(null).map((_, i) => 
         createSizedProduct(i + 1, 100, SIZES.MEDIUM)
       );
-      const result = calculateGeometryScore(layout, products);
+      const result = calculateDistributionScore(layout, products);
       expect(result.score).toBeGreaterThanOrEqual(90);
       expect(result.details.isotropy).toBeGreaterThan(0.9);
     });
@@ -196,7 +196,7 @@ describe('Geometry Score Calculation', () => {
       const products = Array(8).fill(null).map((_, i) => 
         createSizedProduct(i + 1, 100, SIZES.CUBE)
       );
-      const result = calculateGeometryScore(layout, products);
+      const result = calculateDistributionScore(layout, products);
       expect(result.score).toBeGreaterThan(85);
     });
 
@@ -209,7 +209,7 @@ describe('Geometry Score Calculation', () => {
       const products = Array(6).fill(null).map((_, i) => 
         createSizedProduct(i + 1, 100, SIZES.SMALL)
       );
-      const result = calculateGeometryScore(layout, products);
+      const result = calculateDistributionScore(layout, products);
       expect(result.score).toBeGreaterThan(85);
       expect(result.details.isotropy).toBeGreaterThan(0.8);
     });
@@ -233,7 +233,7 @@ describe('Geometry Score Calculation', () => {
         createSizedProduct(5, 100, SIZES.WIDE),
         createSizedProduct(6, 100, SIZES.TALL)
       ];
-      const result = calculateGeometryScore(layout, products);
+      const result = calculateDistributionScore(layout, products);
       expect(result.score).toBeLessThan(85);  // 调整期望值，允许螺旋形布局得到较高分数
     });
 
@@ -260,7 +260,7 @@ describe('Geometry Score Calculation', () => {
         createSizedProduct(8, 100, SIZES.MEDIUM),
         createSizedProduct(9, 100, SIZES.MEDIUM)
       ];
-      const result = calculateGeometryScore(layout, products);
+      const result = calculateDistributionScore(layout, products);
       expect(result.score).toBeGreaterThan(75);
       expect(result.details.centerDeviation).toBeLessThan(0.3);
     });
@@ -281,7 +281,7 @@ describe('Geometry Score Calculation', () => {
         createSizedProduct(5, 100, SIZES.FLAT),
         createSizedProduct(6, 100, SIZES.FLAT)
       ];
-      const result = calculateGeometryScore(layout, products);
+      const result = calculateDistributionScore(layout, products);
       expect(result.score).toBeGreaterThan(80);
     });
 
@@ -300,11 +300,11 @@ describe('Geometry Score Calculation', () => {
         createSizedProduct(6, 100, SIZES.MEDIUM),
         createSizedProduct(7, 100, SIZES.MEDIUM)
       ];
-      const result = calculateGeometryScore(layout, products);
+      const result = calculateDistributionScore(layout, products);
       expect(result.score).toBeGreaterThan(70);
       expect(result.details.gyrationRadius).toBeLessThan(1.0);
     });
   });
 });
 
-// bun test src/lib/algorithm/balance/scores/geometry/__tests__/geometry.test.ts
+// bun test src/lib/algorithm/balance/scores/distribution/__tests__/distribution.test.ts
