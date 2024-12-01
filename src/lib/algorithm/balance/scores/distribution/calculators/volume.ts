@@ -189,11 +189,17 @@ export class VolumeCalculator {
             Math.max(0.7, 1 - Math.abs(rect1Radius - rect2Radius)),
           );
 
-          // Combined asymmetry calculation
-          const asymmetry = Math.min(
-            normalizedDist * positionWeight + sizeDiff * (1 - positionWeight),
-            Math.sqrt(normalizedDist * sizeDiff), // Geometric mean of differences
-          );
+          // Adjust size difference based on radial position
+          const adjustedSizeDiff =
+            sizeDiff * Math.min(1, Math.abs(rect1Radius - rect2Radius) * 1.2);
+
+          // Combined asymmetry calculation with adjusted size difference
+          const asymmetry =
+            Math.min(
+              normalizedDist * positionWeight +
+                adjustedSizeDiff * (1 - positionWeight),
+              Math.sqrt(normalizedDist * adjustedSizeDiff), // Geometric mean of differences
+            ) * 0.95; // Slight overall reduction in asymmetry
 
           minAsymmetry = Math.min(minAsymmetry, asymmetry);
         });
