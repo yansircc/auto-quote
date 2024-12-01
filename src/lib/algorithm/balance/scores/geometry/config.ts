@@ -4,12 +4,20 @@ export interface GeometryScoreConfig {
     shapeWeight: number;
     dimensionWeight: number;
   };
+  efficiency: {
+    planarDensityWeight: number;     // 平面密度权重
+    volumeUtilizationWeight: number; // 体积利用率权重
+    heightDistributionWeight: number; // 高度分布权重
+  };
   curves: {
     perfectScoreThreshold: number;
     nearPerfectThreshold: number;
     midPointRatio: number;
     slopeFactor: number;
-    basePenaltyExponent: number;
+    basePenaltyExponent: number;     // 基础惩罚指数
+    densityPenaltyExponent: number;  // 密度惩罚指数
+    volumePenaltyExponent: number;   // 体积惩罚指数
+    heightPenaltyExponent: number;   // 高度惩罚指数
   };
   tolerance: {
     ratio: number;
@@ -20,19 +28,27 @@ export interface GeometryScoreConfig {
 // 默认配置
 export const defaultConfig: GeometryScoreConfig = {
   similarity: {
-    aspectRatioWeight: 0.6,    // 进一步增加长宽比权重
-    shapeWeight: 0.3,          // 调整形状权重
-    dimensionWeight: 0.1,      // 进一步降低尺寸权重
+    aspectRatioWeight: 0.5,    // 降低长宽比权重
+    shapeWeight: 0.3,
+    dimensionWeight: 0.2,      // 增加尺寸权重
+  },
+  efficiency: {
+    planarDensityWeight: 0.35,      // 降低平面密度权重
+    volumeUtilizationWeight: 0.35,   // 降低体积利用率权重
+    heightDistributionWeight: 0.3,   // 增加高度分布权重
   },
   curves: {
-    perfectScoreThreshold: 0.75,  // 降低完美分数阈值
-    nearPerfectThreshold: 0.80,   // 降低近似完美阈值
-    midPointRatio: 0.65,          // 降低中点比率，使曲线更陡峭
-    slopeFactor: 8.0,             // 增加斜率因子，使分数变化更剧烈
-    basePenaltyExponent: 3.0,     // 大幅增加惩罚指数，特别是对效率分数
+    perfectScoreThreshold: 0.6,     // 降低完美分数阈值
+    nearPerfectThreshold: 0.65,     // 降低接近完美阈值
+    midPointRatio: 0.5,             // 降低中点比例
+    slopeFactor: 10.0,              // 增加斜率因子
+    basePenaltyExponent: 4.0,       // 基础惩罚指数
+    densityPenaltyExponent: 3.0,    // 密度惩罚指数（较宽松）
+    volumePenaltyExponent: 3.5,     // 体积惩罚指数（中等）
+    heightPenaltyExponent: 4.0      // 高度惩罚指数（较严格）
   },
   tolerance: {
-    ratio: 0.03,     // 适度的相对容差
-    minimum: 0.1,    // 适度的绝对容差
+    ratio: 0.02,                    // 降低比例容忍度
+    minimum: 0.05,                  // 降低最小容忍度
   }
 };

@@ -18,23 +18,35 @@ export interface ShapeFeatures {
   aspectRatio: number;
 }
 
+// 形状评分
+export interface ShapeScore {
+  aspectRatio: number;
+  symmetry: number;
+  complexity: number;
+  uniformity: number;
+}
+
+// 尺寸评分
+export interface DimensionScore {
+  sizeVariation: number;
+  scaleRatio: number;
+  consistency: number;
+}
+
+// 效率评分
+export interface EfficiencyScore {
+  planarDensity: number;
+  volumeUtilization: number;
+  heightDistribution: number;
+}
+
 // 几何评分
 export interface GeometryScore {
-  // 总分（0-100）
   score: number;
-  
-  // 子项得分（0-100）
   details: {
-    shapeSimilarity: number;    // 形状相似度
-    dimensionRatio: number;     // 尺寸比例
-    basicEfficiency: number;    // 基础空间效率
-  };
-  
-  // 分析数据
-  analysis: {
-    averageAspectRatio: number;   // 平均长宽比
-    dimensionVariance: number;    // 尺寸方差
-    shapeHomogeneity: number;     // 形状同质性
+    shapeScore: ShapeScore;
+    dimensionScore: DimensionScore;
+    efficiencyScore: EfficiencyScore;
   };
 }
 
@@ -75,6 +87,8 @@ export interface NormalizedProduct {
     length: number;
     width: number;
     height: number;
+    x?: number;
+    y?: number;
   };
   volume: number;
   surfaceArea: number;

@@ -57,8 +57,9 @@ export interface GeometryScore {
     
     // 空间效率评分
     efficiencyScore: {
-      packingDensity: number;       // 空间利用率 (0-100)
-      boundingBoxEfficiency: number; // 包围盒利用率 (0-100)
+      planarDensity: number;      // 平面空间利用率 (0-100)
+      volumeUtilization: number;  // 体积利用效率 (0-100)
+      heightDistribution: number; // 高度分布合理性 (0-100)
     };
   };
 }

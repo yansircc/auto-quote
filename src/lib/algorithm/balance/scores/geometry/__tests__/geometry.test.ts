@@ -185,7 +185,8 @@ describe('GeometryScorer', () => {
         })
       ];
       const score = scorer.calculateScore(products);
-      expect(score.details.efficiencyScore.packingDensity).toBeGreaterThan(90);
+      expect(score.details.efficiencyScore.planarDensity).toBeGreaterThan(90);
+      expect(score.details.efficiencyScore.volumeUtilization).toBeGreaterThan(90);
     });
 
     it('低效排列应得低分', () => {
@@ -204,7 +205,8 @@ describe('GeometryScorer', () => {
         })
       ];
       const score = scorer.calculateScore(products);
-      expect(score.details.efficiencyScore.packingDensity).toBeLessThan(70);
+      expect(score.details.efficiencyScore.planarDensity).toBeLessThan(70);
+      expect(score.details.efficiencyScore.volumeUtilization).toBeLessThan(70);
     });
 
     it('处理混合尺寸组合', () => {
@@ -229,7 +231,9 @@ describe('GeometryScorer', () => {
         })
       ];
       const score = scorer.calculateScore(products);
-      expect(score.details.efficiencyScore.packingDensity).toBeLessThan(65);
+      expect(score.details.efficiencyScore.planarDensity).toBeLessThan(65);
+      expect(score.details.efficiencyScore.volumeUtilization).toBeLessThan(65);
+      expect(score.details.efficiencyScore.heightDistribution).toBeLessThan(70);
     });
   });
 
@@ -252,8 +256,8 @@ describe('GeometryScorer', () => {
       ];
       const score = scorer.calculateScore(products);
       
-      expect(score.details.similarityScore.shapeHomogeneity).toBeGreaterThan(80);
-      expect(score.details.similarityScore.dimensionHomogeneity).toBeGreaterThan(80);
+      expect(score.details.shapeScore.uniformity).toBeGreaterThan(80);
+      expect(score.details.dimensionScore.consistency).toBeGreaterThan(80);
       
       // 验证长宽比计算
       if (products[0]) {
@@ -261,8 +265,6 @@ describe('GeometryScorer', () => {
         const actualAspectRatio = p1.dimensions.length / p1.dimensions.width;
         expect(actualAspectRatio).toBeCloseTo(2, 1);
       }
-      
-      expect(score.details.dimensionScore.consistency).toBeGreaterThan(80);
     });
 
     it('处理极端相似情况', () => {
@@ -281,8 +283,8 @@ describe('GeometryScorer', () => {
         })
       ];
       const score = scorer.calculateScore(products);
-      expect(score.details.similarityScore.shapeHomogeneity).toBeGreaterThan(95);
-      expect(score.details.similarityScore.dimensionHomogeneity).toBeGreaterThan(95);
+      expect(score.details.shapeScore.uniformity).toBeGreaterThan(95);
+      expect(score.details.dimensionScore.consistency).toBeGreaterThan(95);
     });
 
     it('处理极端差异情况', () => {
@@ -301,8 +303,8 @@ describe('GeometryScorer', () => {
         })
       ];
       const score = scorer.calculateScore(products);
-      expect(score.details.similarityScore.shapeHomogeneity).toBeLessThan(30);
-      expect(score.details.similarityScore.dimensionHomogeneity).toBeLessThan(30);
+      expect(score.details.shapeScore.uniformity).toBeLessThan(30);
+      expect(score.details.dimensionScore.consistency).toBeLessThan(30);
     });
   });
 

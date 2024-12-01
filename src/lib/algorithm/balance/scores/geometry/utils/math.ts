@@ -37,27 +37,17 @@ export function safeDivide(numerator: number, denominator: number): number {
 export function applyNonlinearMapping(
   value: number, 
   exponent: number,
-  config: GeometryScoreConfig
+  _config: GeometryScoreConfig
 ): number {
   // 确保输入值在有效范围内
   const normalizedValue = Math.max(0, Math.min(1, value));
 
-  // 使用配置的阈值处理接近完美的情况
-  const { perfectScoreThreshold } = config.curves;
-  if (normalizedValue > perfectScoreThreshold) {
-    // 在阈值附近使用线性插值，保持较高分数
-    return perfectScoreThreshold + (normalizedValue - perfectScoreThreshold) * 2;
+  // 对于较低分数，使用更严格的惩罚
+  if (normalizedValue < 0.3) {
+    return normalizedValue * 0.5;
   }
   
-  // 对于严格模式，使用指数作为惩罚因子
-  if (exponent > 1) {
-    // 计算惩罚系数，随着exponent增加而增加
-    const penaltyFactor = Math.pow(2, exponent - 1);
-    // 对非完美分数进行惩罚
-    return Math.pow(normalizedValue, penaltyFactor);
-  }
-
-  // 对于标准模式，直接使用指数
+  // 对于一般情况，使用指数映射
   return Math.pow(normalizedValue, exponent);
 }
 
