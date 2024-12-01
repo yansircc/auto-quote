@@ -1,12 +1,6 @@
 import type { Rectangle } from "@/types/core/geometry";
 import type { Product } from "@/types/domain/product";
 
-interface GridCell {
-  x: number;
-  y: number;
-  occupied: boolean;
-}
-
 interface SpatialResult {
   uniformity: number;
   density: number;
@@ -103,9 +97,9 @@ export class SpatialCalculator {
     // Create grid
     const gridWidth = Math.ceil((bounds.maxX - bounds.minX) / cellSize);
     const gridHeight = Math.ceil((bounds.maxY - bounds.minY) / cellSize);
-    const grid: boolean[][] = Array(gridHeight)
-      .fill(false)
-      .map(() => Array(gridWidth).fill(false));
+    const grid: boolean[][] = Array.from({ length: gridHeight }, () =>
+      Array.from({ length: gridWidth }, () => false),
+    );
 
     // Mark occupied cells
     rectangles.forEach((rect) => {
@@ -117,7 +111,7 @@ export class SpatialCalculator {
       for (let y = startY; y < endY; y++) {
         for (let x = startX; x < endX; x++) {
           if (y >= 0 && y < gridHeight && x >= 0 && x < gridWidth) {
-            grid[y][x] = true;
+            grid[y]![x] = true;
           }
         }
       }
@@ -130,7 +124,7 @@ export class SpatialCalculator {
 
     for (let y = 0; y < gridHeight; y++) {
       for (let x = 0; x < gridWidth; x++) {
-        if (grid[y][x]) {
+        if (grid[y]![x]) {
           occupiedCells++;
           let neighbors = 0;
           // Check 8 neighbors
@@ -144,7 +138,7 @@ export class SpatialCalculator {
                 ny < gridHeight &&
                 nx >= 0 &&
                 nx < gridWidth &&
-                grid[ny][nx]
+                grid[ny]![nx]
               ) {
                 neighbors++;
               }

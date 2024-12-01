@@ -2,10 +2,6 @@ import { describe, expect, test } from "vitest";
 import { calculateDistributionScore } from "../index";
 import type { Rectangle } from "@/types/core/geometry";
 import type { Product, Dimensions3D } from "@/types/domain/product";
-import {
-  normalizeToHundred,
-  normalizeScore,
-} from "@/lib/algorithm/balance/utils/math";
 
 describe("分布平衡评分测试", () => {
   // 生产相关常量
@@ -135,12 +131,6 @@ describe("分布平衡评分测试", () => {
   //   console.log("----------------------------------------\n");
   // }
 
-  function analyzeScores(
-    result: ReturnType<typeof calculateDistributionScore>,
-  ) {
-    console.log(JSON.stringify(result, null, 2));
-  }
-
   describe("多场景综合测试", () => {
     test("场景1：完美圆形布局", () => {
       // 测试完美对称性的基准场景
@@ -268,7 +258,6 @@ describe("分布平衡评分测试", () => {
 
       // 根据最大产品尺寸调整半径
       const maxSize = 300;
-      const minSize = 30;
       const baseRadius = maxSize * 1.5; // 确保中心大产品有足够空间
       const positions: [number, number][] = [
         [0, 0],

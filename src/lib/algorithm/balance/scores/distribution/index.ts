@@ -21,6 +21,21 @@ export interface DetailedDistributionScore {
   };
 }
 
+interface InertiaResult {
+  principalMoments: [number, number];
+  principalAxes: [[number, number], [number, number]];
+  gyrationRadius: number;
+  isotropy: number;
+  centerDeviation: number;
+}
+
+interface VolumeResult {
+  score: number;
+  details: {
+    symmetry: number;
+  };
+}
+
 export function calculateDistributionScore(
   layout: Record<number, Rectangle>,
   products: Product[],
@@ -66,8 +81,6 @@ export function calculateDistributionScore(
     console.log("Calculating spatial properties...");
     const spatialAnalysis = spatialCalc.calculate(layout, products);
     // console.log("Spatial analysis:", spatialAnalysis);
-    const spatialDetails = spatialCalc.toScoreDetails(spatialAnalysis);
-    // console.log("Spatial details:", spatialDetails);
 
     console.log("Calculating volume properties...");
     const volumeDetails = volumeCalc.calculate(layout, products);
@@ -127,7 +140,7 @@ export function calculateDistributionScore(
       },
     };
   } catch (error) {
-    // console.error("Error calculating distribution score:", error);
+    console.error("Error calculating distribution score:", error);
     return {
       score: 0,
       details: {
@@ -156,12 +169,12 @@ function detectLayoutPatterns(
   products: Product[],
 ): { isGradient: boolean; isHierarchical: boolean; quality: number } {
   const rectangles = Object.values(layout);
-  const sizes = products.map((p) => p.dimensions?.width || 0);
+  const sizes = products.map((p) => p.dimensions?.width ?? 0);
 
   // Check for size gradient with improved quality measure
   const diffs = sizes
     .slice(1)
-    .map((size, i) => Math.abs(size - sizes[i]) / sizes[i]);
+    .map((size, i) => Math.abs(size - (sizes[i] ?? size)) / (sizes[i] ?? size));
   const avgDiff = diffs.reduce((sum, diff) => sum + diff, 0) / diffs.length;
   const isGradient = diffs.every((diff) => diff <= 0.5);
 
@@ -182,7 +195,7 @@ function detectLayoutPatterns(
 }
 
 function calculatePhysicalScore(
-  details: any,
+  details: InertiaResult,
   patterns: { isGradient: boolean; isHierarchical: boolean; quality: number },
 ): number {
   let isotropyWeight = 0.7;
@@ -213,7 +226,7 @@ function calculatePhysicalScore(
 }
 
 function calculateVolumeScore(
-  details: any,
+  details: VolumeResult,
   patterns: { isGradient: boolean; isHierarchical: boolean; quality: number },
 ): number {
   let baseWeight = 0.7;
@@ -245,7 +258,7 @@ function calculateVolumeScore(
 function calculatePatternBonus(
   patterns: { isGradient: boolean; isHierarchical: boolean; quality: number },
   layout: Record<number, Rectangle>,
-  products: Product[],
+  _products: Product[],
 ): number {
   let bonus = 0;
 
@@ -258,7 +271,7 @@ function calculatePatternBonus(
     const positions = Object.values(layout).map((r) => r.x);
     const spacings = positions
       .slice(1)
-      .map((pos, i) => Math.abs(pos - positions[i]));
+      .map((pos, i) => Math.abs(pos - (positions[i] ?? pos)));
     const avgSpacing =
       spacings.reduce((sum, s) => sum + s, 0) / spacings.length;
     const spacingVariance =

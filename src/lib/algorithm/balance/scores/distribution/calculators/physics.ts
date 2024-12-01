@@ -1,7 +1,6 @@
 import type { Rectangle } from "@/types/core/geometry";
 import type { Product } from "@/types/domain/product";
 import type { Point2D } from "@/types/core/geometry";
-import { calculateWeightedMean } from "../../../utils/math";
 
 interface MassElement {
   x: number;
@@ -232,7 +231,6 @@ export class PhysicsCalculator {
     // 检测布局特征
     const isVertical = this.isVerticallyDominant(elements);
     const isHorizontal = this.isHorizontallyDominant(elements);
-    const hasGradient = this.hasSizeGradient(elements);
 
     // console.log("Layout characteristics:", {
     //   isVertical,
@@ -324,7 +322,6 @@ export class PhysicsCalculator {
 
     // 计算基础比率
     let ratio = Math.min(m1 / m2, m2 / m1);
-    const originalRatio = ratio;
 
     // 计算分布因子
     const distributionFactor = this.calculateDistributionFactor(inertia);
@@ -471,7 +468,7 @@ export class PhysicsCalculator {
       );
       avgRadius += radius;
     });
-    avgRadius /= rectangles.length;
+    avgRadius /= rectangles.length || 1;
 
     // Apply pattern-specific radius adjustments
     let adjustedAvgRadius = avgRadius;
@@ -493,7 +490,7 @@ export class PhysicsCalculator {
       );
 
       // Apply pattern-specific weight adjustments
-      let weight = rectArea / totalArea;
+      let weight = totalArea > 0 ? rectArea / totalArea : 1;
       if (patterns.isGradient) {
         // Reduce weight for gradient layouts
         weight *= 0.7 + patterns.gradientQuality * 0.3;
@@ -549,12 +546,21 @@ export class PhysicsCalculator {
   ): { isGradient: boolean; gradientQuality: number } {
     // 计算所有区域并按大小排序
     const areas = products
-      .map((p, i) => ({
-        area: layout[p.id].width * layout[p.id].length,
-        index: i,
-        x: layout[p.id].x,
-      }))
+      .map((p) => {
+        const rect = layout[p.id];
+        if (!rect) return null;
+        return {
+          area: rect.width * rect.length,
+          index: products.indexOf(p),
+          x: rect.x,
+        };
+      })
+      .filter((item): item is NonNullable<typeof item> => item !== null)
       .sort((a, b) => b.area - a.area);
+
+    if (areas.length === 0) {
+      return { isGradient: false, gradientQuality: 0 };
+    }
 
     // 检测空间位置的渐变性
     const spatialGradient = this.checkSpatialGradient(areas);
@@ -566,9 +572,9 @@ export class PhysicsCalculator {
     let maxConsecutiveValid = 0;
 
     // 同时考虑递增和递减序列
-    const ratios = [];
+    const ratios: number[] = [];
     for (let i = 1; i < areas.length; i++) {
-      const ratio = areas[i].area / areas[i - 1].area;
+      const ratio = (areas[i]?.area ?? 0) / (areas[i - 1]?.area ?? 1);
       ratios.push(ratio);
 
       // 放宽比率范围，更容易识别渐变模式
@@ -597,7 +603,7 @@ export class PhysicsCalculator {
 
     // 优化渐变质量计算
     let gradientQuality = 0;
-    if (isGradient) {
+    if (isGradient && validSteps > 0) {
       // 基础质量分数
       const avgRatio = totalRatio / validSteps;
       const baseQuality = 1 - Math.abs(avgRatio - 0.65) / 0.45;
@@ -616,17 +622,6 @@ export class PhysicsCalculator {
       gradientQuality = Math.max(0.65, gradientQuality);
     }
 
-    // console.log("Gradient detection:", {
-    //   ratios,
-    //   validSteps,
-    //   totalRatio,
-    //   hasSegmentedGradient,
-    //   spatialGradient,
-    //   directionConsistency,
-    //   isGradient,
-    //   gradientQuality,
-    // });
-
     return { isGradient, gradientQuality };
   }
 
@@ -638,9 +633,12 @@ export class PhysicsCalculator {
     let decreasingCount = 0;
 
     for (let i = 1; i < xPositions.length; i++) {
-      if (xPositions[i] > xPositions[i - 1]) {
+      const currentPos = xPositions[i] ?? 0;
+      const previousPos = xPositions[i - 1] ?? 0;
+
+      if (currentPos > previousPos) {
         increasingCount++;
-      } else if (xPositions[i] < xPositions[i - 1]) {
+      } else if (currentPos < previousPos) {
         decreasingCount++;
       }
     }
@@ -660,9 +658,12 @@ export class PhysicsCalculator {
     let decreasingCount = 0;
 
     for (let i = 1; i < ratios.length; i++) {
-      if (ratios[i] > ratios[i - 1]) {
+      const currentRatio = ratios[i] ?? 0;
+      const previousRatio = ratios[i - 1] ?? 0;
+
+      if (currentRatio > previousRatio) {
         increasingCount++;
-      } else if (ratios[i] < ratios[i - 1]) {
+      } else if (currentRatio < previousRatio) {
         decreasingCount++;
       }
     }
@@ -675,12 +676,17 @@ export class PhysicsCalculator {
     isHierarchical: boolean;
     hierarchyQuality: number;
   } {
-    const yPositions = Array.from(
-      new Set(Object.values(layout).map((r) => r.y)),
-    ).sort((a, b) => a - b);
+    const rectangles = Object.values(layout);
+    if (rectangles.length === 0) {
+      return { isHierarchical: false, hierarchyQuality: 0 };
+    }
+
+    const yPositions = Array.from(new Set(rectangles.map((r) => r.y))).sort(
+      (a, b) => a - b,
+    );
 
     const levelCount = yPositions.length;
-    const rectangleCount = Object.keys(layout).length;
+    const rectangleCount = rectangles.length;
     const isHierarchical = levelCount >= 2 && levelCount <= rectangleCount / 2;
 
     if (!isHierarchical) {
@@ -689,12 +695,18 @@ export class PhysicsCalculator {
 
     // Calculate level distribution quality
     const levelSizes = yPositions.map(
-      (y) => Object.values(layout).filter((r) => r.y === y).length,
+      (y) => rectangles.filter((r) => r.y === y).length,
     );
+
+    if (levelSizes.length <= 1) {
+      return { isHierarchical: false, hierarchyQuality: 0 };
+    }
 
     let qualityScore = 0;
     for (let i = 1; i < levelSizes.length; i++) {
-      const ratio = levelSizes[i] / levelSizes[i - 1];
+      const currentSize = levelSizes[i] ?? 0;
+      const previousSize = levelSizes[i - 1] ?? 0;
+      const ratio = currentSize / previousSize;
       // Prefer ratios between 0.4 and 0.6 (ideal hierarchy)
       if (ratio >= 0.4 && ratio <= 0.6) {
         qualityScore++;
@@ -711,6 +723,9 @@ export class PhysicsCalculator {
     alignmentQuality: number;
   } {
     const rectangles = Object.values(layout);
+    if (rectangles.length === 0) {
+      return { isAligned: false, alignmentQuality: 0 };
+    }
 
     // Check horizontal alignment
     const yPositions = new Set(rectangles.map((r) => r.y + r.length / 2));
@@ -727,49 +742,57 @@ export class PhysicsCalculator {
     }
 
     // Calculate alignment quality
-    let alignmentQuality;
+    let alignmentQuality = 0;
     if (horizontallyAligned) {
       const positions = Array.from(yPositions);
-      const avgSpacing =
-        positions.reduce(
-          (sum, pos, i, arr) =>
-            i > 0 ? sum + Math.abs(pos - arr[i - 1]) : sum,
-          0,
-        ) /
-        (positions.length - 1);
+      if (positions.length > 1) {
+        const avgSpacing =
+          positions.reduce(
+            (sum, pos, i, arr) =>
+              i > 0 ? sum + Math.abs(pos - (arr[i - 1] ?? 0)) : sum,
+            0,
+          ) /
+          (positions.length - 1);
 
-      const variance =
-        positions.reduce(
-          (sum, pos, i, arr) =>
-            i > 0
-              ? sum + Math.pow(Math.abs(pos - arr[i - 1]) - avgSpacing, 2)
-              : sum,
-          0,
-        ) /
-        (positions.length - 1);
+        const variance =
+          positions.reduce(
+            (sum, pos, i, arr) =>
+              i > 0
+                ? sum +
+                  Math.pow(Math.abs(pos - (arr[i - 1] ?? 0)) - avgSpacing, 2)
+                : sum,
+            0,
+          ) /
+          (positions.length - 1);
 
-      alignmentQuality = 1 - Math.min(1, variance / (avgSpacing * avgSpacing));
+        alignmentQuality =
+          1 - Math.min(1, variance / (avgSpacing * avgSpacing));
+      }
     } else {
       const positions = Array.from(xPositions);
-      const avgSpacing =
-        positions.reduce(
-          (sum, pos, i, arr) =>
-            i > 0 ? sum + Math.abs(pos - arr[i - 1]) : sum,
-          0,
-        ) /
-        (positions.length - 1);
+      if (positions.length > 1) {
+        const avgSpacing =
+          positions.reduce(
+            (sum, pos, i, arr) =>
+              i > 0 ? sum + Math.abs(pos - (arr[i - 1] ?? 0)) : sum,
+            0,
+          ) /
+          (positions.length - 1);
 
-      const variance =
-        positions.reduce(
-          (sum, pos, i, arr) =>
-            i > 0
-              ? sum + Math.pow(Math.abs(pos - arr[i - 1]) - avgSpacing, 2)
-              : sum,
-          0,
-        ) /
-        (positions.length - 1);
+        const variance =
+          positions.reduce(
+            (sum, pos, i, arr) =>
+              i > 0
+                ? sum +
+                  Math.pow(Math.abs(pos - (arr[i - 1] ?? 0)) - avgSpacing, 2)
+                : sum,
+            0,
+          ) /
+          (positions.length - 1);
 
-      alignmentQuality = 1 - Math.min(1, variance / (avgSpacing * avgSpacing));
+        alignmentQuality =
+          1 - Math.min(1, variance / (avgSpacing * avgSpacing));
+      }
     }
 
     return { isAligned, alignmentQuality };
@@ -801,7 +824,9 @@ export class PhysicsCalculator {
   private hasSizeGradient(elements: MassElement[]): boolean {
     const areas = elements.map((e) => e.width * e.length).sort((a, b) => b - a);
     for (let i = 1; i < areas.length; i++) {
-      const ratio = areas[i] / areas[i - 1];
+      const currentArea = areas[i] ?? 0;
+      const previousArea = areas[i - 1] ?? 0;
+      const ratio = currentArea / previousArea;
       if (ratio < 0.3 || ratio > 0.9) return false;
     }
     return true;
@@ -825,7 +850,7 @@ export class PhysicsCalculator {
 
     for (let i = 1; i < sortedElements.length; i++) {
       const massChange = Math.abs(
-        sortedElements[i].mass - sortedElements[i - 1].mass,
+        (sortedElements[i]?.mass ?? 0) - (sortedElements[i - 1]?.mass ?? 0),
       );
       totalMassChange += massChange;
       maxMassChange = Math.max(maxMassChange, massChange);

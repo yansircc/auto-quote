@@ -114,14 +114,12 @@ export class VolumeCalculator {
       minY = Infinity;
     let maxX = -Infinity,
       maxY = -Infinity;
-    let totalArea = 0;
 
     rectangles.forEach((rect) => {
       minX = Math.min(minX, rect.x);
       minY = Math.min(minY, rect.y);
       maxX = Math.max(maxX, rect.x + rect.width);
       maxY = Math.max(maxY, rect.y + rect.length);
-      totalArea += rect.width * rect.length;
     });
 
     const centerX = (minX + maxX) / 2;
@@ -162,8 +160,8 @@ export class VolumeCalculator {
 
           // Calculate normalized distance
           const dist = Math.sqrt(
-            Math.pow(rect2Center.x - mirrorX, 2) +
-              Math.pow(rect2Center.y - mirrorY, 2),
+            Math.pow(rect2Center.x - (mirrorX ?? 0), 2) +
+              Math.pow(rect2Center.y - (mirrorY ?? 0), 2),
           );
           const normalizedDist = dist / maxRadius;
 
@@ -226,7 +224,9 @@ export class VolumeCalculator {
 
     for (let i = 0; i < angles.length; i++) {
       const j = (i + 1) % angles.length;
-      let gap = angles[j] - angles[i];
+      const currentAngle = angles[i] ?? 0;
+      const nextAngle = angles[j] ?? 0;
+      let gap = nextAngle - currentAngle;
       if (gap < 0) gap += 2 * Math.PI;
 
       // Normalize gap difference with improved scaling
@@ -280,7 +280,8 @@ export class VolumeCalculator {
     const positions = Array.from(uniquePositions);
     const avgSpacing =
       positions.reduce(
-        (sum, pos, i, arr) => (i > 0 ? sum + Math.abs(pos - arr[i - 1]) : sum),
+        (sum, pos, i, arr) =>
+          i > 0 ? sum + Math.abs(pos - (arr[i - 1] ?? pos)) : sum,
         0,
       ) /
       (positions.length - 1);
@@ -289,7 +290,8 @@ export class VolumeCalculator {
       positions.reduce(
         (sum, pos, i, arr) =>
           i > 0
-            ? sum + Math.pow(Math.abs(pos - arr[i - 1]) - avgSpacing, 2)
+            ? sum +
+              Math.pow(Math.abs(pos - (arr[i - 1] ?? pos)) - avgSpacing, 2)
             : sum,
         0,
       ) /
@@ -317,7 +319,8 @@ export class VolumeCalculator {
     const positions = Array.from(uniquePositions);
     const avgSpacing =
       positions.reduce(
-        (sum, pos, i, arr) => (i > 0 ? sum + Math.abs(pos - arr[i - 1]) : sum),
+        (sum, pos, i, arr) =>
+          i > 0 ? sum + Math.abs(pos - (arr[i - 1] ?? pos)) : sum,
         0,
       ) /
       (positions.length - 1);
@@ -326,7 +329,8 @@ export class VolumeCalculator {
       positions.reduce(
         (sum, pos, i, arr) =>
           i > 0
-            ? sum + Math.pow(Math.abs(pos - arr[i - 1]) - avgSpacing, 2)
+            ? sum +
+              Math.pow(Math.abs(pos - (arr[i - 1] ?? pos)) - avgSpacing, 2)
             : sum,
         0,
       ) /
@@ -349,7 +353,9 @@ export class VolumeCalculator {
     let validSteps = 0;
 
     for (let i = 1; i < areas.length; i++) {
-      const ratio = areas[i] / areas[i - 1];
+      const currentArea = areas[i] ?? 0;
+      const previousArea = areas[i - 1] ?? 0;
+      const ratio = currentArea / previousArea;
       if (ratio >= 0.3 && ratio <= 0.9) {
         totalRatio += ratio;
         validSteps++;
@@ -374,7 +380,7 @@ export class VolumeCalculator {
     hierarchyQuality: number;
   } {
     const yPositions = Array.from(new Set(rectangles.map((r) => r.y)));
-    const levelCount = yPositions.size;
+    const levelCount = yPositions.length;
     const isHierarchical =
       levelCount >= 2 && levelCount <= rectangles.length / 2;
 
@@ -389,7 +395,9 @@ export class VolumeCalculator {
     );
 
     // Calculate level spacing quality
-    const levelSpacings = yPositions.slice(1).map((y, i) => y - yPositions[i]);
+    const levelSpacings = yPositions
+      .slice(1)
+      .map((y, i) => y - (yPositions[i] ?? y));
     const avgSpacing =
       levelSpacings.reduce((sum, s) => sum + s, 0) / levelSpacings.length;
     const spacingVariance =
@@ -401,7 +409,9 @@ export class VolumeCalculator {
     // Calculate size distribution quality
     let sizeQuality = 0;
     for (let i = 1; i < levelSizes.length; i++) {
-      const ratio = levelSizes[i] / levelSizes[i - 1];
+      const currentSize = levelSizes[i] ?? 0;
+      const previousSize = levelSizes[i - 1] ?? 0;
+      const ratio = currentSize / previousSize;
       // Prefer ratios between 0.4 and 0.6 (ideal hierarchy)
       if (ratio >= 0.4 && ratio <= 0.6) {
         sizeQuality++;
