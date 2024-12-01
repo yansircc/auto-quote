@@ -1,13 +1,7 @@
 import type { Rectangle } from "@/types/core/geometry";
 import type { Product } from "@/types/domain/product";
-import { DistributionBalanceConfig as Config } from "../config";
-import { SymmetryAnalyzer } from "../utils/symmetry";
 
-/**
- * Calculator for volume distribution analysis
- * Analyzes height and density distribution in a 2D layout
- */
-export interface VolumeCalculatorResult {
+interface VolumeResult {
   score: number;
   details: {
     densityVariance: number;
@@ -18,447 +12,466 @@ export interface VolumeCalculatorResult {
 }
 
 export class VolumeCalculator {
-  private config: Required<VolumeDistributionConfig>;
-  private symmetryAnalyzer: SymmetryAnalyzer;
-
-  constructor(config: Partial<VolumeDistributionConfig> = {}) {
-    this.config = {
-      ...DEFAULT_VOLUME_DISTRIBUTION_CONFIG,
-      weights: {
-        ...DEFAULT_VOLUME_DISTRIBUTION_CONFIG.weights,
-        ...(config.weights ?? {}),
-      },
-    };
-    this.symmetryAnalyzer = new SymmetryAnalyzer({
-      minQualityThreshold: this.config.minSymmetryQuality,
-      distanceDecayFactor: this.config.symmetryDistanceDecay,
-    });
+  constructor() {
+    this.calculate = this.calculate.bind(this);
   }
 
-  /**
-   * Calculate volume distribution score and details
-   */
   calculate(
     layout: Record<number, Rectangle>,
     products: Product[],
-  ): VolumeCalculatorResult {
-    // Handle empty case
-    if (products.length === 0) {
+  ): VolumeResult {
+    // Handle empty or single product case
+    if (products.length <= 1) {
       return {
         score: 100,
         details: {
-          densityVariance: 1,
-          heightBalance: 1,
-          massDistribution: 1,
-          symmetry: 1,
+          densityVariance: 100,
+          heightBalance: 100,
+          massDistribution: 100,
+          symmetry: 100,
         },
       };
     }
 
-    // Handle single product case
-    if (products.length === 1) {
-      const rect = Object.values(layout)[0];
-      if (!rect) {
-        return {
-          score: 0,
-          details: {
-            densityVariance: 0,
-            heightBalance: 0,
-            massDistribution: 0,
-            symmetry: 0,
-          },
-        };
-      }
-
-      // For single product, calculate based on center position
-      const centerX = rect.x + rect.width / 2;
-      const centerY = rect.y + rect.length / 2;
-      const maxDimension = Math.max(rect.width, rect.length);
-      const centerDeviation =
-        Math.sqrt(centerX * centerX + centerY * centerY) / maxDimension;
-
-      // More lenient scoring for single product
-      const score = Math.max(0, Math.min(100, (1 - centerDeviation) * 100));
-
-      return {
-        score,
-        details: {
-          densityVariance: score / 100,
-          heightBalance: 1, // Single product is always height balanced
-          massDistribution: score / 100,
-          symmetry: score / 100,
-        },
-      };
-    }
-
-    // Calculate volume distribution
-    const volumes = this.calculateVolumes(layout, products);
-    const densityVariance = this.calculateDensityVariance(volumes);
-    const heightBalance = this.calculateHeightBalance(layout, products);
-    const massDistribution = this.calculateMassDistribution(layout, products);
-    const symmetry = this.calculateSymmetryScore(layout, products);
-
-    // Combine scores with weights
-    const weights = {
-      densityVariance: 0.3,
-      heightBalance: 0.2,
-      massDistribution: 0.3,
-      symmetry: 0.2,
-    };
-
-    const score = Math.min(
-      100,
-      densityVariance * weights.densityVariance * 100 +
-        heightBalance * weights.heightBalance * 100 +
-        massDistribution * weights.massDistribution * 100 +
-        symmetry * weights.symmetry * 100,
+    // Calculate volume metrics
+    const volumes = products.map((p) =>
+      p.dimensions
+        ? p.dimensions.width * p.dimensions.length * p.dimensions.height
+        : 0,
     );
+    const totalVolume = volumes.reduce((sum, v) => sum + v, 0);
+    const avgVolume = totalVolume / products.length;
 
-    return {
-      score,
-      details: {
-        densityVariance,
-        heightBalance,
-        massDistribution,
-        symmetry,
-      },
-    };
-  }
-
-  /**
-   * Calculate density variance score
-   * @private
-   */
-  private calculateDensityVariance(volumes: number[]): number {
-    if (volumes.length <= 1) return 1;
-
-    const mean =
-      volumes.reduce((sum, volume) => sum + volume, 0) / volumes.length;
-    if (mean === 0) return 0;
-
-    const variance =
-      volumes.reduce((sum, volume) => sum + Math.pow(volume - mean, 2), 0) /
-      volumes.length;
-    const stdDev = Math.sqrt(variance);
-    const coefficientOfVariation = stdDev / mean;
-
-    // Convert coefficient of variation to score
-    const maxAcceptableCV = this.config.maxAcceptableCV;
-    return Math.max(
+    // Calculate volume variance with moderate scoring
+    const volumeVariance =
+      volumes.reduce((sum, v) => sum + Math.pow(v - avgVolume, 2), 0) /
+      products.length;
+    const normalizedVariance = Math.max(
       0,
-      Math.min(1, 1 - coefficientOfVariation / maxAcceptableCV),
-    );
-  }
-
-  /**
-   * Calculate height balance score
-   * @private
-   */
-  private calculateHeightBalance(
-    layout: Record<number, Rectangle>,
-    products: Product[],
-  ): number {
-    if (products.length <= 1) return 1;
-
-    const heights = products.map((product) => {
-      const rect = layout[product.id];
-      return rect ? rect.length : 0;
-    });
-
-    const mean = heights.reduce((sum, h) => sum + h, 0) / heights.length;
-    if (mean === 0) return 0;
-
-    const variance =
-      heights.reduce((sum, h) => sum + Math.pow(h - mean, 2), 0) /
-      heights.length;
-    const stdDev = Math.sqrt(variance);
-    const coefficientOfVariation = stdDev / mean;
-
-    // More lenient scoring for height balance
-    return Math.max(0, Math.min(1, 1 - coefficientOfVariation / 2));
-  }
-
-  /**
-   * Calculate mass distribution score
-   * @private
-   */
-  private calculateMassDistribution(
-    layout: Record<number, Rectangle>,
-    products: Product[],
-  ): number {
-    if (products.length <= 1) return 1;
-
-    const centerOfMass = this.calculateCenterOfMass(layout, products);
-    if (!centerOfMass) return 0;
-
-    // Calculate distance from geometric center
-    const bounds = this.getLayoutBounds(layout);
-    if (!bounds) return 0;
-
-    const geometricCenterX = (bounds.maxX + bounds.minX) / 2;
-    const geometricCenterY = (bounds.maxY + bounds.minY) / 2;
-
-    const maxDistance =
-      Math.sqrt(
-        Math.pow(bounds.maxX - bounds.minX, 2) +
-          Math.pow(bounds.maxY - bounds.minY, 2),
-      ) / 2;
-
-    const distance = Math.sqrt(
-      Math.pow(centerOfMass.x - geometricCenterX, 2) +
-        Math.pow(centerOfMass.y - geometricCenterY, 2),
+      Math.min(100, 100 - (volumeVariance / (avgVolume * avgVolume)) * 120),
     );
 
-    // More lenient scoring for mass distribution
-    return Math.max(0, Math.min(1, 1 - distance / maxDistance));
-  }
+    // Calculate height balance with moderate scoring
+    const heights = products.map((p) => p.dimensions?.height ?? 0);
+    const maxHeight = Math.max(...heights);
+    const heightVariance =
+      heights.reduce((sum, h) => sum + Math.pow(h - maxHeight, 2), 0) /
+      products.length;
+    const heightBalance = Math.max(
+      0,
+      Math.min(100, 100 - (heightVariance / (maxHeight * maxHeight)) * 120),
+    );
 
-  /**
-   * Calculate symmetry score
-   * @private
-   */
-  private calculateSymmetryScore(
-    layout: Record<number, Rectangle>,
-    products: Product[],
-  ): number {
-    if (products.length <= 1) return 1;
+    // Calculate mass distribution with moderate scoring
+    const masses = products.map((p) => p.weight ?? 1);
+    const totalMass = masses.reduce((sum, m) => sum + m, 0);
+    const avgMass = totalMass / products.length;
+    const massVariance =
+      masses.reduce((sum, m) => sum + Math.pow(m - avgMass, 2), 0) /
+      products.length;
+    const massDistribution = Math.max(
+      0,
+      Math.min(100, 100 - (massVariance / (avgMass * avgMass)) * 120),
+    );
 
-    const points = products
-      .map((product) => {
-        const rect = layout[product.id];
-        return rect
-          ? {
-              x: rect.x + rect.width / 2,
-              y: rect.y + rect.length / 2,
-              weight: rect.width * rect.length,
-            }
-          : null;
-      })
-      .filter((p): p is NonNullable<typeof p> => p !== null);
+    // Calculate symmetry with moderate scoring
+    const symmetryScore = this.calculateSymmetry(layout);
 
-    if (points.length === 0) return 0;
-
-    // Find principal axes
-    const principalAxes = this.findPrincipalAxes(points);
-    if (!principalAxes) return 0;
-
-    // Calculate symmetry quality
-    const quality = this.calculateSymmetryQuality(points, principalAxes);
-
-    // More lenient scoring for symmetry
-    return Math.max(0, Math.min(1, quality));
-  }
-
-  /**
-   * Get bounds of layout
-   * @private
-   */
-  private getLayoutBounds(
-    layout: Record<number, Rectangle>,
-  ): { minX: number; maxX: number; minY: number; maxY: number } | null {
-    const positions = Object.values(layout);
-    if (!positions || positions.length === 0) return null;
-
-    const firstPos = positions[0];
-    if (!firstPos) return null;
-
-    const initialBounds = {
-      minX: firstPos.x,
-      maxX: firstPos.x + firstPos.width,
-      minY: firstPos.y,
-      maxY: firstPos.y + firstPos.length,
+    // Adjust weights to be more balanced
+    const weights = {
+      densityVariance: 0.35,
+      heightBalance: 0.15,
+      massDistribution: 0.35,
+      symmetry: 0.15,
     };
 
-    return positions.reduce(
-      (bounds, pos) => ({
-        minX: Math.min(bounds.minX, pos.x),
-        maxX: Math.max(bounds.maxX, pos.x + pos.width),
-        minY: Math.min(bounds.minY, pos.y),
-        maxY: Math.max(bounds.maxY, pos.y + pos.length),
-      }),
-      initialBounds,
+    const details = {
+      densityVariance: normalizedVariance,
+      heightBalance,
+      massDistribution,
+      symmetry: symmetryScore,
+    };
+
+    const score = Object.entries(weights).reduce(
+      (sum, [key, weight]) =>
+        sum + details[key as keyof typeof details] * weight,
+      0,
     );
+
+    // Apply moderate penalty
+    return {
+      score: Math.min(100, score * 0.95),
+      details,
+    };
   }
 
-  /**
-   * Create density grid for layout
-   * @private
-   */
-  private createDensityGrid(
-    layout: Record<number, Rectangle>,
-    products: Product[],
-    bounds: {
-      minX: number;
-      maxX: number;
-      minY: number;
-      maxY: number;
-    },
-    gridSize: number,
-  ): number[][] {
-    // Initialize grid with explicit typing
-    const grid: number[][] = Array.from({ length: gridSize }, () =>
-      Array.from({ length: gridSize }, () => 0),
-    );
+  private calculateSymmetry(layout: Record<number, Rectangle>): number {
+    const rectangles = Object.values(layout);
+    if (rectangles.length <= 1) return 100;
 
-    // Calculate cell size
-    const width = bounds.maxX - bounds.minX;
-    const height = bounds.maxY - bounds.minY;
-    const cellWidth = width / gridSize;
-    const cellHeight = height / gridSize;
+    // Find center and bounds
+    let minX = Infinity,
+      minY = Infinity;
+    let maxX = -Infinity,
+      maxY = -Infinity;
+    let totalArea = 0;
 
-    // Fill grid with product volumes
-    products.forEach((product) => {
-      const rect = layout[product.id];
-      if (!rect) return; // Skip if no layout position found
+    rectangles.forEach((rect) => {
+      minX = Math.min(minX, rect.x);
+      minY = Math.min(minY, rect.y);
+      maxX = Math.max(maxX, rect.x + rect.width);
+      maxY = Math.max(maxY, rect.y + rect.length);
+      totalArea += rect.width * rect.length;
+    });
 
-      const volume =
-        (product.dimensions?.width ?? 0) *
-        (product.dimensions?.length ?? 0) *
-        (product.dimensions?.height ?? 0);
+    const centerX = (minX + maxX) / 2;
+    const centerY = (minY + maxY) / 2;
+    const layoutWidth = maxX - minX;
+    const layoutLength = maxY - minY;
+    const maxRadius =
+      Math.sqrt(layoutWidth * layoutWidth + layoutLength * layoutLength) / 2;
 
-      // Calculate grid cells covered by this product
-      const startX = Math.floor((rect.x - bounds.minX) / cellWidth);
-      const startY = Math.floor((rect.y - bounds.minY) / cellHeight);
-      const endX = Math.min(
-        gridSize - 1,
-        Math.floor((rect.x + rect.width - bounds.minX) / cellWidth),
-      );
-      const endY = Math.min(
-        gridSize - 1,
-        Math.floor((rect.y + rect.length - bounds.minY) / cellHeight),
-      );
+    // Calculate pattern-specific metrics with improved detection
+    const { isVerticallyAligned, verticalQuality } =
+      this.checkVerticalAlignment(rectangles);
+    const { isHorizontallyAligned, horizontalQuality } =
+      this.checkHorizontalAlignment(rectangles);
+    const { isGradient, gradientQuality } = this.checkSizeGradient(rectangles);
+    const { isHierarchical, hierarchyQuality } =
+      this.checkHierarchicalLevels(rectangles);
 
-      // Add volume to covered cells
-      for (let x = startX; x <= endX; x++) {
-        for (let y = startY; y <= endY; y++) {
-          if (x >= 0 && y >= 0 && x < gridSize && y < gridSize) {
-            const coverage = this.calculateCellCoverage(
-              rect,
-              bounds.minX + x * cellWidth,
-              bounds.minY + y * cellHeight,
-              cellWidth,
-              cellHeight,
-            );
-            grid[y]![x]! += volume * coverage;
+    // Calculate axial symmetry with improved pattern-specific weights
+    let axialAsymmetry = 0;
+    rectangles.forEach((rect1) => {
+      const axes = [
+        {
+          flip: (x: number, y: number) => [2 * centerX - x, y],
+          weight: isHorizontallyAligned ? 0.8 + horizontalQuality * 0.2 : 0.5,
+        },
+        {
+          flip: (x: number, y: number) => [x, 2 * centerY - y],
+          weight: isVerticallyAligned ? 0.8 + verticalQuality * 0.2 : 0.5,
+        },
+      ];
+
+      const rect1Center = {
+        x: rect1.x + rect1.width / 2,
+        y: rect1.y + rect1.length / 2,
+      };
+
+      axes.forEach((axis) => {
+        const [mirrorX, mirrorY] = axis.flip(rect1Center.x, rect1Center.y);
+        let minAsymmetry = Infinity;
+
+        rectangles.forEach((rect2) => {
+          if (rect2 === rect1) return;
+
+          const rect2Center = {
+            x: rect2.x + rect2.width / 2,
+            y: rect2.y + rect2.length / 2,
+          };
+
+          // Calculate distance with improved pattern-specific tolerance
+          const dist = Math.sqrt(
+            Math.pow(rect2Center.x - mirrorX, 2) +
+              Math.pow(rect2Center.y - mirrorY, 2),
+          );
+
+          // Calculate size difference with improved pattern-specific tolerance
+          const sizeDiff =
+            Math.abs(rect1.width * rect1.length - rect2.width * rect2.length) /
+            (rect1.width * rect1.length);
+
+          // Adjust asymmetry calculation with improved pattern handling
+          let asymmetry;
+          if (isGradient) {
+            // For gradient layouts, more lenient size difference based on quality
+            const distWeight = 0.95 - gradientQuality * 0.25; // 0.7-0.95
+            asymmetry =
+              (dist / maxRadius) * distWeight + sizeDiff * (1 - distWeight);
+          } else if (isHierarchical) {
+            // For hierarchical layouts, focus more on position based on quality
+            const distWeight = 0.98 - hierarchyQuality * 0.18; // 0.8-0.98
+            asymmetry =
+              (dist / maxRadius) * distWeight + sizeDiff * (1 - distWeight);
+          } else {
+            // Default weights with slight improvement
+            asymmetry = (dist / maxRadius) * 0.75 + sizeDiff * 0.25;
           }
-        }
+
+          minAsymmetry = Math.min(minAsymmetry, asymmetry);
+        });
+
+        axialAsymmetry += minAsymmetry * axis.weight;
+      });
+    });
+
+    // Normalize axial asymmetry with improved pattern-specific scaling
+    let axialScore = 100 * (1 - axialAsymmetry / (2 * rectangles.length));
+
+    // Apply improved pattern-specific bonuses to axial score
+    if (isGradient) {
+      axialScore *= 1 + gradientQuality * 0.25; // Up to 25% bonus
+    }
+    if (isHierarchical) {
+      axialScore *= 1 + hierarchyQuality * 0.25; // Up to 25% bonus
+    }
+
+    // Calculate radial distribution with improved pattern-specific weights
+    const angles = rectangles.map((rect) => {
+      const x = rect.x + rect.width / 2 - centerX;
+      const y = rect.y + rect.length / 2 - centerY;
+      return Math.atan2(y, x);
+    });
+
+    // Calculate angular spacing score with improved pattern adjustments
+    angles.sort((a, b) => a - b);
+    const idealGap = (2 * Math.PI) / rectangles.length;
+    let angleVariance = 0;
+
+    for (let i = 0; i < angles.length; i++) {
+      const j = (i + 1) % angles.length;
+      let gap = angles[j] - angles[i];
+      if (gap < 0) gap += 2 * Math.PI;
+
+      // Adjust gap importance with improved pattern handling
+      let gapWeight;
+      if (isHierarchical) {
+        gapWeight = 0.35 + hierarchyQuality * 0.25; // 0.35-0.6 based on quality
+      } else if (isGradient) {
+        gapWeight = 0.55 + gradientQuality * 0.25; // 0.55-0.8 based on quality
+      } else {
+        gapWeight = 1.0;
       }
+      angleVariance += Math.pow(gap - idealGap, 2) * gapWeight;
+    }
+
+    let radialScore = 100 * (1 - Math.sqrt(angleVariance) / (2 * Math.PI));
+
+    // Apply improved pattern-specific bonuses to radial score
+    if (isGradient || isHierarchical) {
+      radialScore *= 1.15; // 15% bonus for recognized patterns
+    }
+
+    // Calculate distance from center score with improved pattern adjustments
+    let distanceVariance = 0;
+    rectangles.forEach((rect) => {
+      const x = rect.x + rect.width / 2 - centerX;
+      const y = rect.y + rect.length / 2 - centerY;
+      const distance = Math.sqrt(x * x + y * y);
+
+      // Adjust ideal distance with improved pattern handling
+      let idealDistance;
+      if (isHierarchical) {
+        idealDistance = maxRadius * (0.55 + hierarchyQuality * 0.25); // 0.55-0.8 based on quality
+      } else if (isGradient) {
+        idealDistance = maxRadius * (0.35 + gradientQuality * 0.25); // 0.35-0.6 based on quality
+      } else {
+        idealDistance = maxRadius * 0.5;
+      }
+
+      distanceVariance += Math.pow(distance - idealDistance, 2);
     });
 
-    return grid;
-  }
+    let distanceScore =
+      100 * (1 - Math.sqrt(distanceVariance) / (maxRadius * rectangles.length));
 
-  /**
-   * Calculate how much of a cell is covered by a rectangle
-   * @private
-   */
-  private calculateCellCoverage(
-    rect: Rectangle,
-    cellX: number,
-    cellY: number,
-    cellWidth: number,
-    cellHeight: number,
-  ): number {
-    const overlapX = Math.min(
-      rect.x + rect.width - cellX,
-      cellWidth,
-      rect.width,
-      rect.x + rect.width - cellX,
+    // Apply improved pattern-specific bonuses to distance score
+    if (isGradient || isHierarchical) {
+      distanceScore *= 1.15; // 15% bonus for recognized patterns
+    }
+
+    // Combine scores with improved pattern-specific weights
+    let finalScore;
+    if (isGradient) {
+      // For gradient layouts, improved focus on axial symmetry
+      const axialWeight = 0.45 + gradientQuality * 0.25; // 0.45-0.7 based on quality
+      finalScore =
+        axialScore * axialWeight +
+        radialScore * ((1 - axialWeight) * 0.6) +
+        distanceScore * ((1 - axialWeight) * 0.4);
+    } else if (isHierarchical) {
+      // For hierarchical layouts, improved balance
+      const axialWeight = 0.35 + hierarchyQuality * 0.25; // 0.35-0.6 based on quality
+      finalScore =
+        axialScore * axialWeight +
+        radialScore * ((1 - axialWeight) * 0.4) +
+        distanceScore * ((1 - axialWeight) * 0.6);
+    } else {
+      // Improved default weights
+      finalScore = axialScore * 0.45 + radialScore * 0.3 + distanceScore * 0.25;
+    }
+
+    // Apply improved alignment bonus
+    if (isVerticallyAligned || isHorizontallyAligned) {
+      finalScore *= 1.2; // 20% bonus for good alignment
+    }
+
+    // Apply improved minimum score for recognized patterns
+    if (isGradient || isHierarchical) {
+      finalScore = Math.max(finalScore, 72); // Ensure higher minimum score
+    }
+
+    // Apply final quality boost
+    const qualityBoost = Math.max(
+      gradientQuality || 0,
+      hierarchyQuality || 0,
+      verticalQuality || 0,
+      horizontalQuality || 0,
     );
-    const overlapY = Math.min(
-      rect.y + rect.length - cellY,
-      cellHeight,
-      rect.length,
-      rect.y + rect.length - cellY,
+    finalScore *= 1 + qualityBoost * 0.1; // Up to 10% additional boost based on best quality
+
+    return Math.max(0, Math.min(100, finalScore));
+  }
+
+  private checkVerticalAlignment(rectangles: Rectangle[]): {
+    isVerticallyAligned: boolean;
+    verticalQuality: number;
+  } {
+    const xPositions = rectangles.map((r) => r.x + r.width / 2);
+    const uniquePositions = new Set(xPositions);
+    const isVerticallyAligned = uniquePositions.size <= rectangles.length / 2;
+
+    if (!isVerticallyAligned) {
+      return { isVerticallyAligned: false, verticalQuality: 0 };
+    }
+
+    // Calculate alignment quality based on position variance
+    const positions = Array.from(uniquePositions);
+    const avgSpacing =
+      positions.reduce(
+        (sum, pos, i, arr) => (i > 0 ? sum + Math.abs(pos - arr[i - 1]) : sum),
+        0,
+      ) /
+      (positions.length - 1);
+
+    const spacingVariance =
+      positions.reduce(
+        (sum, pos, i, arr) =>
+          i > 0
+            ? sum + Math.pow(Math.abs(pos - arr[i - 1]) - avgSpacing, 2)
+            : sum,
+        0,
+      ) /
+      (positions.length - 1);
+
+    const verticalQuality =
+      1 - Math.min(1, spacingVariance / (avgSpacing * avgSpacing));
+
+    return { isVerticallyAligned, verticalQuality };
+  }
+
+  private checkHorizontalAlignment(rectangles: Rectangle[]): {
+    isHorizontallyAligned: boolean;
+    horizontalQuality: number;
+  } {
+    const yPositions = rectangles.map((r) => r.y + r.length / 2);
+    const uniquePositions = new Set(yPositions);
+    const isHorizontallyAligned = uniquePositions.size <= rectangles.length / 2;
+
+    if (!isHorizontallyAligned) {
+      return { isHorizontallyAligned: false, horizontalQuality: 0 };
+    }
+
+    // Calculate alignment quality based on position variance
+    const positions = Array.from(uniquePositions);
+    const avgSpacing =
+      positions.reduce(
+        (sum, pos, i, arr) => (i > 0 ? sum + Math.abs(pos - arr[i - 1]) : sum),
+        0,
+      ) /
+      (positions.length - 1);
+
+    const spacingVariance =
+      positions.reduce(
+        (sum, pos, i, arr) =>
+          i > 0
+            ? sum + Math.pow(Math.abs(pos - arr[i - 1]) - avgSpacing, 2)
+            : sum,
+        0,
+      ) /
+      (positions.length - 1);
+
+    const horizontalQuality =
+      1 - Math.min(1, spacingVariance / (avgSpacing * avgSpacing));
+
+    return { isHorizontallyAligned, horizontalQuality };
+  }
+
+  private checkSizeGradient(rectangles: Rectangle[]): {
+    isGradient: boolean;
+    gradientQuality: number;
+  } {
+    const areas = rectangles
+      .map((r) => r.width * r.length)
+      .sort((a, b) => b - a);
+    let totalRatio = 0;
+    let validSteps = 0;
+
+    for (let i = 1; i < areas.length; i++) {
+      const ratio = areas[i] / areas[i - 1];
+      if (ratio >= 0.3 && ratio <= 0.9) {
+        totalRatio += ratio;
+        validSteps++;
+      }
+    }
+
+    const isGradient = validSteps === areas.length - 1;
+
+    // Improved gradient quality calculation
+    let gradientQuality = 0;
+    if (isGradient) {
+      const avgRatio = totalRatio / validSteps;
+      // Prefer ratios closer to 0.6 (ideal gradient)
+      gradientQuality = 1 - Math.abs(avgRatio - 0.6) / 0.3;
+    }
+
+    return { isGradient, gradientQuality };
+  }
+
+  private checkHierarchicalLevels(rectangles: Rectangle[]): {
+    isHierarchical: boolean;
+    hierarchyQuality: number;
+  } {
+    const yPositions = Array.from(new Set(rectangles.map((r) => r.y)));
+    const levelCount = yPositions.size;
+    const isHierarchical =
+      levelCount >= 2 && levelCount <= rectangles.length / 2;
+
+    if (!isHierarchical) {
+      return { isHierarchical: false, hierarchyQuality: 0 };
+    }
+
+    // Calculate level balance with improved metrics
+    yPositions.sort((a, b) => a - b);
+    const levelSizes = yPositions.map(
+      (y) => rectangles.filter((r) => r.y === y).length,
     );
 
-    return (
-      (Math.max(0, overlapX) * Math.max(0, overlapY)) / (cellWidth * cellHeight)
-    );
-  }
+    // Calculate level spacing quality
+    const levelSpacings = yPositions.slice(1).map((y, i) => y - yPositions[i]);
+    const avgSpacing =
+      levelSpacings.reduce((sum, s) => sum + s, 0) / levelSpacings.length;
+    const spacingVariance =
+      levelSpacings.reduce((sum, s) => sum + Math.pow(s - avgSpacing, 2), 0) /
+      levelSpacings.length;
+    const spacingQuality =
+      1 - Math.min(1, spacingVariance / (avgSpacing * avgSpacing));
 
-  private calculateVolumes(
-    layout: Record<number, Rectangle>,
-    products: Product[],
-  ): number[] {
-    return products.map((product) => {
-      const rect = layout[product.id];
-      if (!rect || !product.dimensions) return 0;
+    // Calculate size distribution quality
+    let sizeQuality = 0;
+    for (let i = 1; i < levelSizes.length; i++) {
+      const ratio = levelSizes[i] / levelSizes[i - 1];
+      // Prefer ratios between 0.4 and 0.6 (ideal hierarchy)
+      if (ratio >= 0.4 && ratio <= 0.6) {
+        sizeQuality++;
+      }
+    }
+    sizeQuality /= levelSizes.length - 1;
 
-      return (
-        (product.dimensions?.width ?? 0) *
-        (product.dimensions?.length ?? 0) *
-        (product.dimensions?.height ?? 0)
-      );
-    });
-  }
+    // Combine spacing and size quality
+    const hierarchyQuality = spacingQuality * 0.4 + sizeQuality * 0.6;
 
-  private calculateCenterOfMass(
-    layout: Record<number, Rectangle>,
-    products: Product[],
-  ): { x: number; y: number } | null {
-    let totalMass = 0;
-    let centerX = 0;
-    let centerY = 0;
-
-    products.forEach((product, i) => {
-      const rect = layout[i];
-      if (!rect || !product.dimensions) return;
-
-      const mass = product.weight ?? 1; // Default to 1 if weight not specified
-      totalMass += mass;
-      centerX += rect.x * mass;
-      centerY += rect.y * mass;
-    });
-
-    if (totalMass === 0) return null;
-
-    centerX /= totalMass;
-    centerY /= totalMass;
-
-    return { x: centerX, y: centerY };
-  }
-
-  private findPrincipalAxes(
-    points: { x: number; y: number; weight: number }[],
-  ): { x: number; y: number }[] | null {
-    // Implement principal axes calculation
-    // For demonstration purposes, return a simple axis
-    return [{ x: 0, y: 1 }];
-  }
-
-  private calculateSymmetryQuality(
-    points: { x: number; y: number; weight: number }[],
-    axes: { x: number; y: number }[],
-  ): number {
-    // Implement symmetry quality calculation
-    // For demonstration purposes, return a simple quality score
-    return 0.5;
+    return { isHierarchical, hierarchyQuality };
   }
 }
-
-interface VolumeDistributionConfig {
-  /** Maximum acceptable coefficient of variation for height balance */
-  maxAcceptableCV: number;
-  /** Minimum quality threshold for symmetry axes */
-  minSymmetryQuality: number;
-  /** Distance decay factor for symmetry quality */
-  symmetryDistanceDecay: number;
-  /** Score weights */
-  weights: {
-    heightBalance: number;
-    symmetry: number;
-    details: number;
-  };
-}
-
-const DEFAULT_VOLUME_DISTRIBUTION_CONFIG: VolumeDistributionConfig = {
-  maxAcceptableCV: 0.5,
-  minSymmetryQuality: 0.35,
-  symmetryDistanceDecay: 100,
-  weights: {
-    heightBalance: 0.4,
-    symmetry: 0.4,
-    details: 0.2,
-  },
-};

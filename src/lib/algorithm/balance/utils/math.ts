@@ -69,6 +69,31 @@ export function normalizeToRange(
 }
 
 /**
+ * Normalize any score to 0-100 range
+ * 将任意分数归一化到0-100范围
+ * @param score 原始分数
+ * @param currentMax 当前最大值（默认为1）
+ * @returns 归一化后的分数（0-100）
+ */
+export function normalizeToHundred(
+  score: number,
+  currentMax: number = 1,
+): number {
+  if (currentMax === 0) return 0;
+  return Math.max(0, Math.min(100, (score / currentMax) * 100));
+}
+
+/**
+ * Convert a 0-100 score back to 0-1 range
+ * 将0-100范围的分数转换回0-1范围
+ * @param score 0-100范围的分数
+ * @returns 0-1范围的分数
+ */
+export function normalizeToOne(score: number): number {
+  return Math.max(0, Math.min(1, score / 100));
+}
+
+/**
  * Normalize a score to 0-100 range based on maximum variance
  * 基于最大方差将分数归一化到0-100范围
  * @param value The value to normalize
@@ -76,7 +101,8 @@ export function normalizeToRange(
  * @returns Normalized score between 0 and 100
  */
 export function normalizeScore(value: number, maxVariance = 1000): number {
-  return normalizeToRange(value, 0, maxVariance, true);
+  const normalized = normalizeToRange(value, 0, maxVariance, true);
+  return Math.max(0, Math.min(100, normalized));
 }
 
 /**
@@ -92,7 +118,7 @@ export function weightedAverage(scoreWeightPairs: [number, number][]): number {
   if (totalWeight === 0) return 0;
 
   const weightedSum = scoreWeightPairs.reduce(
-    (sum, [score, weight]) => sum + Math.max(0, Math.min(100, score)) * weight,
+    (sum, [score, weight]) => sum + normalizeToHundred(score) * weight,
     0,
   );
 
