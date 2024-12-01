@@ -40,8 +40,6 @@ export function calculateDistributionScore(
   layout: Record<number, Rectangle>,
   products: Product[],
 ): DetailedDistributionScore {
-  // console.log("Starting distribution score calculation:", { layout, products });
-
   // Handle empty case
   if (products.length === 0) {
     console.log("Empty case detected, returning perfect score");
@@ -72,45 +70,30 @@ export function calculateDistributionScore(
   const volumeCalc = new VolumeCalculator();
 
   try {
-    // console.log("Calculating physical properties...");
     const physicalAnalysis = physicsCalc.calculate(layout, products);
-    // console.log("Physical analysis:", physicalAnalysis);
     const physicalDetails = physicsCalc.toScoreDetails(physicalAnalysis);
-    // console.log("Physical details:", physicalDetails);
 
-    console.log("Calculating spatial properties...");
     const spatialAnalysis = spatialCalc.calculate(layout, products);
-    // console.log("Spatial analysis:", spatialAnalysis);
-
-    console.log("Calculating volume properties...");
     const volumeDetails = volumeCalc.calculate(layout, products);
-    // console.log("Volume details:", volumeDetails);
 
-    // Calculate layout pattern scores
     const layoutPatterns = detectLayoutPatterns(layout, products);
     const patternBonus = calculatePatternBonus(
       layoutPatterns,
       layout,
       products,
     );
-
-    // Combine scores with adjusted weights
     const weights = {
       physical: 0.3,
       spatial: 0.3,
       volume: 0.4,
     };
-
-    // Calculate physical score with pattern-specific adjustments
     const physicalScore = calculatePhysicalScore(
       physicalDetails,
       layoutPatterns,
     );
 
-    // Calculate volume score with pattern-specific adjustments
     const volumeScore = calculateVolumeScore(volumeDetails, layoutPatterns);
 
-    // Calculate final score with pattern bonus
     const baseScore =
       physicalScore * weights.physical +
       spatialAnalysis.uniformity * weights.spatial +

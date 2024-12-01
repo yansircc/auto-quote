@@ -75,10 +75,7 @@ export function normalizeToRange(
  * @param currentMax 当前最大值（默认为1）
  * @returns 归一化后的分数（0-100）
  */
-export function normalizeToHundred(
-  score: number,
-  currentMax: number = 1,
-): number {
+export function normalizeToHundred(score: number, currentMax = 1): number {
   if (currentMax === 0) return 0;
   return Math.max(0, Math.min(100, (score / currentMax) * 100));
 }
