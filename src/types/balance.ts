@@ -15,16 +15,24 @@ export interface BalanceScore {
 }
 
 /**
- * 详细的几何平衡分数，用于可视化展示
+ * 详细的分布平衡分数，用于可视化展示
  */
 export interface DetailedDistributionScore {
-  score: number;          // 总体几何分数 (0-100)
+  score: number;          // 总体分布分数 (0-100)
   details: {
+    // 物理特性
     principalMoments: [number, number];  // 主惯性矩（特征值）
     principalAxes: [[number, number], [number, number]];  // 主轴方向（特征向量）
     gyrationRadius: number;  // 陀螺半径
     isotropy: number;       // 各向同性比
     centerDeviation: number;  // 质心偏移
+
+    // 体积平衡
+    volumeBalance: {
+      densityVariance: number;     // 密度方差 - 反映平面空间利用
+      heightBalance: number;       // 高度分布的平衡性
+      massDistribution: number;    // 考虑体积带来的质量分布
+    };
   };
 }
 

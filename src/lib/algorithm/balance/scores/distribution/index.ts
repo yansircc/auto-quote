@@ -1,21 +1,23 @@
-import type { Rectangle, Product, Point2D } from '@/types/geometry';
+import type { Rectangle, Product } from '@/types/geometry';
 import type { DetailedDistributionScore } from '@/types/balance';
-import { DistributionBalanceConfig as Config } from '../../config';
+import { PhysicsCalculator } from './calculators/physics';
+import { SpatialCalculator } from './calculators/spatial';
+import { VolumeCalculator } from './calculators/volume';
 
 /**
- * 计算几何平衡分数
- * 使用物理学和线性代数方法评估布局的平衡性
+ * Calculate distribution balance score
+ * Uses physics and linear algebra methods to evaluate layout balance
  * 
- * 核心指标：
- * 1. 惯性张量（Inertia Tensor）- 描述质量分布
- * 2. 主轴方向（Principal Axes）- 评估对称性
- * 3. 陀螺矩（Gyration Radius）- 评估分布均匀性
+ * Core metrics:
+ * 1. Physical Properties - Mass distribution and isotropy
+ * 2. Spatial Properties - Symmetry and uniformity
+ * 3. Volume Properties - Height and density distribution
  */
 export function calculateDistributionScore(
   layout: Record<number, Rectangle>,
   products: Product[]
 ): DetailedDistributionScore {
-  // 如果没有产品，返回满分
+  // Handle empty case
   if (products.length === 0) {
     return {
       score: 100,
@@ -24,123 +26,65 @@ export function calculateDistributionScore(
         principalAxes: [[1, 0], [0, 1]],
         gyrationRadius: 0,
         isotropy: 1,
-        centerDeviation: 0
+        centerDeviation: 0,
+        volumeBalance: {
+          densityVariance: 0,
+          heightBalance: 1,
+          massDistribution: 1
+        }
       }
     };
   }
 
-  // 1. 计算质心
-  const totalWeight = products.reduce((sum, p) => sum + p.weight, 0);
-  const centerOfMass: Point2D = {
-    x: products.reduce((sum, p) => sum + p.weight * (layout[p.id]?.x ?? 0), 0) / totalWeight,
-    y: products.reduce((sum, p) => sum + p.weight * (layout[p.id]?.y ?? 0), 0) / totalWeight
-  };
+  // Initialize calculators
+  const physicsCalc = new PhysicsCalculator();
+  const spatialCalc = new SpatialCalculator();
+  const volumeCalc = new VolumeCalculator();
 
-  // 2. 计算惯性张量（相对于质心）
-  let Ixx = 0, Iyy = 0, Ixy = 0;
-  products.forEach(p => {
-    const x = (layout[p.id]?.x ?? 0) - centerOfMass.x;
-    const y = (layout[p.id]?.y ?? 0) - centerOfMass.y;
-    Ixx += p.weight * y * y;  // y方向的惯性矩
-    Iyy += p.weight * x * x;  // x方向的惯性矩
-    Ixy -= p.weight * x * y;  // 混合惯性积
-  });
+  // Calculate physical properties
+  const physicalAnalysis = physicsCalc.calculate(layout, products);
+  const physicalDetails = physicsCalc.toScoreDetails(physicalAnalysis);
 
-  // 3. 计算主轴和主惯性矩
-  const trace = Ixx + Iyy;
-  const det = Ixx * Iyy - Ixy * Ixy;
-  const discriminant = Math.sqrt(trace * trace - 4 * det);
+  // Calculate spatial properties
+  const spatialAnalysis = spatialCalc.calculate(layout, products);
+  const spatialDetails = spatialCalc.toScoreDetails(spatialAnalysis);
+
+  // Calculate volume properties
+  const volumeAnalysis = volumeCalc.calculate(layout, products);
+
+  // Combine scores with weights
+  const physicalScore = physicalDetails.isotropy * 0.25;  // 物理分数权重
+  const symmetryScore = (spatialAnalysis.symmetry / 100) * 0.35;  // 对称性权重
+  const uniformityScore = (spatialAnalysis.uniformity / 100) * 0.2;  // 均匀性权重
+  const volumeScore = (volumeAnalysis.score / 100) * 0.2;  // 体积分数权重
   
-  // 主惯性矩（特征值）
-  const lambda1 = (trace + discriminant) / 2;
-  const lambda2 = (trace - discriminant) / 2;
-  
-  // 主轴方向（特征向量）
-  const theta = Math.atan2(2 * Ixy, Ixx - Iyy) / 2;
-  const principalAxes: [[number, number], [number, number]] = [
-    [Math.cos(theta), -Math.sin(theta)],
-    [Math.sin(theta), Math.cos(theta)]
-  ];
-
-  // 4. 计算评分指标
-  // 4.1 各向同性比（isotropy）- 评估分布均匀性
-  const isotropy = lambda2 / lambda1;  // 0到1之间，1表示完全各向同性
-
-  // 4.2 陀螺半径（gyration radius）- 评估空间利用
-  const maxRadius = Math.sqrt(
-    products.reduce((max, p) => {
-      const x = (layout[p.id]?.x ?? 0) - centerOfMass.x;
-      const y = (layout[p.id]?.y ?? 0) - centerOfMass.y;
-      return Math.max(max, x * x + y * y);
-    }, 0)
-  );
-  // 避免除以零，如果maxRadius为0（单个产品在原点)),则设为1
-  const normalizedMaxRadius = maxRadius === 0 ? 1 : maxRadius;
-  const gyrationRadius = Math.sqrt((lambda1 + lambda2) / totalWeight) / normalizedMaxRadius;
-
-  // 4.3 质心偏移（相对于几何中心）
-  const geometricCenter: Point2D = {
-    x: (products.reduce((min, p) => Math.min(min, layout[p.id]?.x ?? 0), Infinity) +
-        products.reduce((max, p) => Math.max(max, layout[p.id]?.x ?? 0), -Infinity)) / 2,
-    y: (products.reduce((min, p) => Math.min(min, layout[p.id]?.y ?? 0), Infinity) +
-        products.reduce((max, p) => Math.max(max, layout[p.id]?.y ?? 0), -Infinity)) / 2
-  };
-
-  const centerDeviation = Math.sqrt(
-    Math.pow(centerOfMass.x - geometricCenter.x, 2) +
-    Math.pow(centerOfMass.y - geometricCenter.y, 2)
-  ) / normalizedMaxRadius;
-
-  // 5. 计算最终分数
-  // 调整评分参数，使分数更合理
-  // 5.1 各向同性分数
-  const isotropyScore = Config.WEIGHTS.ISOTROPY * (
-    Config.ISOTROPY.BASE_SCORE + 
-    (1 - Config.ISOTROPY.BASE_SCORE) * Math.pow(isotropy, Config.ISOTROPY.POWER)
-  );
-  
-  // 5.2 陀螺半径分数
-  const gyrationScore = Config.WEIGHTS.GYRATION * (
-    Config.GYRATION.BASE_SCORE + 
-    (1 - Config.GYRATION.BASE_SCORE) * Math.exp(-Config.GYRATION.DECAY * gyrationRadius)
-  );
-  
-  // 5.3 质心偏移分数
-  const centerScore = Config.WEIGHTS.CENTER * (
-    Config.CENTER.BASE_SCORE + 
-    (1 - Config.CENTER.BASE_SCORE) * Math.exp(-Config.CENTER.DECAY * centerDeviation)
+  console.log(
+    `Raw scores before normalization:`,
+    `\nphysical=${physicalDetails.isotropy}`,
+    `\nsymmetry=${spatialAnalysis.symmetry}`,
+    `\nuniformity=${spatialAnalysis.uniformity}`,
+    `\nvolume=${volumeAnalysis.score}`
   );
 
-  // 对于单个产品的特殊处理
-  const finalScore = products.length === 1 
-    ? Config.SPECIAL.SINGLE_PRODUCT
-    : Math.min(100, Math.round(isotropyScore + gyrationScore + centerScore));
+  console.log(
+    `Weighted scores:`,
+    `\nphysical=${(physicalScore*100).toFixed(1)}%`,
+    `\nsymmetry=${(symmetryScore*100).toFixed(1)}%`,
+    `\nuniformity=${(uniformityScore*100).toFixed(1)}%`,
+    `\nvolume=${(volumeScore*100).toFixed(1)}%`,
+    `\ntotal=${Math.round((physicalScore + symmetryScore + uniformityScore + volumeScore) * 100)}%`
+  );
 
-  // 对于完美对称布局的特殊处理
-  const isNearPerfect = 
-    isotropy > Config.PATTERNS.PERFECT.ISOTROPY && 
-    centerDeviation < Config.PATTERNS.PERFECT.CENTER_DEV && 
-    gyrationRadius < Config.PATTERNS.PERFECT.GYRATION;
-
-  const isSymmetric = 
-    isotropy > Config.PATTERNS.SYMMETRIC.ISOTROPY && 
-    centerDeviation < Config.PATTERNS.SYMMETRIC.CENTER_DEV;
-  
-  let finalScoreWithBonus = finalScore;
-  if (isNearPerfect) {
-    finalScoreWithBonus = Math.min(100, finalScore + Config.PATTERNS.PERFECT.BONUS);
-  } else if (isSymmetric) {
-    finalScoreWithBonus = Math.min(100, finalScore + Config.PATTERNS.SYMMETRIC.BONUS);
-  }
+  const score = Math.round(
+    (physicalScore + symmetryScore + uniformityScore + volumeScore) * 100
+  );  // 先乘以100再取整，避免小数被舍入为0
 
   return {
-    score: finalScoreWithBonus,
+    score,
     details: {
-      principalMoments: [lambda1, lambda2],
-      principalAxes,
-      gyrationRadius,
-      isotropy,
-      centerDeviation
+      ...physicalDetails,
+      ...spatialDetails,
+      volumeBalance: volumeAnalysis.details
     }
   };
 }
