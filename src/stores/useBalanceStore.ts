@@ -35,6 +35,52 @@ export const useBalanceStore = create<BalanceState>((set) => ({
   // 计算所有评分
   calculateScores: (layout, products, injectionPoint) => {
     try {
+      // 添加输入验证
+      if (!layout?.length || !products?.length || !injectionPoint) {
+        console.warn("Invalid input: missing required data");
+        return;
+      }
+
+      // 验证产品数据
+      const isValidProducts = products.every(
+        (product) =>
+          product.dimensions?.width &&
+          product.dimensions?.length &&
+          product.dimensions?.height,
+      );
+      if (!isValidProducts) {
+        console.warn("Invalid input: products missing dimensions");
+        return;
+      }
+
+      // 验证布局数据
+      const isValidLayout = layout.every(
+        (rect) =>
+          typeof rect.x === "number" &&
+          typeof rect.y === "number" &&
+          typeof rect.width === "number" &&
+          typeof rect.length === "number",
+      );
+      if (!isValidLayout) {
+        console.warn("Invalid input: layout contains invalid rectangles");
+        return;
+      }
+
+      // 验证注塑点数据
+      if (
+        typeof injectionPoint.x !== "number" ||
+        typeof injectionPoint.y !== "number"
+      ) {
+        console.warn("Invalid input: injection point coordinates invalid");
+        return;
+      }
+
+      // 验证数量匹配
+      if (layout.length !== products.length) {
+        console.warn("Invalid input: layout and products count mismatch");
+        return;
+      }
+
       // 1. 计算总体平衡分数
       const score = calculateBalanceScore(layout, products, injectionPoint);
 
@@ -50,9 +96,9 @@ export const useBalanceStore = create<BalanceState>((set) => ({
       // 发生错误时重置状态
       set({
         score: null,
-        layout,
-        products,
-        injectionPoint,
+        layout: null,
+        products: null,
+        injectionPoint: null,
       });
     }
   },

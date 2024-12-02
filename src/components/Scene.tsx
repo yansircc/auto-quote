@@ -23,9 +23,18 @@ export const Scene: React.FC<SceneProps> = ({ product, products, layout }) => {
   useEffect(() => {
     if (!containerRef.current) return;
 
-    // 清理之前的 WebGL 上下文
+    // 清理之前的 WebGL 上下文和渲染器
     const existingCanvas = containerRef.current.querySelector("canvas");
     if (existingCanvas) {
+      const gl =
+        existingCanvas.getContext("webgl") ??
+        existingCanvas.getContext("webgl2");
+      if (gl) {
+        const ext = gl.getExtension("WEBGL_lose_context");
+        if (ext) {
+          ext.loseContext();
+        }
+      }
       containerRef.current.removeChild(existingCanvas);
     }
 
@@ -43,9 +52,6 @@ export const Scene: React.FC<SceneProps> = ({ product, products, layout }) => {
     ) {
       return;
     }
-
-    // 保存当前容器引用，用于清理
-    const container = containerRef.current;
 
     // 创建场景
     const scene = new THREE.Scene();
@@ -198,21 +204,47 @@ export const Scene: React.FC<SceneProps> = ({ product, products, layout }) => {
 
     window.addEventListener("resize", handleResize);
 
-    // 清理函数
+    // 增强清理函数
     return () => {
       if (animationFrameId.current) {
         cancelAnimationFrame(animationFrameId.current);
       }
       window.removeEventListener("resize", handleResize);
 
-      // 使用保存的容器引用进行清理
-      if (container) {
-        const canvas = container.querySelector("canvas");
-        if (canvas) {
-          container.removeChild(canvas);
+      // 释放 Three.js 资源
+      scene.traverse((object) => {
+        if (object instanceof THREE.Mesh) {
+          if (object.geometry) {
+            (object.geometry as THREE.BufferGeometry).dispose();
+          }
+          if (object.material) {
+            if (Array.isArray(object.material)) {
+              object.material.forEach((material: THREE.Material) => {
+                if (material.dispose) {
+                  material.dispose();
+                }
+              });
+            } else if (
+              object.material instanceof THREE.Material &&
+              object.material.dispose
+            ) {
+              object.material.dispose();
+            }
+          }
         }
+      });
+
+      // 释放渲染器资源
+      if (renderer) {
+        renderer.dispose();
+        renderer.forceContextLoss();
+        renderer.domElement.parentNode?.removeChild(renderer.domElement);
       }
-      renderer.dispose();
+
+      // 清理 OrbitControls
+      if (controls) {
+        controls.dispose();
+      }
     };
   }, [product, products, layout]);
 
