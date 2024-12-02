@@ -72,7 +72,7 @@ interface CADFeatures {
 /**
  * CAD 数据
  */
-interface CADData {
+export interface CADData {
   boundingBox: CADBoundingBox;
   topology?: CADTopology;
   features?: CADFeatures;
