@@ -137,11 +137,12 @@ export const Scene: React.FC<SceneProps> = ({ product, products, layout }) => {
 
       // 创建 CSG 评估器
       const evaluator = new Evaluator();
+      let currentMold = moldBrush;
 
-      // 渲染产品
-      layout.forEach((item, index) => {
+      // 先创建所有凹槽
+      const cavities = layout.map((item, index) => {
         const product = products[index];
-        if (!product?.dimensions) return;
+        if (!product?.dimensions) return null;
 
         // 创建带高度的布局项（2D转3D，保持垂直放置）
         const layoutItem = createLayoutItemWithHeight(item, product.dimensions.height);
@@ -173,35 +174,49 @@ export const Scene: React.FC<SceneProps> = ({ product, products, layout }) => {
         const cavityBrush = new Brush(cavityGeometry, cavityMaterial);
         
         // 设置凹槽位置（米）
-        // 从模具顶部开始向下延伸
         cavityBrush.position.copy(new THREE.Vector3(
           position.x,
           moldHeight / 100,  // 模具顶部位置
           position.z
         ));
+        
+        cavityBrush.updateMatrixWorld();
+        
+        return {
+          brush: cavityBrush,
+          position: position
+        };
+      }).filter(Boolean);
 
-        // 从模具中减去凹槽
-        try {
-          moldBrush.updateMatrixWorld();
-          cavityBrush.updateMatrixWorld();
-          const result = evaluator.evaluate(moldBrush, cavityBrush, SUBTRACTION);
-          
+      // 一次性执行所有凹槽的减法操作
+      try {
+        currentMold.updateMatrixWorld();
+        
+        // 依次减去每个凹槽
+        cavities.forEach(cavity => {
+          if (!cavity) return;
+          const result = evaluator.evaluate(currentMold, cavity.brush, SUBTRACTION);
           if (result) {
-            // 确保结果使用模具的材质
             result.material = moldMaterial;
-            scene.add(result);
-            
-            // 添加中心点标记（在产品顶部）
-            const sphereGeometry = new THREE.SphereGeometry(0.015);
-            const sphereMaterial = new THREE.MeshBasicMaterial({ color: 0xff3333 });
-            const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
-            sphere.position.set(position.x, moldHeight / 100 + 0.015, position.z);
-            scene.add(sphere);
+            currentMold = result;
           }
-        } catch (error) {
-          console.error('Error creating cavity:', error);
-        }
-      });
+        });
+
+        // 添加最终结果到场景
+        scene.add(currentMold);
+        
+        // 添加所有产品的中心点标记
+        cavities.forEach(cavity => {
+          if (!cavity) return;
+          const sphereGeometry = new THREE.SphereGeometry(0.015);
+          const sphereMaterial = new THREE.MeshBasicMaterial({ color: 0xff3333 });
+          const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
+          sphere.position.set(cavity.position.x, moldHeight / 100 + 0.015, cavity.position.z);
+          scene.add(sphere);
+        });
+      } catch (error) {
+        console.error('Error creating cavity:', error);
+      }
 
       // 添加模具边框线
       const edges = new THREE.EdgesGeometry(moldGeometry);

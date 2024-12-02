@@ -7,40 +7,6 @@ import { geometryScorer } from "./geometry";
 import { normalizeProducts } from "./geometry/utils/normalization";
 
 /**
- * 创建空的评分数据
- * @returns 空的评分数据对象
- */
-function createEmptyScore(): BalanceScore {
-  return {
-    total: 0,
-    details: {
-      geometry: {
-        overall: 0,
-        shapeScore: {
-          aspectRatio: 0,
-          symmetry: 0,
-          complexity: 0,
-          uniformity: 0,
-        },
-        dimensionScore: {
-          sizeVariation: 0,
-          scaleRatio: 0,
-          consistency: 0,
-        },
-        efficiencyScore: {
-          planarDensity: 0,
-          volumeUtilization: 0,
-          heightDistribution: 0,
-        },
-      },
-      flow: 0,
-      distribution: 0,
-    },
-    confidence: 0,
-  };
-}
-
-/**
  * 验证输入数据的有效性
  * @param layout 产品布局数组
  * @param products 产品信息数组
@@ -70,7 +36,7 @@ export function calculateBalanceScore(
 ): BalanceScore {
   // 1. 验证输入数据
   if (!validateInput(layout, products)) {
-    return createEmptyScore();
+   throw new Error("Invalid input data");
   }
 
   try {
@@ -127,7 +93,7 @@ export function calculateBalanceScore(
     };
   } catch (error) {
     console.error("Error calculating balance score:", error);
-    return createEmptyScore();
+    throw error;
   }
 }
 
