@@ -26,11 +26,6 @@ const scoreTooltips = {
     description:
       "评估熔融材料从注塑点到各产品的流动路径是否均衡。高分表示流长相近，这有助于：\n• 保证各产品填充同步性\n• 减少翘曲和缩水\n• 提高尺寸精度",
   },
-  volume: {
-    title: "体积利用分数",
-    description:
-      "评估产品在模具空间中的体积利用率。高分表示空间利用率高，产品体积分布合理，这有助于：\n• 降低模具成本\n• 提高生产效率\n• 节约材料使用",
-  },
   distribution: {
     title: "分布平衡分数",
     description:
@@ -107,13 +102,6 @@ export default function BalanceVisualizerPage() {
               <ProductViewer products={products} layout={layout} />
             </div>
           )}
-
-          {/* 产品列表 */}
-          <div className="grid grid-cols-1 gap-4">
-            {products.map((product) => (
-              <ProductViewer key={product.id} product={product} />
-            ))}
-          </div>
 
           {/* 布局分析区域 */}
           <div className="container mx-auto py-8">

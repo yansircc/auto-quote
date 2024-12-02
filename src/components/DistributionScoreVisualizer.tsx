@@ -1,5 +1,5 @@
 import React, { useMemo } from "react";
-import { calculateRectCenter } from "@/lib/algorithm/balance";
+import { calculate2DCenter } from "@/lib/utils/coordinate";
 import { calculateDistributionScore } from "@/lib/algorithm/balance/scores/distribution";
 import { COLORS } from "@/lib/constants/colors";
 import {
@@ -25,7 +25,7 @@ export const DistributionScoreVisualizer: React.FC<BaseVisualizerProps> = ({
   const scores = useMemo(() => {
     if (!layout.length || !products.length) return null;
 
-    const centers = layout.map((rect) => calculateRectCenter(rect));
+    const centers = layout.map((rect) => calculate2DCenter(rect));
     const weights = products.map((p) => p.weight ?? 1);
 
     // Calculate aspect ratios

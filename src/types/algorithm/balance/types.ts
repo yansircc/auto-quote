@@ -35,7 +35,6 @@ export interface BalanceScore {
 //     };
 //     // 尺寸评分
 //     dimensionScore: {
-//       volume: number; // 体积评分 (0-100)
 //       surfaceArea: number; // 表面积评分 (0-100)
 //       efficiency: number; // 空间利用率评分 (0-100)
 //     };
@@ -52,7 +51,6 @@ export interface GeometryAnalysis {
     complexityMetrics: number[]; // 每个产品的复杂度指标
   };
   dimensions: {
-    volumes: number[]; // 体积
     surfaceAreas: number[]; // 表面积
     boundingBoxVolumes: number[]; // 包围盒体积
     wallThicknesses?: number[]; // 壁厚（如果可用）
@@ -62,7 +60,6 @@ export interface GeometryAnalysis {
     dimensionMatrix: number[][]; // 尺寸相似度矩阵
   };
   efficiency: {
-    totalVolume: number; // 总体积
     boundingBoxVolume: number; // 包围盒体积
     packingRatio: number; // 填充率
   };
@@ -74,7 +71,6 @@ export interface GeometryAnalysis {
 export interface DetailedFlowScore {
   flowPathBalance: number; // 流动路径平衡性
   surfaceAreaBalance: number; // 表面积平衡性
-  volumeBalance: number; // 体积平衡性
   overall: number; // 总体评分
 }
 

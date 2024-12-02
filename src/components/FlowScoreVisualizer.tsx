@@ -1,18 +1,15 @@
 import React, { useMemo } from "react";
+import { calculate2DCenter, type Point2D } from "@/lib/utils/coordinate";
 import { COLORS } from "@/lib/constants/colors";
-import type { Rectangle, Point2D } from "@/types/core/geometry";
+import type { Rectangle } from "@/types/core/geometry";
 import type { Product } from "@/types/domain/product";
-import { useBalanceStore } from "@/stores/useBalanceStore";
 import {
-  calculateRectCenter,
-  calculateFlowPathInfo,
-} from "@/lib/utils/geometry";
-import {
-  type LayoutItem,
-  type LegendConfig,
   useViewBoxCalculation,
   Legend,
+  type LegendConfig,
 } from "./base/BaseScoreVisualizer";
+import { useBalanceStore } from "@/stores/useBalanceStore";
+import { calculateFlowPathInfo } from "@/lib/utils/geometry";
 
 interface FlowScoreVisualizerProps {
   layout: Rectangle[];
@@ -20,6 +17,14 @@ interface FlowScoreVisualizerProps {
   injectionPoint: Point2D;
   width?: number;
   height?: number;
+}
+
+export interface FlowLayoutItem {
+  center: Point2D;
+  weight: number;
+  dimensions: Rectangle;
+  flowLength: number;
+  flowPath: Point2D[];
 }
 
 export const FlowScoreVisualizer: React.FC<FlowScoreVisualizerProps> = ({
@@ -36,27 +41,23 @@ export const FlowScoreVisualizer: React.FC<FlowScoreVisualizerProps> = ({
   const viewBoxData = useViewBoxCalculation(layout, width, height);
 
   // 计算布局项目
-  const layoutItems: LayoutItem[] = useMemo(() => {
+  const layoutItems: FlowLayoutItem[] = useMemo(() => {
     if (layout.length !== products.length) return [];
 
     return layout.map((rect, i) => {
       const product = products[i];
-      if (!product)
-        return {
-          center: calculateRectCenter(rect),
-          weight: 0,
-          dimensions: rect,
-        };
+      const center = calculate2DCenter(rect);
+      if (!product) return { center, weight: 1, dimensions: rect, flowLength: 0, flowPath: [] };
 
       // 计算流动路径信息
       const flowInfo = calculateFlowPathInfo(product, rect, injectionPoint);
 
       // 如果有手动设置的流动长度，使用手动值
-      const flowLength = product.flowData?.manualFlowLength ?? flowInfo.length;
+      const flowLength = product?.flowData?.manualFlowLength ?? flowInfo.length;
 
       return {
-        center: calculateRectCenter(rect),
-        weight: product.weight ?? 1,
+        center,
+        weight: product?.weight ?? 1,
         dimensions: rect,
         flowLength,
         flowPath: flowInfo.path,

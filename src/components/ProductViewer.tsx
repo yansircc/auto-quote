@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
-import * as Collapsible from "@radix-ui/react-collapsible";
 import { Scene } from "./Scene";
+import { ProductDetails } from "./ProductDetails";
 import type { Rectangle } from "@/types/core/geometry";
 import type { Product } from "@/types/domain/product";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface ProductViewerProps {
   product?: Product;
@@ -12,108 +12,59 @@ interface ProductViewerProps {
   layout?: Rectangle[];
 }
 
-// 格式化数字，保留2位小数
-function formatNumber(num: number): string {
-  return num.toFixed(2);
-}
-
 export function ProductViewer({
   product,
   products,
   layout,
 }: ProductViewerProps) {
-  const [isOpen, setIsOpen] = useState(false);
 
-  // 如果提供了单个产品，就显示单个产品视图
-  if (product) {
+  // 如果提供了产品列表和布局，显示布局视图
+  if (products && layout) {
     return (
-      <div className="mb-4 rounded-lg bg-white p-6 shadow-md">
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-          {/* 3D视图 */}
-          <div className="h-[300px] overflow-hidden rounded-lg bg-gray-50">
-            <Scene
-              product={product}
-              products={[product]}
-              layout={[
-                {
-                  x: 0,
-                  y: 0,
-                  width: product.dimensions?.length ?? 0,
-                  length: product.dimensions?.width ?? 0,
-                },
-              ]}
-            />
+      <div className="rounded-lg bg-white p-6 shadow-md">
+        <Tabs defaultValue="layout" className="flex h-[600px]">
+          <TabsList className="flex h-full w-48 flex-col justify-start space-y-2 bg-muted p-2">
+            <TabsTrigger value="layout" className="w-full justify-start">布局视图</TabsTrigger>
+            {products.map((p) => (
+              <TabsTrigger
+                key={p.id}
+                value={p.id.toString()}
+                className="w-full justify-start"
+              >
+                {p.name || `产品 ${p.id}`}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+          <div className="flex-1">
+            <TabsContent value="layout" className="m-0 h-full data-[state=active]:block">
+              <Scene products={products} layout={layout} />
+            </TabsContent>
+            {products.map((p) => (
+              <TabsContent
+                key={p.id}
+                value={p.id.toString()}
+                className="m-0 h-full data-[state=active]:block"
+              >
+                <div className="grid h-full grid-cols-[2fr,1fr] gap-6">
+                  <Scene product={p} />
+                  <ProductDetails product={p} />
+                </div>
+              </TabsContent>
+            ))}
           </div>
-
-          {/* 产品信息 */}
-          <div>
-            <h3 className="mb-4 text-lg font-semibold">产品 #{product.id}</h3>
-
-            {/* 基本信息 */}
-            <div className="mb-4">
-              <h4 className="mb-2 font-medium">基本信息</h4>
-              <div className="grid grid-cols-2 gap-2 text-sm">
-                <div>重量：</div>
-                <div>{product.weight}g</div>
-                {product.dimensions && (
-                  <>
-                    <div>尺寸：</div>
-                    <div>
-                      {product.dimensions.length} × {product.dimensions.width} ×{" "}
-                      {product.dimensions.height} mm
-                    </div>
-                  </>
-                )}
-              </div>
-            </div>
-
-            {/* 详细信息（可折叠） */}
-            <Collapsible.Root open={isOpen} onOpenChange={setIsOpen}>
-              <Collapsible.Trigger className="flex items-center text-sm text-blue-600 hover:text-blue-700">
-                <span className="mr-1">{isOpen ? "收起" : "展开"}详细信息</span>
-                <svg
-                  className={`h-4 w-4 transform transition-transform ${isOpen ? "rotate-180" : ""}`}
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M19 9l-7 7-7-7"
-                  />
-                </svg>
-              </Collapsible.Trigger>
-
-              <Collapsible.Content className="mt-4">
-                {product.cadData && (
-                  <div className="grid grid-cols-2 gap-2 text-sm">
-                    <div>体积：</div>
-                    <div>{formatNumber(product.cadData.volume)} mm³</div>
-                    <div>表面积：</div>
-                    <div>{formatNumber(product.cadData.surfaceArea)} mm²</div>
-                    <div>质心位置：</div>
-                    <div>
-                      ({formatNumber(product.cadData.centerOfMass.x)},
-                      {formatNumber(product.cadData.centerOfMass.y)},
-                      {formatNumber(product.cadData.centerOfMass.z)})
-                    </div>
-                  </div>
-                )}
-              </Collapsible.Content>
-            </Collapsible.Root>
-          </div>
-        </div>
+        </Tabs>
       </div>
     );
   }
 
-  // 如果提供了多个产品和布局，就显示布局视图
-  if (products && layout && products.length > 0 && layout.length > 0) {
+  // 如果只提供了单个产品，显示单个产品视图
+  if (product) {
     return (
-      <div className="relative h-[400px] w-full overflow-hidden rounded-lg border bg-slate-100">
-        <Scene products={products} layout={layout} />
+      <div className="rounded-lg bg-white p-6 shadow-md">
+        <div className="grid grid-cols-[2fr,1fr] gap-6">
+          <Scene product={product} />
+          <ProductDetails product={product} />
+        </div>
       </div>
     );
   }

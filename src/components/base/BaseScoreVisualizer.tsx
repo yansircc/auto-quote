@@ -1,18 +1,13 @@
 import React, { useMemo } from "react";
-import type { Rectangle, Point2D } from "@/types/core/geometry";
+import type { Rectangle } from "@/types/core/geometry";
 import type { Product } from "@/types/domain/product";
+import type { Point2D, LayoutItem } from "@/lib/utils/coordinate";
 
 export interface BaseVisualizerProps {
   layout: Rectangle[];
   products: Product[];
   width?: number;
   height?: number;
-}
-
-export interface LayoutItem {
-  center: Point2D;
-  weight: number;
-  dimensions: Rectangle;
 }
 
 export interface ViewBoxData {

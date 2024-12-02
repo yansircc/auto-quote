@@ -1,18 +1,17 @@
 import React, { useMemo } from "react";
-import { calculateRectCenter } from "@/lib/algorithm/balance";
+import { calculate2DCenter, type LayoutItem } from "@/lib/utils/coordinate";
 import { COLORS } from "@/lib/constants/colors";
 import type { Rectangle } from "@/types/core/geometry";
 import type { Product } from "@/types/domain/product";
-import { useBalanceStore } from "@/stores/useBalanceStore";
 import {
   useViewBoxCalculation,
   useQuadrantCalculation,
   QuadrantLines,
   QuadrantWeightLabels,
   Legend,
-  type LayoutItem,
   type LegendConfig,
 } from "./base/BaseScoreVisualizer";
+import { useBalanceStore } from "@/stores/useBalanceStore";
 
 interface GeometryScoreVisualizerProps {
   layout: Rectangle[];
@@ -38,17 +37,11 @@ export const GeometryScoreVisualizer: React.FC<
 
     return layout.map((rect, i) => {
       const product = products[i];
-      if (!product) {
-        return {
-          center: calculateRectCenter(rect),
-          weight: 0,
-          dimensions: rect,
-        };
-      }
+      const center = calculate2DCenter(rect);
 
       return {
-        center: calculateRectCenter(rect),
-        weight: product.weight ?? 0,
+        center,
+        weight: product?.weight ?? 0,
         dimensions: rect,
       };
     });
