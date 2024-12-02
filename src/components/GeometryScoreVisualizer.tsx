@@ -1,8 +1,9 @@
-import React, { useMemo } from 'react';
-import { calculateRectCenter } from '@/lib/algorithm/balance';
-import { COLORS } from '@/lib/constants/colors';
-import type { Product, Rectangle } from '@/types/geometry';
-import { useBalanceStore } from '@/stores/useBalanceStore';
+import React, { useMemo } from "react";
+import { calculateRectCenter } from "@/lib/algorithm/balance";
+import { COLORS } from "@/lib/constants/colors";
+import type { Rectangle } from "@/types/core/geometry";
+import type { Product } from "@/types/domain/product";
+import { useBalanceStore } from "@/stores/useBalanceStore";
 import {
   useViewBoxCalculation,
   useQuadrantCalculation,
@@ -11,7 +12,7 @@ import {
   Legend,
   type LayoutItem,
   type LegendConfig,
-} from './base/BaseScoreVisualizer';
+} from "./base/BaseScoreVisualizer";
 
 interface GeometryScoreVisualizerProps {
   layout: Rectangle[];
@@ -20,24 +21,21 @@ interface GeometryScoreVisualizerProps {
   height?: number;
 }
 
-export const GeometryScoreVisualizer: React.FC<GeometryScoreVisualizerProps> = ({
-  layout,
-  products,
-  width = 800,
-  height = 600,
-}) => {
+export const GeometryScoreVisualizer: React.FC<
+  GeometryScoreVisualizerProps
+> = ({ layout, products, width = 800, height = 600 }) => {
   // Get score from store
-  const { geometryScore } = useBalanceStore();
+  const { score } = useBalanceStore();
 
   // Calculate visualization parameters
   const viewBoxData = useViewBoxCalculation(layout, width, height);
-  
+
   // Calculate centers and weights
   const centers: LayoutItem[] = useMemo(() => {
     if (layout.length !== products.length) {
       return [];
     }
-    
+
     return layout.map((rect, i) => {
       const product = products[i];
       if (!product) {
@@ -57,24 +55,27 @@ export const GeometryScoreVisualizer: React.FC<GeometryScoreVisualizerProps> = (
   }, [layout, products]);
 
   // Calculate quadrant data
-  const { centerOfMass, quadrantWeights } = useQuadrantCalculation(centers, viewBoxData.originPoint);
+  const { centerOfMass, quadrantWeights } = useQuadrantCalculation(
+    centers,
+    viewBoxData.originPoint,
+  );
 
   // Legend configuration
   const legendConfig: LegendConfig = {
     items: [
       {
         color: COLORS.visualization.accent,
-        label: '产品重心',
+        label: "产品重心",
       },
       {
         color: COLORS.visualization.highlight,
-        label: '整体重心',
+        label: "整体重心",
       },
       {
         color: COLORS.visualization.gray,
-        label: '象限分界线',
+        label: "象限分界线",
       },
-    ]
+    ],
   };
 
   return (
@@ -92,10 +93,10 @@ export const GeometryScoreVisualizer: React.FC<GeometryScoreVisualizerProps> = (
               x={rect.x}
               y={rect.y}
               width={rect.width}
-              height={rect.height}
+              height={rect.length}
               className="stroke-green-500"
               fill={COLORS.success.light}
-              strokeWidth={1/viewBoxData.scale}
+              strokeWidth={1 / viewBoxData.scale}
               fillOpacity={0.2}
             />
           </g>
@@ -124,7 +125,7 @@ export const GeometryScoreVisualizer: React.FC<GeometryScoreVisualizerProps> = (
             key={`center-${index}`}
             cx={item.center.x}
             cy={item.center.y}
-            r={3/viewBoxData.scale}
+            r={3 / viewBoxData.scale}
             fill={COLORS.visualization.accent}
             fillOpacity={0.8}
           />
@@ -134,10 +135,10 @@ export const GeometryScoreVisualizer: React.FC<GeometryScoreVisualizerProps> = (
         <circle
           cx={centerOfMass.x}
           cy={centerOfMass.y}
-          r={5/viewBoxData.scale}
+          r={5 / viewBoxData.scale}
           fill={COLORS.visualization.highlight}
           stroke="white"
-          strokeWidth={2/viewBoxData.scale}
+          strokeWidth={2 / viewBoxData.scale}
         />
       </svg>
 
@@ -145,13 +146,13 @@ export const GeometryScoreVisualizer: React.FC<GeometryScoreVisualizerProps> = (
       <Legend config={legendConfig} />
 
       {/* 分数展示 */}
-      {geometryScore && (
-        <div className="absolute top-4 right-4 bg-white/80 p-4 rounded shadow-sm">
-          <div className="text-sm space-y-2">
-            <div>径向平衡: {geometryScore.radialBalance.toFixed(1)}</div>
-            <div>象限平衡: {geometryScore.quadrantBalance.toFixed(1)}</div>
-            <div>中心偏移: {geometryScore.centerOffset.toFixed(1)}</div>
-            <div className="font-bold">总分: {geometryScore.overall.toFixed(1)}</div>
+      {score && (
+        <div className="absolute right-4 top-4 rounded bg-white/80 p-4 shadow-sm">
+          <div className="space-y-2 text-sm">
+            <div>径向平衡: {score.details.geometry.toFixed(1)}</div>
+            <div>象限平衡: {score.total.toFixed(1)}</div>
+            <div>中心偏移: {score.total.toFixed(1)}</div>
+            <div className="font-bold">总分: {score.total.toFixed(1)}</div>
           </div>
         </div>
       )}

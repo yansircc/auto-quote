@@ -10,7 +10,7 @@ describe("GeometryScorer", () => {
   describe("基础功能", () => {
     it("空产品列表应返回默认分数", () => {
       const score = scorer.calculateScore([]);
-      expect(score.score).toBe(0);
+      expect(score.overall).toBe(0);
     });
 
     it("单个产品应返回完美分数", () => {
@@ -21,7 +21,7 @@ describe("GeometryScorer", () => {
         volume: 1000000,
       });
       const score = scorer.calculateScore([product]);
-      expect(score.score).toBeGreaterThan(95);
+      expect(score.overall).toBeGreaterThan(95);
     });
 
     it("处理缺失尺寸的产品", () => {
@@ -32,7 +32,7 @@ describe("GeometryScorer", () => {
         volume: 0,
       });
       const score = scorer.calculateScore([product]);
-      expect(score.score).toBeLessThan(50);
+      expect(score.overall).toBeLessThan(50);
     });
 
     it("处理零体积的产品", () => {
@@ -43,7 +43,7 @@ describe("GeometryScorer", () => {
         volume: 0,
       });
       const score = scorer.calculateScore([product]);
-      expect(score.score).toBeLessThan(50);
+      expect(score.overall).toBeLessThan(50);
     });
   });
 
@@ -328,8 +328,8 @@ describe("GeometryScorer", () => {
         }),
       ];
       const score = scorer.calculateScore(products);
-      expect(score.score).toBeDefined();
-      expect(score.score).not.toBeNaN();
+      expect(score.overall).toBeDefined();
+      expect(score.overall).not.toBeNaN();
     });
 
     it("处理非常小的数字", () => {
@@ -348,8 +348,8 @@ describe("GeometryScorer", () => {
         }),
       ];
       const score = scorer.calculateScore(products);
-      expect(score.score).toBeDefined();
-      expect(score.score).not.toBeNaN();
+      expect(score.overall).toBeDefined();
+      expect(score.overall).not.toBeNaN();
     });
 
     it("处理混合尺度", () => {
@@ -368,8 +368,8 @@ describe("GeometryScorer", () => {
         }),
       ];
       const score = scorer.calculateScore(products);
-      expect(score.score).toBeDefined();
-      expect(score.score).not.toBeNaN();
+      expect(score.overall).toBeDefined();
+      expect(score.overall).not.toBeNaN();
     });
   });
 });

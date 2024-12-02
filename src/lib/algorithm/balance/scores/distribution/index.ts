@@ -208,7 +208,7 @@ function calculatePhysicalScore(
   );
 }
 
-function calculateVolumeScore(
+export function calculateVolumeScore(
   details: VolumeResult,
   patterns: { isGradient: boolean; isHierarchical: boolean; quality: number },
 ): number {

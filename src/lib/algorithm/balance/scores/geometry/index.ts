@@ -72,7 +72,7 @@ export class GeometryScorer {
         0.6;
 
     return {
-      score: Math.round(totalScore), // 四舍五入到整数
+      overall: Math.round(totalScore), // 四舍五入到整数
       details: {
         shapeScore,
         dimensionScore,
@@ -83,7 +83,7 @@ export class GeometryScorer {
 
   private createZeroScore(): GeometryScore {
     return {
-      score: 0,
+      overall: 0,
       details: {
         shapeScore: {
           aspectRatio: 0,
@@ -107,7 +107,7 @@ export class GeometryScorer {
 
   private createPerfectScore(): GeometryScore {
     return {
-      score: 100,
+      overall: 100,
       details: {
         shapeScore: {
           aspectRatio: 100,

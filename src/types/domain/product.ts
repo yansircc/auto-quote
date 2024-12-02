@@ -1,5 +1,4 @@
-import type { Point3D, Rectangle2D } from "../core/geometry";
-
+import type { Point2D, Point3D, Rectangle2D } from "../core/geometry";
 /**
  * 3D尺寸
  */
@@ -87,6 +86,26 @@ interface CADData {
 }
 
 /**
+ * 注胶点位置配置
+ */
+export interface InjectionPointConfig {
+  // 手动指定的注胶点位置
+  manual?: Point2D;
+  // 自动计算注胶点的策略
+  strategy?: "center" | "edge" | "corner" | "weighted-center";
+}
+
+/**
+ * 流动路径信息
+ */
+export interface FlowPathInfo {
+  // 注胶点到产品中心的距离
+  length: number;
+  // 注胶点到产品中心的路径
+  path: Point2D[];
+}
+
+/**
  * 产品完整信息
  */
 export interface Product extends ProductBase {
@@ -110,4 +129,10 @@ export interface Product extends ProductBase {
     [key: string]: unknown; // 其他元数据
   };
   cadData?: CADData; // 添加 CAD 数据字段
+  flowData?: {
+    // 手动指定的流动长度（优先级最高）
+    manualFlowLength?: number;
+    // 计算得到的流动路径信息
+    calculatedFlowPath?: FlowPathInfo;
+  };
 }

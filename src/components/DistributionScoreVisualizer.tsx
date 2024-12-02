@@ -1,7 +1,7 @@
-import React, { useMemo } from 'react';
-import { calculateRectCenter } from '@/lib/algorithm/balance';
-import { calculateDistributionScore } from '@/lib/algorithm/balance/scores/distribution';
-import { COLORS } from '@/lib/constants/colors';
+import React, { useMemo } from "react";
+import { calculateRectCenter } from "@/lib/algorithm/balance";
+import { calculateDistributionScore } from "@/lib/algorithm/balance/scores/distribution";
+import { COLORS } from "@/lib/constants/colors";
 import {
   type BaseVisualizerProps,
   Annotation,
@@ -9,7 +9,7 @@ import {
   Legend,
   type LegendConfig,
   useViewBoxCalculation,
-} from './base/BaseScoreVisualizer';
+} from "./base/BaseScoreVisualizer";
 
 export const DistributionScoreVisualizer: React.FC<BaseVisualizerProps> = ({
   layout,
@@ -25,30 +25,36 @@ export const DistributionScoreVisualizer: React.FC<BaseVisualizerProps> = ({
   const scores = useMemo(() => {
     if (!layout.length || !products.length) return null;
 
-    const centers = layout.map(rect => calculateRectCenter(rect));
-    const weights = products.map(p => p.weight ?? 1);
+    const centers = layout.map((rect) => calculateRectCenter(rect));
+    const weights = products.map((p) => p.weight ?? 1);
 
     // Calculate aspect ratios
-    const aspectRatios = layout.map(rect => rect.width / rect.height);
-    const avgAspectRatio = aspectRatios.reduce((a, b) => a + b, 0) / aspectRatios.length;
-    const aspectRatioVariance = aspectRatios.reduce((sum, ratio) => 
-      sum + Math.pow(ratio - avgAspectRatio, 2), 0) / aspectRatios.length;
+    const aspectRatios = layout.map((rect) => rect.width / rect.length);
+    const avgAspectRatio =
+      aspectRatios.reduce((a, b) => a + b, 0) / aspectRatios.length;
+    const aspectRatioVariance =
+      aspectRatios.reduce(
+        (sum, ratio) => sum + Math.pow(ratio - avgAspectRatio, 2),
+        0,
+      ) / aspectRatios.length;
     const aspectRatioScore = 100 - Math.min(100, aspectRatioVariance * 350);
 
     // Calculate areas
-    const areas = layout.map(rect => rect.width * rect.height);
+    const areas = layout.map((rect) => rect.width * rect.length);
     const avgArea = areas.reduce((a, b) => a + b, 0) / areas.length;
-    const areaVariance = areas.reduce((sum, area) => 
-      sum + Math.pow(area - avgArea, 2), 0) / (avgArea * avgArea * areas.length);
+    const areaVariance =
+      areas.reduce((sum, area) => sum + Math.pow(area - avgArea, 2), 0) /
+      (avgArea * avgArea * areas.length);
     const areaScore = 100 - Math.min(100, areaVariance * 350);
 
     // Calculate linear penalty
-    const xCoords = centers.map(p => p.x);
-    const yCoords = centers.map(p => p.y);
+    const xCoords = centers.map((p) => p.x);
+    const yCoords = centers.map((p) => p.y);
     const xRange = Math.max(...xCoords) - Math.min(...xCoords);
     const yRange = Math.max(...yCoords) - Math.min(...yCoords);
     const maxRange = Math.max(xRange, yRange);
-    const linearPenalty = maxRange === 0 ? 0 : Math.abs(xRange - yRange) / maxRange * 150;
+    const linearPenalty =
+      maxRange === 0 ? 0 : (Math.abs(xRange - yRange) / maxRange) * 150;
 
     return {
       total: calculateDistributionScore(layout, products),
@@ -73,11 +79,11 @@ export const DistributionScoreVisualizer: React.FC<BaseVisualizerProps> = ({
   const legendConfig: LegendConfig = {
     items: [
       {
-        label: '产品中心点',
+        label: "产品中心点",
         color: COLORS.neutral.text.primary,
       },
       {
-        label: '线性布局惩罚',
+        label: "线性布局惩罚",
         color: COLORS.error.main,
       },
     ],
@@ -85,11 +91,11 @@ export const DistributionScoreVisualizer: React.FC<BaseVisualizerProps> = ({
 
   // Annotation configuration
   const annotationConfig: AnnotationConfig = {
-    title: '分布平衡分析',
+    title: "分布平衡分析",
     descriptions: [
-      '颜色深浅表示宽高比和面积偏差',
-      '圆点表示产品中心位置',
-      scores.linearPenalty > 0 ? '虚线表示线性布局惩罚' : '',
+      "颜色深浅表示宽高比和面积偏差",
+      "圆点表示产品中心位置",
+      scores.linearPenalty > 0 ? "虚线表示线性布局惩罚" : "",
     ].filter(Boolean),
   };
 
@@ -103,21 +109,26 @@ export const DistributionScoreVisualizer: React.FC<BaseVisualizerProps> = ({
       >
         {/* Draw layout rectangles with heat map coloring */}
         {layout.map((rect, index) => {
-          const aspectRatioDeviation = Math.abs(rect.width / rect.height - 1);
+          const aspectRatioDeviation = Math.abs(rect.width / rect.length - 1);
           const areaDeviation = Math.abs(
-            (rect.width * rect.height) / 
-            (layout.reduce((sum, r) => sum + r.width * r.height, 0) / layout.length) - 1
+            (rect.width * rect.length) /
+              (layout.reduce((sum, r) => sum + r.width * r.length, 0) /
+                layout.length) -
+              1,
           );
-          const opacity = Math.min(0.8, Math.max(0.2, (aspectRatioDeviation + areaDeviation) / 2));
-          
+          const opacity = Math.min(
+            0.8,
+            Math.max(0.2, (aspectRatioDeviation + areaDeviation) / 2),
+          );
+
           return (
             <rect
               key={index}
               x={rect.x}
               y={rect.y}
               width={rect.width}
-              height={rect.height}
-              fill={getScoreColor(scores.total)}
+              height={rect.length}
+              fill={getScoreColor(scores.total.score)}
               fillOpacity={opacity}
               stroke={COLORS.neutral.border}
               strokeWidth={1 / scale}

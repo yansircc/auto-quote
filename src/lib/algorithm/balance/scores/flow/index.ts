@@ -43,8 +43,8 @@ export function calculateDetailedFlowScore(
 
   // Calculate flow paths with safe distance calculation
   const flowPaths = products.map((product, i) => {
-    if (product.flowLength != null) {
-      return product.flowLength;
+    if (product.flowData?.calculatedFlowPath != null) {
+      return product.flowData.calculatedFlowPath.length;
     }
     const center = calculateRectCenter(layout[i]!);
     return calculateDistance(injectionPoint, center);

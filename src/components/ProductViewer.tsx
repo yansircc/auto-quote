@@ -1,9 +1,10 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import * as Collapsible from '@radix-ui/react-collapsible';
-import { Scene } from './Scene';
-import type { Product, Rectangle } from '@/types/geometry';
+import { useState } from "react";
+import * as Collapsible from "@radix-ui/react-collapsible";
+import { Scene } from "./Scene";
+import type { Rectangle } from "@/types/core/geometry";
+import type { Product } from "@/types/domain/product";
 
 interface ProductViewerProps {
   product?: Product;
@@ -16,37 +17,41 @@ function formatNumber(num: number): string {
   return num.toFixed(2);
 }
 
-export function ProductViewer({ product, products, layout }: ProductViewerProps) {
+export function ProductViewer({
+  product,
+  products,
+  layout,
+}: ProductViewerProps) {
   const [isOpen, setIsOpen] = useState(false);
 
   // 如果提供了单个产品，就显示单个产品视图
   if (product) {
     return (
-      <div className="bg-white rounded-lg shadow-md p-6 mb-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="mb-4 rounded-lg bg-white p-6 shadow-md">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           {/* 3D视图 */}
-          <div className="h-[300px] bg-gray-50 rounded-lg overflow-hidden">
-            <Scene 
+          <div className="h-[300px] overflow-hidden rounded-lg bg-gray-50">
+            <Scene
               product={product}
               products={[product]}
-              layout={[{
-                x: 0,
-                y: 0,
-                width: product.dimensions?.length ?? 0,
-                height: product.dimensions?.width ?? 0,
-                rotated: false,
-                originalIndex: 0
-              }]}
+              layout={[
+                {
+                  x: 0,
+                  y: 0,
+                  width: product.dimensions?.length ?? 0,
+                  length: product.dimensions?.width ?? 0,
+                },
+              ]}
             />
           </div>
 
           {/* 产品信息 */}
           <div>
-            <h3 className="text-lg font-semibold mb-4">产品 #{product.id}</h3>
-            
+            <h3 className="mb-4 text-lg font-semibold">产品 #{product.id}</h3>
+
             {/* 基本信息 */}
             <div className="mb-4">
-              <h4 className="font-medium mb-2">基本信息</h4>
+              <h4 className="mb-2 font-medium">基本信息</h4>
               <div className="grid grid-cols-2 gap-2 text-sm">
                 <div>重量：</div>
                 <div>{product.weight}g</div>
@@ -54,7 +59,8 @@ export function ProductViewer({ product, products, layout }: ProductViewerProps)
                   <>
                     <div>尺寸：</div>
                     <div>
-                      {product.dimensions.length} × {product.dimensions.width} × {product.dimensions.height} mm
+                      {product.dimensions.length} × {product.dimensions.width} ×{" "}
+                      {product.dimensions.height} mm
                     </div>
                   </>
                 )}
@@ -64,17 +70,22 @@ export function ProductViewer({ product, products, layout }: ProductViewerProps)
             {/* 详细信息（可折叠） */}
             <Collapsible.Root open={isOpen} onOpenChange={setIsOpen}>
               <Collapsible.Trigger className="flex items-center text-sm text-blue-600 hover:text-blue-700">
-                <span className="mr-1">{isOpen ? '收起' : '展开'}详细信息</span>
+                <span className="mr-1">{isOpen ? "收起" : "展开"}详细信息</span>
                 <svg
-                  className={`w-4 h-4 transform transition-transform ${isOpen ? 'rotate-180' : ''}`}
+                  className={`h-4 w-4 transform transition-transform ${isOpen ? "rotate-180" : ""}`}
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
                 >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M19 9l-7 7-7-7"
+                  />
                 </svg>
               </Collapsible.Trigger>
-              
+
               <Collapsible.Content className="mt-4">
                 {product.cadData && (
                   <div className="grid grid-cols-2 gap-2 text-sm">

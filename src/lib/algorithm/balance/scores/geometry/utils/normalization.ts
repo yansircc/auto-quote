@@ -1,8 +1,12 @@
 import type { Product } from "@/types/domain/product";
 import type { NormalizedProduct } from "@/types/algorithm/balance/geometry";
 import type { GeometryScoreConfig } from "../config";
+import { defaultConfig } from "../config";
 
-export class DataNormalizer {
+/**
+ * 数据归一化处理类
+ */
+class DataNormalizer {
   constructor(private config: GeometryScoreConfig) {}
 
   private normalizeDimension(value: number): number {
@@ -45,10 +49,29 @@ export class DataNormalizer {
   }
 }
 
-// 批量规范化
+/**
+ * 归一化单个产品数据
+ * @param product 产品数据
+ * @param config 几何评分配置（可选）
+ * @returns 归一化后的产品数据
+ */
+export function normalizeProduct(
+  product: Product,
+  config: GeometryScoreConfig = defaultConfig,
+): NormalizedProduct {
+  const normalizer = new DataNormalizer(config);
+  return normalizer.normalizeProduct(product);
+}
+
+/**
+ * 批量归一化产品数据
+ * @param products 产品数据数组
+ * @param config 几何评分配置（可选）
+ * @returns 归一化后的产品数据数组
+ */
 export function normalizeProducts(
   products: Product[],
-  config: GeometryScoreConfig,
+  config: GeometryScoreConfig = defaultConfig,
 ): NormalizedProduct[] {
   const normalizer = new DataNormalizer(config);
   return products.map((p) => normalizer.normalizeProduct(p));

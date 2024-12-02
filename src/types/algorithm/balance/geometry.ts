@@ -1,4 +1,4 @@
-import type { Product } from '@/types/domain/product';
+import type { Product } from "@/types/domain/product";
 
 // 基础特征
 export interface DimensionFeatures {
@@ -42,7 +42,7 @@ export interface EfficiencyScore {
 
 // 几何评分
 export interface GeometryScore {
-  score: number;
+  overall: number;
   details: {
     shapeScore: ShapeScore;
     dimensionScore: DimensionScore;
@@ -54,24 +54,24 @@ export interface GeometryScore {
 export interface GeometryScoreConfig {
   // 相似度评分参数
   similarity: {
-    aspectRatioWeight: number;     // 长宽比权重
-    shapeWeight: number;           // 形状权重
-    dimensionWeight: number;       // 尺寸权重
+    aspectRatioWeight: number; // 长宽比权重
+    shapeWeight: number; // 形状权重
+    dimensionWeight: number; // 尺寸权重
   };
-  
+
   // 评分曲线参数
   curves: {
     perfectScoreThreshold: number; // 完美分数阈值
-    nearPerfectThreshold: number;  // 接近完美阈值
-    midPointRatio: number;         // S型曲线中点
-    slopeFactor: number;           // 曲线斜率因子
-    basePenaltyExponent: number;   // 基础惩罚指数
+    nearPerfectThreshold: number; // 接近完美阈值
+    midPointRatio: number; // S型曲线中点
+    slopeFactor: number; // 曲线斜率因子
+    basePenaltyExponent: number; // 基础惩罚指数
   };
-  
+
   // 容差设置
   tolerance: {
-    ratio: number;    // 相对容差
-    minimum: number;  // 最小容差
+    ratio: number; // 相对容差
+    minimum: number; // 最小容差
   };
 }
 

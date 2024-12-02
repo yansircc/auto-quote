@@ -41,8 +41,7 @@ export function Scene({ product, products, layout }: SceneProps) {
 
     // 确保数据有效性
     const isSingleProduct = !!product?.dimensions;
-    const isMultiProduct =
-      products.length > 0 && layout?.length === products?.length;
+    const isMultiProduct = products && layout?.length === products?.length;
     if (!isSingleProduct && !isMultiProduct) {
       return;
     }
@@ -71,7 +70,7 @@ export function Scene({ product, products, layout }: SceneProps) {
     if (isMultiProduct) {
       totalWidth = Math.max(...layout.map((item) => item.x + item.width)) / 100;
       totalHeight =
-        Math.max(...layout.map((item) => item.y + item.height)) / 100;
+        Math.max(...layout.map((item) => item.y + item.length)) / 100;
     }
     const cameraDistance = Math.max(
       isMultiProduct ? Math.max(totalWidth, totalHeight) * 2 : 5,
@@ -102,8 +101,8 @@ export function Scene({ product, products, layout }: SceneProps) {
       // 直接使用2D布局数据，只添加高度
       const size: Point3D = {
         x: layoutItem.width / 100,
-        y: product.dimensions.height / 100,
-        z: layoutItem.height / 100,
+        y: product.dimensions.length / 100,
+        z: layoutItem.length / 100,
       };
 
       // 位置也直接使用2D布局坐标
@@ -197,11 +196,13 @@ export function Scene({ product, products, layout }: SceneProps) {
       // 释放资源
       scene.traverse((object) => {
         if (object instanceof THREE.Mesh) {
-          object.geometry.dispose();
+          (object.geometry as THREE.BufferGeometry).dispose();
           if (object.material instanceof THREE.Material) {
             object.material.dispose();
           } else if (Array.isArray(object.material)) {
-            object.material.forEach((material) => material.dispose());
+            (object.material as THREE.Material[]).forEach((material) =>
+              material.dispose(),
+            );
           }
         }
       });

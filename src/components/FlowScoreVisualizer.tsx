@@ -1,15 +1,18 @@
-import React, { useMemo } from 'react';
-import { calculateRectCenter, calculateDistance } from '@/lib/algorithm/balance';
-import { COLORS } from '@/lib/constants/colors';
-import type { Product, Rectangle, Point2D } from '@/types/geometry';
-import { useBalanceStore } from '@/stores/useBalanceStore';
+import React, { useMemo } from "react";
+import { COLORS } from "@/lib/constants/colors";
+import type { Rectangle, Point2D } from "@/types/core/geometry";
+import type { Product } from "@/types/domain/product";
+import { useBalanceStore } from "@/stores/useBalanceStore";
 import {
-
+  calculateRectCenter,
+  calculateFlowPathInfo,
+} from "@/lib/utils/geometry";
+import {
   type LayoutItem,
   type LegendConfig,
   useViewBoxCalculation,
   Legend,
-} from './base/BaseScoreVisualizer';
+} from "./base/BaseScoreVisualizer";
 
 interface FlowScoreVisualizerProps {
   layout: Rectangle[];
@@ -26,56 +29,57 @@ export const FlowScoreVisualizer: React.FC<FlowScoreVisualizerProps> = ({
   width = 800,
   height = 600,
 }) => {
-  // Get score from store
-  const { flowScore } = useBalanceStore();
+  // 获取评分数据
+  const { score } = useBalanceStore();
 
-  // Calculate visualization parameters
+  // 计算视图参数
   const viewBoxData = useViewBoxCalculation(layout, width, height);
-  
-  // Calculate centers and weights
-  const centers: LayoutItem[] = useMemo(() => {
-    if (layout.length !== products.length) {
-      return [];
-    }
-    
+
+  // 计算布局项目
+  const layoutItems: LayoutItem[] = useMemo(() => {
+    if (layout.length !== products.length) return [];
+
     return layout.map((rect, i) => {
       const product = products[i];
-      if (!product) {
+      if (!product)
         return {
           center: calculateRectCenter(rect),
           weight: 0,
           dimensions: rect,
         };
-      }
 
-      const center = calculateRectCenter(rect);
-      const flowLength = product.flowLength ?? calculateDistance(injectionPoint, center);
+      // 计算流动路径信息
+      const flowInfo = calculateFlowPathInfo(product, rect, injectionPoint);
+
+      // 如果有手动设置的流动长度，使用手动值
+      const flowLength = product.flowData?.manualFlowLength ?? flowInfo.length;
 
       return {
-        center,
+        center: calculateRectCenter(rect),
         weight: product.weight ?? 1,
         dimensions: rect,
         flowLength,
+        flowPath: flowInfo.path,
       };
     });
   }, [layout, products, injectionPoint]);
 
-  // Legend configuration
+  // 图例配置
   const legendConfig: LegendConfig = {
     items: [
       {
         color: COLORS.visualization.accent,
-        label: '产品重心',
+        label: "产品重心",
       },
       {
         color: COLORS.visualization.highlight,
-        label: '注塑点',
+        label: "注塑点",
       },
       {
         color: COLORS.visualization.gray,
-        label: '流道长度',
+        label: "流道长度",
       },
-    ]
+    ],
   };
 
   return (
@@ -93,10 +97,10 @@ export const FlowScoreVisualizer: React.FC<FlowScoreVisualizerProps> = ({
               x={rect.x}
               y={rect.y}
               width={rect.width}
-              height={rect.height}
+              height={rect.length}
               className="stroke-green-500"
               fill={COLORS.success.light}
-              strokeWidth={1/viewBoxData.scale}
+              strokeWidth={1 / viewBoxData.scale}
               fillOpacity={0.2}
             />
           </g>
@@ -106,26 +110,28 @@ export const FlowScoreVisualizer: React.FC<FlowScoreVisualizerProps> = ({
         <circle
           cx={injectionPoint.x}
           cy={injectionPoint.y}
-          r={5/viewBoxData.scale}
+          r={5 / viewBoxData.scale}
           fill={COLORS.visualization.highlight}
         />
 
-        {/* 流道长度线 */}
-        {centers.map((item, index) => (
+        {/* 流道路径和产品重心 */}
+        {layoutItems.map((item, index) => (
           <g key={`flow-${index}`}>
+            {/* 流道路径线 */}
             <line
               x1={injectionPoint.x}
               y1={injectionPoint.y}
               x2={item.center.x}
               y2={item.center.y}
               stroke={COLORS.visualization.gray}
-              strokeWidth={1/viewBoxData.scale}
-              strokeDasharray={`${4/viewBoxData.scale},${4/viewBoxData.scale}`}
+              strokeWidth={1 / viewBoxData.scale}
+              strokeDasharray={`${4 / viewBoxData.scale},${4 / viewBoxData.scale}`}
             />
+            {/* 产品重心点 */}
             <circle
               cx={item.center.x}
               cy={item.center.y}
-              r={3/viewBoxData.scale}
+              r={3 / viewBoxData.scale}
               fill={COLORS.visualization.accent}
             />
           </g>
@@ -135,13 +141,13 @@ export const FlowScoreVisualizer: React.FC<FlowScoreVisualizerProps> = ({
       <Legend config={legendConfig} />
 
       {/* 分数展示 */}
-      {flowScore && (
-        <div className="absolute top-4 right-4 bg-white/80 p-4 rounded shadow-sm">
-          <div className="text-sm space-y-2">
-            <div>流道平衡: {flowScore.flowPathBalance.toFixed(1)}</div>
-            <div>表面积平衡: {flowScore.surfaceAreaBalance.toFixed(1)}</div>
-            <div>体积平衡: {flowScore.volumeBalance.toFixed(1)}</div>
-            <div className="font-bold">总分: {flowScore.overall.toFixed(1)}</div>
+      {score && (
+        <div className="absolute right-4 top-4 rounded bg-white/80 p-4 shadow-sm">
+          <div className="space-y-2 text-sm">
+            <div>流道平衡: {score.details.flow.toFixed(1)}</div>
+            <div>表面积平衡: {score.details.geometry.toFixed(1)}</div>
+            <div>分布平衡: {score.details.distribution.toFixed(1)}</div>
+            <div className="font-bold">总分: {score.total.toFixed(1)}</div>
           </div>
         </div>
       )}

@@ -1,33 +1,19 @@
 import { create } from "zustand";
 import type { Product } from "@/types/domain/product";
 import type { Rectangle, Point2D } from "@/types/core/geometry";
-import type {
-  BalanceScore,
-  DetailedGeometryScore,
-  DetailedFlowScore,
-} from "@/types/algorithm";
-import {
-  calculateDetailedGeometryScore,
-  calculateDetailedFlowScore,
-  calculateDistributionScore,
-  calculateVolumeScore,
-  calculateBalanceScore,
-} from "@/lib/algorithm/balance";
+import type { BalanceScore } from "@/types/algorithm/balance/types";
+import { calculateBalanceScore } from "@/lib/algorithm/balance/scores";
 
 interface BalanceState {
-  // Scores
-  overallScore: BalanceScore | null;
-  geometryScore: DetailedGeometryScore | null;
-  flowScore: DetailedFlowScore | null;
-  distributionScore: number | null;
-  volumeScore: number | null;
+  // 评分结果
+  score: BalanceScore | null;
 
-  // Input data
+  // 输入数据
   layout: Rectangle[] | null;
   products: Product[] | null;
   injectionPoint: Point2D | null;
 
-  // Actions
+  // 动作
   calculateScores: (
     layout: Rectangle[],
     products: Product[],
@@ -38,55 +24,43 @@ interface BalanceState {
 
 /**
  * 平衡分析状态管理
- * Balance analysis state management store
  */
 export const useBalanceStore = create<BalanceState>((set) => ({
-  // Initial state
-  overallScore: null,
-  geometryScore: null,
-  flowScore: null,
-  distributionScore: null,
-  volumeScore: null,
+  // 初始状态
+  score: null,
   layout: null,
   products: null,
   injectionPoint: null,
 
-  // Calculate all scores
+  // 计算所有评分
   calculateScores: (layout, products, injectionPoint) => {
-    const geometryScore = calculateDetailedGeometryScore(layout, products);
-    const flowScore = calculateDetailedFlowScore(
-      layout,
-      products,
-      injectionPoint,
-    );
-    const distributionScore = calculateDistributionScore(layout, products);
-    const volumeScore = calculateVolumeScore(layout, products);
-    const overallScore = calculateBalanceScore(
-      layout,
-      products,
-      injectionPoint,
-    );
+    try {
+      // 1. 计算总体平衡分数
+      const score = calculateBalanceScore(layout, products, injectionPoint);
 
-    set({
-      overallScore,
-      geometryScore,
-      flowScore,
-      distributionScore,
-      volumeScore,
-      layout,
-      products,
-      injectionPoint,
-    });
+      // 2. 更新状态
+      set({
+        score,
+        layout,
+        products,
+        injectionPoint,
+      });
+    } catch (error) {
+      console.error("Error calculating balance scores:", error);
+      // 发生错误时重置状态
+      set({
+        score: null,
+        layout,
+        products,
+        injectionPoint,
+      });
+    }
   },
 
-  // Reset all scores
+  // 重置所有评分
   resetScores: () => {
     set({
-      overallScore: null,
-      geometryScore: null,
-      flowScore: null,
-      distributionScore: null,
-      volumeScore: null,
+      score: null,
       layout: null,
       products: null,
       injectionPoint: null,

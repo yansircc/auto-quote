@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import type { BalanceScore } from "@/types/balance";
+import type { BalanceScore } from "@/types/algorithm/balance/types";
 import { cn } from "@/lib/utils";
 
 interface ScoreCardProps {
@@ -31,7 +31,9 @@ export function ScoreCard({ score, className }: ScoreCardProps) {
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
           <span>平衡分析得分</span>
-          <span className={cn("text-2xl font-bold", getScoreColor(score.total))}>
+          <span
+            className={cn("text-2xl font-bold", getScoreColor(score.total))}
+          >
             {Math.round(score.total)}
           </span>
         </CardTitle>
@@ -44,9 +46,9 @@ export function ScoreCard({ score, className }: ScoreCardProps) {
               {Math.round(score.details.geometry)}
             </span>
           </div>
-          <Progress 
-            value={score.details.geometry} 
-            className={cn("h-2", getProgressColor(score.details.geometry))} 
+          <Progress
+            value={score.details.geometry}
+            className={cn("h-2", getProgressColor(score.details.geometry))}
           />
         </div>
         <div className="space-y-2">
@@ -56,9 +58,9 @@ export function ScoreCard({ score, className }: ScoreCardProps) {
               {Math.round(score.details.flow)}
             </span>
           </div>
-          <Progress 
-            value={score.details.flow} 
-            className={cn("h-2", getProgressColor(score.details.flow))} 
+          <Progress
+            value={score.details.flow}
+            className={cn("h-2", getProgressColor(score.details.flow))}
           />
         </div>
         <div className="space-y-2">
@@ -68,22 +70,17 @@ export function ScoreCard({ score, className }: ScoreCardProps) {
               {Math.round(score.details.distribution)}
             </span>
           </div>
-          <Progress 
-            value={score.details.distribution} 
-            className={cn("h-2", getProgressColor(score.details.distribution))} 
+          <Progress
+            value={score.details.distribution}
+            className={cn("h-2", getProgressColor(score.details.distribution))}
           />
         </div>
         <div className="space-y-2">
           <div className="flex justify-between text-sm">
             <span>体积利用</span>
-            <span className={getScoreColor(score.details.volume)}>
-              {Math.round(score.details.volume)}
-            </span>
+            <span className={getScoreColor(0)}>{Math.round(0)}</span>
           </div>
-          <Progress 
-            value={score.details.volume} 
-            className={cn("h-2", getProgressColor(score.details.volume))} 
-          />
+          <Progress value={0} className={cn("h-2", getProgressColor(0))} />
         </div>
         <div className="mt-4 text-xs text-muted-foreground">
           置信度: {Math.round(score.confidence * 100)}%
