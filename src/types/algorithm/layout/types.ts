@@ -1,4 +1,4 @@
-import type { Rectangle2D, Rectangle } from "@/types/core/geometry";
+import type { Rectangle } from "@/types/core/geometry";
 
 /**
  * 天际线算法的节点
