@@ -14,5 +14,11 @@ export function calculateSpacing(maxDimension: number): number {
   if (maxDimension <= 800) return 60;
   if (maxDimension <= 900) return 65;
   if (maxDimension <= 1000) return 70;
-  throw new Error('Max dimension exceeded');
+  throw new Error("Max dimension exceeded");
+  // const baseSpacing = 30;
+  // const scaleFactor = 0.1;
+  // return Math.min(
+  //   baseSpacing + Math.floor(maxDimension * scaleFactor),
+  //   70, // 最大间距限制
+  // );
 }
