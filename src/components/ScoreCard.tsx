@@ -42,45 +42,38 @@ export function ScoreCard({ score, className }: ScoreCardProps) {
         <div className="space-y-2">
           <div className="flex justify-between text-sm">
             <span>几何平衡</span>
-            <span className={getScoreColor(score.details.geometry)}>
-              {Math.round(score.details.geometry)}
+            <span className={getScoreColor(score.details.geometry.overall)}>
+              {Math.round(score.details.geometry.overall)}
             </span>
           </div>
           <Progress
-            value={score.details.geometry}
-            className={cn("h-2", getProgressColor(score.details.geometry))}
+            value={score.details.geometry.overall}
+            className={cn("h-2", getProgressColor(score.details.geometry.overall))}
           />
         </div>
         <div className="space-y-2">
           <div className="flex justify-between text-sm">
             <span>流动平衡</span>
-            <span className={getScoreColor(score.details.flow)}>
-              {Math.round(score.details.flow)}
+            <span className={getScoreColor(score.details.flow.overall)}>
+              {Math.round(score.details.flow.overall)}
             </span>
           </div>
           <Progress
-            value={score.details.flow}
-            className={cn("h-2", getProgressColor(score.details.flow))}
+            value={score.details.flow.overall}
+            className={cn("h-2", getProgressColor(score.details.flow.overall))}
           />
         </div>
         <div className="space-y-2">
           <div className="flex justify-between text-sm">
             <span>分布平衡</span>
-            <span className={getScoreColor(score.details.distribution)}>
-              {Math.round(score.details.distribution)}
+            <span className={getScoreColor(score.details.distribution.overall)}>
+              {Math.round(score.details.distribution.overall)}
             </span>
           </div>
           <Progress
-            value={score.details.distribution}
-            className={cn("h-2", getProgressColor(score.details.distribution))}
+            value={score.details.distribution.overall}
+            className={cn("h-2", getProgressColor(score.details.distribution.overall))}
           />
-        </div>
-        <div className="space-y-2">
-          <div className="flex justify-between text-sm">
-            <span>体积利用</span>
-            <span className={getScoreColor(0)}>{Math.round(0)}</span>
-          </div>
-          <Progress value={0} className={cn("h-2", getProgressColor(0))} />
         </div>
         <div className="mt-4 text-xs text-muted-foreground">
           置信度: {Math.round(score.confidence * 100)}%

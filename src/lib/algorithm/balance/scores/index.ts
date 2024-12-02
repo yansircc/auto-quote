@@ -5,6 +5,57 @@ import { calculateDetailedFlowScore } from "./flow";
 import { calculateDistributionScore } from "./distribution";
 import { geometryScorer } from "./geometry";
 import { normalizeProducts } from "./geometry/utils/normalization";
+
+/**
+ * 创建空的评分数据
+ * @returns 空的评分数据对象
+ */
+function createEmptyScore(): BalanceScore {
+  return {
+    total: 0,
+    details: {
+      geometry: {
+        overall: 0,
+        shapeScore: {
+          aspectRatio: 0,
+          symmetry: 0,
+          complexity: 0,
+          uniformity: 0,
+        },
+        dimensionScore: {
+          sizeVariation: 0,
+          scaleRatio: 0,
+          consistency: 0,
+        },
+        efficiencyScore: {
+          planarDensity: 0,
+          volumeUtilization: 0,
+          heightDistribution: 0,
+        },
+      },
+      flow: 0,
+      distribution: 0,
+    },
+    confidence: 0,
+  };
+}
+
+/**
+ * 验证输入数据的有效性
+ * @param layout 产品布局数组
+ * @param products 产品信息数组
+ * @returns 是否有效
+ */
+function validateInput(layout: Rectangle[], products: Product[]): boolean {
+  return (
+    Array.isArray(layout) &&
+    Array.isArray(products) &&
+    layout.length > 0 &&
+    products.length > 0 &&
+    layout.length === products.length
+  );
+}
+
 /**
  * 计算总体平衡分数
  * @param layout 产品布局数组
@@ -17,17 +68,9 @@ export function calculateBalanceScore(
   products: Product[],
   injectionPoint: Point2D,
 ): BalanceScore {
-  // 1. 处理空数据情况
-  if (!layout.length || !products.length || layout.length !== products.length) {
-    return {
-      total: 0,
-      details: {
-        geometry: 0,
-        flow: 0,
-        distribution: 0,
-      },
-      confidence: 0,
-    };
+  // 1. 验证输入数据
+  if (!validateInput(layout, products)) {
+    return createEmptyScore();
   }
 
   try {
@@ -39,8 +82,18 @@ export function calculateBalanceScore(
       products,
       injectionPoint,
     );
+
+    // 创建布局映射，确保键是数字类型
+    const layoutMap = layout.reduce<Record<number, Rectangle>>(
+      (acc, rect, i) => {
+        acc[i] = rect;
+        return acc;
+      },
+      {},
+    );
+
     const distributionScore = calculateDistributionScore(
-      layout.reduce((acc, rect, i) => ({ ...acc, [i]: rect }), {}),
+      layoutMap,
       products,
     );
 
@@ -56,7 +109,7 @@ export function calculateBalanceScore(
       100,
       weights.geometry * geometryScore.overall +
         weights.flow * flowScore.overall +
-        weights.distribution * distributionScore.score,
+        weights.distribution * distributionScore.overall,
     );
 
     // 5. 计算置信度（基于数据完整性）
@@ -66,23 +119,15 @@ export function calculateBalanceScore(
     return {
       total,
       details: {
-        geometry: geometryScore.overall,
-        flow: flowScore.overall,
-        distribution: distributionScore.score,
+        geometry: geometryScore,
+        flow: flowScore,
+        distribution: distributionScore,
       },
       confidence,
     };
   } catch (error) {
     console.error("Error calculating balance score:", error);
-    return {
-      total: 0,
-      details: {
-        geometry: 0,
-        flow: 0,
-        distribution: 0,
-      },
-      confidence: 0,
-    };
+    return createEmptyScore();
   }
 }
 
@@ -100,9 +145,10 @@ function calculateConfidence(products: Product[]): number {
       product.dimensions?.length != null &&
       product.dimensions?.width != null &&
       product.dimensions?.height != null,
-  ).length;
+  );
 
-  return Math.min(1, validDataPoints / products.length);
+  // 计算置信度
+  return validDataPoints.length / products.length;
 }
 
 // 导出所有子模块的评分函数

@@ -57,8 +57,8 @@ export const BalanceAnalyzer: React.FC<BalanceAnalyzerProps> = ({
                 </h3>
                 <div className="text-2xl font-semibold text-slate-800">
                   {renderScore
-                    ? renderScore("geometry", score.details.geometry)
-                    : score.details.geometry.toFixed(1)}
+                    ? renderScore("geometry", score.details.geometry.overall)
+                    : score.details.geometry.overall.toFixed(1)}
                 </div>
               </div>
               <GeometryScoreVisualizer layout={layout} products={products} />
@@ -72,8 +72,8 @@ export const BalanceAnalyzer: React.FC<BalanceAnalyzerProps> = ({
                 </h3>
                 <div className="text-2xl font-semibold text-slate-800">
                   {renderScore
-                    ? renderScore("flow", score.details.flow)
-                    : score.details.flow.toFixed(1)}
+                    ? renderScore("flow", score.details.flow.overall)
+                    : score.details.flow.overall.toFixed(1)}
                 </div>
               </div>
               <FlowScoreVisualizer
@@ -91,8 +91,8 @@ export const BalanceAnalyzer: React.FC<BalanceAnalyzerProps> = ({
                 </h3>
                 <div className="text-2xl font-semibold text-slate-800">
                   {renderScore
-                    ? renderScore("distribution", score.details.distribution)
-                    : score.details.distribution.toFixed(1)}
+                    ? renderScore("distribution", score.details.distribution.overall)
+                    : score.details.distribution.overall.toFixed(1)}
                 </div>
               </div>
               <DistributionScoreVisualizer

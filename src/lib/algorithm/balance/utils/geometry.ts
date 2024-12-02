@@ -18,11 +18,9 @@ export function calculateDistance(p1: Point2D, p2: Point2D): number {
  * 计算矩形中心点
  */
 export function calculateRectCenter(rect: Rectangle): Point2D {
-  // For flow balance calculation, we use the position point directly
-  // 对于流动平衡计算，直接使用位置点
   return {
-    x: rect.x,
-    y: rect.y,
+    x: rect.x + rect.width / 2,
+    y: rect.y + rect.length / 2,
   };
 }
 

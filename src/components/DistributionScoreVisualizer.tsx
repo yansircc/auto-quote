@@ -100,71 +100,137 @@ export const DistributionScoreVisualizer: React.FC<BaseVisualizerProps> = ({
   };
 
   return (
-    <div className="relative" style={{ width, height }}>
-      <svg
-        width={width}
-        height={height}
-        viewBox={`${viewBox.x} ${viewBox.y} ${viewBox.width} ${viewBox.height}`}
-        className="absolute inset-0"
-      >
-        {/* Draw layout rectangles with heat map coloring */}
-        {layout.map((rect, index) => {
-          const aspectRatioDeviation = Math.abs(rect.width / rect.length - 1);
-          const areaDeviation = Math.abs(
-            (rect.width * rect.length) /
-              (layout.reduce((sum, r) => sum + r.width * r.length, 0) /
-                layout.length) -
-              1,
-          );
-          const opacity = Math.min(
-            0.8,
-            Math.max(0.2, (aspectRatioDeviation + areaDeviation) / 2),
-          );
+    <div className="flex h-full w-full flex-col">
+      {/* 详细信息面板 */}
+      <div className="mb-4 space-y-4 rounded bg-white/90 p-4 text-sm shadow-sm">
+        {/* 总分 */}
+        <div className="border-b pb-2">
+          <div className="font-medium">分布总分</div>
+          <div className="text-2xl font-semibold text-slate-800">
+            {scores.total.overall.toFixed(1)}
+          </div>
+        </div>
 
-          return (
-            <rect
+        {/* 物理特性 */}
+        <div className="space-y-2">
+          <div className="font-medium">物理特性</div>
+          <div className="grid grid-cols-2 gap-2 text-xs">
+            <div>
+              <div className="text-gray-600">各向同性比</div>
+              <div>{scores.total.details.isotropy.toFixed(1)}</div>
+            </div>
+            <div>
+              <div className="text-gray-600">质心偏移</div>
+              <div>{scores.total.details.centerDeviation.toFixed(1)}</div>
+            </div>
+            <div>
+              <div className="text-gray-600">陀螺半径</div>
+              <div>{scores.total.details.gyrationRadius.toFixed(1)}</div>
+            </div>
+            <div>
+              <div className="text-gray-600">主惯性矩</div>
+              <div>{scores.total.details.principalMoments.map(m => m.toFixed(1)).join(", ")}</div>
+            </div>
+          </div>
+        </div>
+
+        {/* 体积平衡 */}
+        <div className="space-y-2">
+          <div className="font-medium">体积平衡</div>
+          <div className="grid grid-cols-2 gap-2 text-xs">
+            <div>
+              <div className="text-gray-600">密度方差</div>
+              <div>{scores.total.details.volumeBalance.densityVariance.toFixed(1)}</div>
+            </div>
+            <div>
+              <div className="text-gray-600">高度分布</div>
+              <div>{scores.total.details.volumeBalance.heightBalance.toFixed(1)}</div>
+            </div>
+            <div>
+              <div className="text-gray-600">质量分布</div>
+              <div>{scores.total.details.volumeBalance.massDistribution.toFixed(1)}</div>
+            </div>
+            <div>
+              <div className="text-gray-600">对称性</div>
+              <div>{scores.total.details.volumeBalance.symmetry.toFixed(1)}</div>
+            </div>
+          </div>
+        </div>
+
+        {/* 说明 */}
+        <div className="mt-2 text-xs text-gray-500">
+          颜色深浅表示分布评分的高低
+        </div>
+      </div>
+
+      {/* 主视图 */}
+      <div className="relative flex-1">
+        <svg
+          width={width}
+          height={height}
+          viewBox={`${viewBox.x} ${viewBox.y} ${viewBox.width} ${viewBox.height}`}
+          className="border border-slate-300"
+        >
+          {/* Draw layout rectangles with heat map coloring */}
+          {layout.map((rect, index) => {
+            const aspectRatioDeviation = Math.abs(rect.width / rect.length - 1);
+            const areaDeviation = Math.abs(
+              (rect.width * rect.length) /
+                (layout.reduce((sum, r) => sum + r.width * r.length, 0) /
+                  layout.length) -
+                1,
+            );
+            const opacity = Math.min(
+              0.8,
+              Math.max(0.2, (aspectRatioDeviation + areaDeviation) / 2),
+            );
+
+            return (
+              <rect
+                key={index}
+                x={rect.x}
+                y={rect.y}
+                width={rect.width}
+                height={rect.length}
+                fill={getScoreColor(scores.total.overall)}
+                fillOpacity={opacity}
+                stroke={COLORS.neutral.border}
+                strokeWidth={1 / scale}
+              />
+            );
+          })}
+
+          {/* Draw center points */}
+          {scores.centers.map((center, index) => (
+            <circle
               key={index}
-              x={rect.x}
-              y={rect.y}
-              width={rect.width}
-              height={rect.length}
-              fill={getScoreColor(scores.total.score)}
-              fillOpacity={opacity}
-              stroke={COLORS.neutral.border}
-              strokeWidth={1 / scale}
+              cx={center.x}
+              cy={center.y}
+              r={3 / scale}
+              fill={COLORS.neutral.text.primary}
+              fillOpacity={0.8}
             />
-          );
-        })}
+          ))}
 
-        {/* Draw center points */}
-        {scores.centers.map((center, index) => (
-          <circle
-            key={index}
-            cx={center.x}
-            cy={center.y}
-            r={3 / scale}
-            fill={COLORS.neutral.text.primary}
-            fillOpacity={0.8}
-          />
-        ))}
-
-        {/* Draw linear distribution indicator */}
-        {scores.linearPenalty > 0 && (
-          <line
-            x1={layoutBounds.minX}
-            y1={layoutBounds.minY}
-            x2={layoutBounds.maxX}
-            y2={layoutBounds.maxY}
-            stroke={COLORS.error.main}
-            strokeWidth={2 / scale}
-            strokeOpacity={Math.min(1, scores.linearPenalty / 100)}
-            strokeDasharray={`${10 / scale},${5 / scale}`}
-          />
-        )}
-      </svg>
-
-      <Legend config={legendConfig} />
-      <Annotation config={annotationConfig} position="bottom-right" />
+          {/* Draw linear distribution indicator */}
+          {scores.linearPenalty > 0 && (
+            <line
+              x1={layoutBounds.minX}
+              y1={layoutBounds.minY}
+              x2={layoutBounds.maxX}
+              y2={layoutBounds.maxY}
+              stroke={COLORS.error.main}
+              strokeWidth={2 / scale}
+              strokeOpacity={Math.min(1, scores.linearPenalty / 100)}
+              strokeDasharray={`${10 / scale},${5 / scale}`}
+            />
+          )}
+        </svg>
+        <div className="absolute inset-0">
+          <Legend config={legendConfig} />
+          <Annotation config={annotationConfig} position="bottom-right" />
+        </div>
+      </div>
     </div>
   );
 };

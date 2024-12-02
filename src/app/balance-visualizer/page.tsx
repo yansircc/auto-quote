@@ -126,7 +126,7 @@ export default function BalanceVisualizerPage() {
                   renderScore={(type, score) => (
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <span className="cursor-help">{score}</span>
+                        <span className="cursor-help">{score.toFixed(1)}</span>
                       </TooltipTrigger>
                       <TooltipContent className="max-w-sm">
                         <div className="space-y-2">
