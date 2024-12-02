@@ -3,14 +3,23 @@
 import { useEffect, useRef } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
+import { CSG } from 'three-csg-ts';
 import {
   calculate3DCenter,
   calculateDimensions,
+  createLayoutItemWithHeight,
   toThreeJSCoordinates,
-  type LayoutItemWithHeight,
 } from "@/lib/utils/coordinate";
-import { type Product } from "@/types/domain/product";
-import { type Rectangle } from "@/types/core/geometry";
+import {
+  type Product,
+} from "@/types/domain/product";
+import {
+  type Rectangle,
+} from "@/types/core/geometry";
+
+const MOLD_MARGIN = 50; // 模具边距（毫米）
+const MOLD_HEIGHT_MARGIN = 10; // 模具上下边距（毫米）
+const CAVITY_MARGIN = 0.2; // 凹槽边距（毫米）
 
 interface SceneProps {
   product?: Product;
@@ -48,7 +57,31 @@ export const Scene: React.FC<SceneProps> = ({ product, products, layout }) => {
 
     // 创建场景
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color("#f1f5f9");
+    scene.background = new THREE.Color(0xf0f0f0);
+
+    // 环境光
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+    scene.add(ambientLight);
+
+    // 主光源 - 从右上方照射
+    const mainLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    mainLight.position.set(5, 8, 5);
+    scene.add(mainLight);
+
+    // 辅助光源1 - 从左前方照射
+    const fillLight1 = new THREE.DirectionalLight(0xffffff, 0.4);
+    fillLight1.position.set(-3, 6, 2);
+    scene.add(fillLight1);
+
+    // 辅助光源2 - 从后方照射
+    const fillLight2 = new THREE.DirectionalLight(0xffffff, 0.3);
+    fillLight2.position.set(0, 4, -5);
+    scene.add(fillLight2);
+
+    // 底部柔光 - 增加底部细节可见度
+    const bottomLight = new THREE.DirectionalLight(0xffffff, 0.2);
+    bottomLight.position.set(0, -5, 0);
+    scene.add(bottomLight);
 
     // 创建相机
     const camera = new THREE.PerspectiveCamera(
@@ -58,20 +91,230 @@ export const Scene: React.FC<SceneProps> = ({ product, products, layout }) => {
       1000,
     );
 
+    // 计算场景尺寸和边界
     let totalWidth = 0;
-    let totalHeight = 0;
+    let totalLength = 0;
+    let maxHeight = 0;
 
-    // 调整相机位置以适应场景大小
-    if (isMultiProduct && layout) {
-      totalWidth = Math.max(...layout.map((item) => item.x + item.width)) / 100;
-      totalHeight = Math.max(...layout.map((item) => item.y + item.length)) / 100;
+    if (isMultiProduct && layout && products) {
+      // 计算布局的总体尺寸
+      const minX = Math.min(...layout.map(item => item.x));
+      const maxX = Math.max(...layout.map(item => item.x + item.width));
+      const minY = Math.min(...layout.map(item => item.y));
+      const maxY = Math.max(...layout.map(item => item.y + item.length));
+      
+      totalWidth = maxX - minX;
+      totalLength = maxY - minY;
+      maxHeight = Math.max(...products.map(p => p.dimensions?.height ?? 0));
+
+      // 创建模具盒子
+      const moldWidth = totalWidth + MOLD_MARGIN * 2;
+      const moldLength = totalLength + MOLD_MARGIN * 2;
+      const moldHeight = maxHeight + MOLD_HEIGHT_MARGIN * 2;
+
+      const moldGeometry = new THREE.BoxGeometry(
+        moldWidth / 100,
+        moldHeight / 100,
+        moldLength / 100
+      );
+      const moldMaterial = new THREE.MeshPhongMaterial({
+        color: 0x505050,
+        opacity: 0.75,  // 降低透明度使凹槽更明显
+        transparent: true,
+        side: THREE.DoubleSide,
+        shininess: 90,  // 增加反光度
+        specular: 0x888888,  // 增加高光强度
+        flatShading: false,  // 平滑着色
+      });
+      let moldMesh: THREE.Mesh<THREE.BufferGeometry, THREE.Material> = new THREE.Mesh(moldGeometry, moldMaterial);
+      moldMesh.position.set(0, moldHeight / 200, 0); // 模具中心
+
+      // 渲染产品
+      layout.forEach((item, index) => {
+        const product = products[index];
+        if (!product?.dimensions) return;
+
+        // 创建带高度的布局项
+        const layoutItem = createLayoutItemWithHeight(item, product.dimensions.height);
+        
+        // 计算中心点和尺寸
+        const center = calculate3DCenter(layoutItem);
+        const dimensions = calculateDimensions(layoutItem);
+        
+        // 转换为Three.js坐标，但高度需要特殊处理
+        const position = toThreeJSCoordinates({
+          x: center.x,
+          y: dimensions.height / 2, // 从底部开始算起
+          z: center.z,
+        });
+
+        // 创建凹槽（稍大一点）
+        const cavityGeometry = new THREE.BoxGeometry(
+          (dimensions.width + CAVITY_MARGIN * 2) / 100,
+          dimensions.height / 100,
+          (dimensions.length + CAVITY_MARGIN * 2) / 100
+        );
+        const cavityMesh = new THREE.Mesh(cavityGeometry);
+        cavityMesh.position.copy(new THREE.Vector3(position.x, position.y, position.z));
+
+        // 从模具中减去凹槽
+        try {
+          const moldCSG = CSG.fromMesh(moldMesh);
+          const cavityCSG = CSG.fromMesh(cavityMesh);
+          const resultCSG = moldCSG.subtract(cavityCSG);
+          const newMoldMesh = CSG.toMesh(
+            resultCSG,
+            moldMesh.matrix,
+            new THREE.MeshPhongMaterial({
+              color: 0x505050,
+              opacity: 0.75,  // 降低透明度
+              transparent: true,
+              side: THREE.DoubleSide,
+              shininess: 90,  // 增加反光度
+              specular: 0x888888,  // 增加高光强度
+              flatShading: false,  // 平滑着色
+            })
+          );
+          
+          // 保持原始模具的位置和属性
+          newMoldMesh.position.copy(moldMesh.position);
+          moldMesh = newMoldMesh;
+        } catch (error) {
+          console.error('Error creating cavity:', error);
+        }
+
+        // 添加中心点标记
+        const sphereGeometry = new THREE.SphereGeometry(0.015);
+        const sphereMaterial = new THREE.MeshBasicMaterial({ color: 0xff3333 });
+        const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
+        sphere.position.set(position.x, 0.015, position.z);
+        scene.add(sphere);
+      });
+
+      scene.add(moldMesh);
+
+      // 添加模具边框线
+      const edges = new THREE.EdgesGeometry(moldGeometry);
+      const lineMaterial = new THREE.LineBasicMaterial({ 
+        color: 0x404040,
+        linewidth: 1,
+      });
+      const moldWireframe = new THREE.LineSegments(edges, lineMaterial);
+      moldWireframe.position.copy(moldMesh.position);
+      scene.add(moldWireframe);
+
+      // 添加网格辅助线在原点
+      const gridHelper = new THREE.GridHelper(10, 10, 0xcccccc, 0xe5e5e5);
+      gridHelper.position.y = -0.01; // 略微下移网格，避免z-fighting
+      scene.add(gridHelper);
+
     } else if (isSingleProduct && product.dimensions) {
-      totalWidth = product.dimensions.width / 100;
-      totalHeight = product.dimensions.length / 100;
+      totalWidth = product.dimensions.width;
+      totalLength = product.dimensions.length;
+      maxHeight = product.dimensions.height;
+
+      // 创建模具盒子
+      const moldWidth = totalWidth + MOLD_MARGIN * 2;
+      const moldLength = totalLength + MOLD_MARGIN * 2;
+      const moldHeight = maxHeight + MOLD_HEIGHT_MARGIN * 2;
+
+      const moldGeometry = new THREE.BoxGeometry(
+        moldWidth / 100,
+        moldHeight / 100,
+        moldLength / 100
+      );
+      const moldMaterial = new THREE.MeshPhongMaterial({
+        color: 0x505050,
+        opacity: 0.75,  // 降低透明度使凹槽更明显
+        transparent: true,
+        side: THREE.DoubleSide,
+        shininess: 90,  // 增加反光度
+        specular: 0x888888,  // 增加高光强度
+        flatShading: false,  // 平滑着色
+      });
+      let moldMesh: THREE.Mesh<THREE.BufferGeometry, THREE.Material> = new THREE.Mesh(moldGeometry, moldMaterial);
+      moldMesh.position.set(0, moldHeight / 200, 0); // 模具中心
+
+      // 渲染单个产品
+      const layoutItem = createLayoutItemWithHeight({ x: 0, y: 0, width: product.dimensions.width, length: product.dimensions.length }, product.dimensions.height);
+      const center = calculate3DCenter(layoutItem);
+      const dimensions = calculateDimensions(layoutItem);
+      
+      // 转换为Three.js坐标
+      const position = toThreeJSCoordinates({
+        x: center.x,
+        y: dimensions.height / 2,
+        z: center.z,
+      });
+
+      // 创建凹槽（稍大一点）
+      const cavityGeometry = new THREE.BoxGeometry(
+        (dimensions.width + CAVITY_MARGIN * 2) / 100,
+        dimensions.height / 100,
+        (dimensions.length + CAVITY_MARGIN * 2) / 100
+      );
+      const cavityMesh = new THREE.Mesh(cavityGeometry);
+      cavityMesh.position.copy(new THREE.Vector3(position.x, position.y, position.z));
+
+      // 从模具中减去凹槽
+      try {
+        const moldCSG = CSG.fromMesh(moldMesh);
+        const cavityCSG = CSG.fromMesh(cavityMesh);
+        const resultCSG = moldCSG.subtract(cavityCSG);
+        const newMoldMesh = CSG.toMesh(
+          resultCSG,
+          moldMesh.matrix,
+          new THREE.MeshPhongMaterial({
+            color: 0x505050,
+            opacity: 0.75,  // 降低透明度
+            transparent: true,
+            side: THREE.DoubleSide,
+            shininess: 90,  // 增加反光度
+            specular: 0x888888,  // 增加高光强度
+            flatShading: false,  // 平滑着色
+          })
+        );
+        
+        // 保持原始模具的位置和属性
+        newMoldMesh.position.copy(moldMesh.position);
+        moldMesh = newMoldMesh;
+      } catch (error) {
+        console.error('Error creating cavity:', error);
+      }
+
+      scene.add(moldMesh);
+
+      // 添加模具边框线
+      const edges = new THREE.EdgesGeometry(moldGeometry);
+      const lineMaterial = new THREE.LineBasicMaterial({ 
+        color: 0x404040,
+        linewidth: 1,
+      });
+      const moldWireframe = new THREE.LineSegments(edges, lineMaterial);
+      moldWireframe.position.copy(moldMesh.position);
+      scene.add(moldWireframe);
+
+      // 添加网格辅助线在原点
+      const gridHelper = new THREE.GridHelper(10, 10, 0xcccccc, 0xe5e5e5);
+      gridHelper.position.y = -0.01; // 略微下移网格，避免z-fighting
+      scene.add(gridHelper);
+
+      // 添加中心点标记
+      const sphereGeometry = new THREE.SphereGeometry(0.015);
+      const sphereMaterial = new THREE.MeshBasicMaterial({ color: 0xff3333 });
+      const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
+      sphere.position.set(position.x, 0.015, position.z);
+      scene.add(sphere);
     }
 
-    const cameraDistance = Math.max(Math.max(totalWidth, totalHeight) * 2, 5);
+    // 调整相机位置以适应场景大小
+    const sceneSize = Math.max(
+      (totalWidth + MOLD_MARGIN * 2) / 100,
+      (totalLength + MOLD_MARGIN * 2) / 100
+    );
+    const cameraDistance = Math.max(sceneSize * 2, 5);
     camera.position.set(cameraDistance, cameraDistance, cameraDistance);
+    camera.lookAt(0, 0, 0);
 
     // 创建渲染器
     const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -81,104 +324,6 @@ export const Scene: React.FC<SceneProps> = ({ product, products, layout }) => {
     );
     renderer.shadowMap.enabled = true;
     containerRef.current.appendChild(renderer.domElement);
-
-    // 添加网格辅助线
-    const gridHelper = new THREE.GridHelper(10, 10, "#cccccc", "#e5e5e5");
-    
-    if (isMultiProduct && products && layout) {
-      const layoutWithHeight = layout.map((item, index) => ({
-        ...item,
-        height: products[index]?.dimensions?.height ?? 10, // 默认高度为10
-      })) as LayoutItemWithHeight[];
-
-      // 计算布局的几何中心
-      const bounds = {
-        minX: Math.min(...layout.map(r => r.x)),
-        maxX: Math.max(...layout.map(r => r.x + r.width)),
-        minZ: Math.min(...layout.map(r => r.y)),
-        maxZ: Math.max(...layout.map(r => r.y + r.length)),
-      };
-      
-      const geometricCenter = {
-        x: (bounds.minX + bounds.maxX) / 2,
-        y: 0,
-        z: (bounds.minZ + bounds.maxZ) / 2,
-      };
-      const threeGeometricCenter = toThreeJSCoordinates(geometricCenter);
-
-      // 移动网格辅助线到几何中心点
-      gridHelper.position.set(threeGeometricCenter.x, 0, threeGeometricCenter.z);
-      scene.add(gridHelper);
-
-      // 创建产品模型
-      layoutWithHeight.forEach((item) => {
-        const center = calculate3DCenter(item);
-        const dimensions = calculateDimensions(item);
-        const threePosition = toThreeJSCoordinates(center);
-
-        const geometry = new THREE.BoxGeometry(
-          dimensions.width * 0.01,
-          dimensions.height * 0.01,
-          dimensions.length * 0.01
-        );
-        const material = new THREE.MeshStandardMaterial({
-          color: "#3b82f6",
-          transparent: true,
-          opacity: 0.8,
-        });
-        const mesh = new THREE.Mesh(geometry, material);
-
-        mesh.position.set(threePosition.x, threePosition.y, threePosition.z);
-
-        scene.add(mesh);
-
-        // 添加中心点标记
-        const sphereGeometry = new THREE.SphereGeometry(0.02);
-        const sphereMaterial = new THREE.MeshBasicMaterial({ color: "#ef4444" });
-        const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
-        sphere.position.set(threePosition.x, 0, threePosition.z);
-        scene.add(sphere);
-      });
-    } else if (isSingleProduct && product.dimensions) {
-      // 添加网格辅助线到原点
-      scene.add(gridHelper);
-      
-      // 创建单个产品的3D表示
-      const geometry = new THREE.BoxGeometry(
-        product.dimensions.width / 100,
-        product.dimensions.height / 100,
-        product.dimensions.length / 100,
-      );
-      const material = new THREE.MeshStandardMaterial({
-        color: "#3b82f6",
-        transparent: true,
-        opacity: 0.8,
-      });
-      const mesh = new THREE.Mesh(geometry, material);
-
-      // 设置位置在原点
-      mesh.position.set(0, product.dimensions.height / 200, 0);
-
-      scene.add(mesh);
-
-      // 添加中心点标记
-      const sphereGeometry = new THREE.SphereGeometry(0.02);
-      const sphereMaterial = new THREE.MeshBasicMaterial({ color: "#ef4444" });
-      const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
-      sphere.position.set(0, 0, 0);
-      scene.add(sphere);
-    }
-
-    // 添加光源
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
-    scene.add(ambientLight);
-
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
-    directionalLight.position.set(5, 5, 5);
-    directionalLight.castShadow = true;
-    directionalLight.shadow.mapSize.width = 2048;
-    directionalLight.shadow.mapSize.height = 2048;
-    scene.add(directionalLight);
 
     // 添加轨道控制器
     const controls = new OrbitControls(camera, renderer.domElement);

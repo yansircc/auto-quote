@@ -107,10 +107,6 @@ export const FlowScoreVisualizer: React.FC<FlowScoreVisualizerProps> = ({
               <div className="text-gray-600">表面积</div>
               <div>{score?.details.flow.surfaceAreaBalance.toFixed(1)}</div>
             </div>
-            <div>
-              <div className="text-gray-600">体积</div>
-              <div>{score?.details.flow.volumeBalance.toFixed(1)}</div>
-            </div>
           </div>
         </div>
 
