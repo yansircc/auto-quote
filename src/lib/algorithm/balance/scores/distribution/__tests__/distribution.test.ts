@@ -762,3 +762,5 @@ describe("分布平衡评分测试", () => {
     });
   });
 });
+
+// bun test src/lib/algorithm/balance/scores/distribution/__tests__/distribution.test.ts

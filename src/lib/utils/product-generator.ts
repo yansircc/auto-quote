@@ -155,8 +155,18 @@ export function generateRandomProduct(
 export function generateRandomProducts(
   count: number,
   config?: Partial<ProductGeneratorConfig>,
+  identical = false,
 ): Product[] {
-  return Array.from({ length: count }, (_, i) =>
-    generateRandomProduct(i + 1, config),
-  );
+  if (identical) {
+    // 如果需要相同的产品，只生成一个然后复制
+    const baseProduct = generateRandomProduct(1, config);
+    return Array(count).fill(null).map((_, index) => ({
+      ...baseProduct,
+      id: index + 1,
+    }));
+  }
+  
+  return Array(count)
+    .fill(null)
+    .map((_, index) => generateRandomProduct(index + 1, config));
 }
