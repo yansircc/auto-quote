@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { BalanceAnalyzer } from "@/components/BalanceAnalyzer";
-import { ProductViewer } from "@/components/ProductViewer";
+import { BalanceAnalyzer } from "@/components/score-visualizer/BalanceAnalyzer";
+import { ProductViewer } from "@/components/viewers/ProductViewer";
 import { generateRandomProducts } from "@/lib/utils/product-generator";
 import { calculateMinArea } from "@/lib/algorithm/min-area";
 import { calculateInjectionPoint } from "@/lib/algorithm/balance/utils/geometry";
@@ -41,7 +41,11 @@ export default function BalanceVisualizerPage() {
 
   // 生成新的随机产品并计算布局
   const handleGenerateProducts = () => {
-    const newProducts = generateRandomProducts(productCount, undefined, identical);
+    const newProducts = generateRandomProducts(
+      productCount,
+      undefined,
+      identical,
+    );
 
     // 1. 将产品转换为 Rectangle2D 数组
     const rectangles: Rectangle2D[] = newProducts.map((product) => ({
@@ -86,20 +90,20 @@ export default function BalanceVisualizerPage() {
                   Math.max(1, Math.min(10, parseInt(e.target.value) || 1)),
                 )
               }
-              className="w-16 px-2 py-1 border rounded"
+              className="w-16 rounded border px-2 py-1"
             />
             <label className="flex items-center gap-2">
               <input
                 type="checkbox"
                 checked={identical}
                 onChange={(e) => setIdentical(e.target.checked)}
-                className="w-4 h-4"
+                className="h-4 w-4"
               />
               <span>相同产品</span>
             </label>
             <button
               onClick={handleGenerateProducts}
-              className="px-4 py-1 text-white bg-blue-500 rounded hover:bg-blue-600"
+              className="rounded bg-blue-500 px-4 py-1 text-white hover:bg-blue-600"
             >
               随机生成
             </button>

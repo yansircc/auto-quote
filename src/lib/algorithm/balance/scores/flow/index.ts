@@ -36,7 +36,6 @@ export function calculateDetailedFlowScore(
     return {
       flowPathBalance: 0,
       surfaceAreaBalance: 0,
-      volumeBalance: 0,
       overall: 0,
     };
   }
@@ -265,7 +264,6 @@ export function calculateDetailedFlowScore(
   return {
     flowPathBalance,
     surfaceAreaBalance,
-    volumeBalance,
     overall: finalScore,
   };
 }

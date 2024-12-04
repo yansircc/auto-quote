@@ -89,19 +89,33 @@ export const GeometryScoreVisualizer: React.FC<
           <div className="grid grid-cols-2 gap-2 text-xs">
             <div>
               <div className="text-gray-600">长宽比</div>
-              <div>{score?.details.geometry.details.shapeScore.aspectRatio.toFixed(1)}</div>
+              <div>
+                {score?.details.geometry.details.shapeScore.aspectRatio.toFixed(
+                  1,
+                )}
+              </div>
             </div>
             <div>
               <div className="text-gray-600">对称性</div>
-              <div>{score?.details.geometry.details.shapeScore.symmetry.toFixed(1)}</div>
+              <div>
+                {score?.details.geometry.details.shapeScore.symmetry.toFixed(1)}
+              </div>
             </div>
             <div>
               <div className="text-gray-600">复杂度</div>
-              <div>{score?.details.geometry.details.shapeScore.complexity.toFixed(1)}</div>
+              <div>
+                {score?.details.geometry.details.shapeScore.complexity.toFixed(
+                  1,
+                )}
+              </div>
             </div>
             <div>
               <div className="text-gray-600">一致性</div>
-              <div>{score?.details.geometry.details.shapeScore.uniformity.toFixed(1)}</div>
+              <div>
+                {score?.details.geometry.details.shapeScore.uniformity.toFixed(
+                  1,
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -112,15 +126,27 @@ export const GeometryScoreVisualizer: React.FC<
           <div className="grid grid-cols-2 gap-2 text-xs">
             <div>
               <div className="text-gray-600">尺寸变化</div>
-              <div>{score?.details.geometry.details.dimensionScore.sizeVariation.toFixed(1)}</div>
+              <div>
+                {score?.details.geometry.details.dimensionScore.sizeVariation.toFixed(
+                  1,
+                )}
+              </div>
             </div>
             <div>
               <div className="text-gray-600">比例</div>
-              <div>{score?.details.geometry.details.dimensionScore.scaleRatio.toFixed(1)}</div>
+              <div>
+                {score?.details.geometry.details.dimensionScore.scaleRatio.toFixed(
+                  1,
+                )}
+              </div>
             </div>
             <div>
               <div className="text-gray-600">一致性</div>
-              <div>{score?.details.geometry.details.dimensionScore.consistency.toFixed(1)}</div>
+              <div>
+                {score?.details.geometry.details.dimensionScore.consistency.toFixed(
+                  1,
+                )}
+              </div>
             </div>
           </div>
         </div>

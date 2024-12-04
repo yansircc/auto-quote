@@ -129,7 +129,11 @@ export const DistributionScoreVisualizer: React.FC<BaseVisualizerProps> = ({
             </div>
             <div>
               <div className="text-gray-600">主惯性矩</div>
-              <div>{scores.total.details.principalMoments.map(m => m.toFixed(1)).join(", ")}</div>
+              <div>
+                {scores.total.details.principalMoments
+                  .map((m) => m.toFixed(1))
+                  .join(", ")}
+              </div>
             </div>
           </div>
         </div>
@@ -140,19 +144,27 @@ export const DistributionScoreVisualizer: React.FC<BaseVisualizerProps> = ({
           <div className="grid grid-cols-2 gap-2 text-xs">
             <div>
               <div className="text-gray-600">密度方差</div>
-              <div>{scores.total.details.volumeBalance.densityVariance.toFixed(1)}</div>
+              <div>
+                {scores.total.details.volumeBalance.densityVariance.toFixed(1)}
+              </div>
             </div>
             <div>
               <div className="text-gray-600">高度分布</div>
-              <div>{scores.total.details.volumeBalance.heightBalance.toFixed(1)}</div>
+              <div>
+                {scores.total.details.volumeBalance.heightBalance.toFixed(1)}
+              </div>
             </div>
             <div>
               <div className="text-gray-600">质量分布</div>
-              <div>{scores.total.details.volumeBalance.massDistribution.toFixed(1)}</div>
+              <div>
+                {scores.total.details.volumeBalance.massDistribution.toFixed(1)}
+              </div>
             </div>
             <div>
               <div className="text-gray-600">对称性</div>
-              <div>{scores.total.details.volumeBalance.symmetry.toFixed(1)}</div>
+              <div>
+                {scores.total.details.volumeBalance.symmetry.toFixed(1)}
+              </div>
             </div>
           </div>
         </div>

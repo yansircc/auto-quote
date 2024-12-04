@@ -34,4 +34,5 @@ export interface FileProcessingState {
   error: string | null;
   modelData: OCCTResult | null;
   geometryData: GeometricProperties | null;
+  progress: number;
 }

@@ -47,7 +47,14 @@ export const FlowScoreVisualizer: React.FC<FlowScoreVisualizerProps> = ({
     return layout.map((rect, i) => {
       const product = products[i];
       const center = calculate2DCenter(rect);
-      if (!product) return { center, weight: 1, dimensions: rect, flowLength: 0, flowPath: [] };
+      if (!product)
+        return {
+          center,
+          weight: 1,
+          dimensions: rect,
+          flowLength: 0,
+          flowPath: [],
+        };
 
       // 计算流动路径信息
       const flowInfo = calculateFlowPathInfo(product, rect, injectionPoint);

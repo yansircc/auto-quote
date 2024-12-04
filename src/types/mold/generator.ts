@@ -69,13 +69,12 @@ export const MOLD_CONSTANTS = {
   WIREFRAME_LINEWIDTH: 0.5, // 线框线宽
   WIREFRAME_HEIGHT_SCALE: 0.01, // 线框高度缩放比例
   DEFAULT_MOLD_OPTIONS: {
-    color: 0x808080,
-    opacity: 0.95,
-    transparent: true,
-    metalness: 0.5,
-    roughness: 0.3,
-    clearcoat: 0.3,
-    clearcoatRoughness: 0.25,
+    color: 0x88ccee, // 淡蓝色
+    opacity: 0.85, // 略微透明
+    metalness: 0.1, // 低金属度，更像塑料
+    roughness: 0.2, // 较光滑
+    clearcoat: 1.0, // 强清漆效果
+    clearcoatRoughness: 0.1, // 光滑的清漆
     side: DoubleSide,
   },
   DEFAULT_WIREFRAME_OPTIONS: {

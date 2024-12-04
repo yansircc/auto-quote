@@ -3,7 +3,7 @@ import React, { useEffect } from "react";
 import { GeometryScoreVisualizer } from "./GeometryScoreVisualizer";
 import { FlowScoreVisualizer } from "./FlowScoreVisualizer";
 import { DistributionScoreVisualizer } from "./DistributionScoreVisualizer";
-import { ScoreCard } from "./ScoreCard";
+import { ScoreCard } from "../ScoreCard";
 import { useBalanceStore } from "@/stores/useBalanceStore";
 import type { Rectangle, Point2D } from "@/types/core/geometry";
 import type { Product } from "@/types/domain/product";
@@ -52,10 +52,7 @@ export const BalanceAnalyzer: React.FC<BalanceAnalyzerProps> = ({
                 <TabsTrigger value="distribution">分布评分</TabsTrigger>
               </TabsList>
               <TabsContent value="geometry" className="h-[calc(100vh-300px)]">
-                <GeometryScoreVisualizer
-                  layout={layout}
-                  products={products}
-                />
+                <GeometryScoreVisualizer layout={layout} products={products} />
               </TabsContent>
               <TabsContent value="flow" className="h-[calc(100vh-300px)]">
                 <FlowScoreVisualizer
@@ -64,7 +61,10 @@ export const BalanceAnalyzer: React.FC<BalanceAnalyzerProps> = ({
                   injectionPoint={injectionPoint}
                 />
               </TabsContent>
-              <TabsContent value="distribution" className="h-[calc(100vh-300px)]">
+              <TabsContent
+                value="distribution"
+                className="h-[calc(100vh-300px)]"
+              >
                 <DistributionScoreVisualizer
                   layout={layout}
                   products={products}
