@@ -3,15 +3,15 @@
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { OCCTService } from "@/lib/occt-service";
-import type { GeometricProperties, OCCTResult } from "@/lib/occt-service";
+import type { FileProcessingState } from "@/lib/occt-types";
 
 export default function OCCTPage() {
-  const [modelData, setModelData] = useState<OCCTResult | null>(null);
-  const [geometryData, setGeometryData] = useState<GeometricProperties | null>(
-    null,
-  );
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [processingState, setProcessingState] = useState<FileProcessingState>({
+    status: "idle",
+    error: null,
+    modelData: null,
+    geometryData: null,
+  });
 
   const handleFileChange = async (
     event: React.ChangeEvent<HTMLInputElement>,
@@ -19,28 +19,38 @@ export default function OCCTPage() {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    setLoading(true);
-    setError(null);
-    setModelData(null);
-    setGeometryData(null);
+    setProcessingState((prev) => ({
+      ...prev,
+      status: "loading",
+      error: null,
+      modelData: null,
+      geometryData: null,
+    }));
 
     try {
       const arrayBuffer = await file.arrayBuffer();
       const fileBuffer = new Uint8Array(arrayBuffer);
 
-      // 使用 OCCTService 处理文件
       const occtService = OCCTService.getInstance();
       const result = await occtService.processSTEPFile(fileBuffer);
 
-      setModelData(result.modelData);
-      setGeometryData(result.geometryData);
+      setProcessingState((prev) => ({
+        ...prev,
+        status: "success",
+        modelData: result.modelData,
+        geometryData: result.geometryData,
+      }));
     } catch (err) {
       console.error("Error processing file:", err);
-      setError(err instanceof Error ? err.message : "Failed to process file");
-    } finally {
-      setLoading(false);
+      setProcessingState((prev) => ({
+        ...prev,
+        status: "error",
+        error: err instanceof Error ? err.message : "Failed to process file",
+      }));
     }
   };
+
+  const { status, error, geometryData, modelData } = processingState;
 
   return (
     <div className="container mx-auto p-4">
@@ -230,7 +240,7 @@ export default function OCCTPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle>拓扑特���</CardTitle>
+              <CardTitle>拓扑特</CardTitle>
             </CardHeader>
             <CardContent>
               <dl className="space-y-2">
@@ -402,9 +412,9 @@ export default function OCCTPage() {
           accept=".step,.stp"
           onChange={handleFileChange}
           className="block w-full text-sm text-slate-500 file:mr-4 file:rounded-full file:border-0 file:bg-violet-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-violet-700 hover:file:bg-violet-100"
-          disabled={loading}
+          disabled={status === "loading"}
         />
-        {loading && <div className="text-center">加载中...</div>}
+        {status === "loading" && <div className="text-center">加载中...</div>}
         {modelData && (
           <div id="viewer" style={{ width: "100%", height: "500px" }} />
         )}
