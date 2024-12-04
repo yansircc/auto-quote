@@ -1,44 +1,60 @@
-import { BaseAPSService } from "./base-service";
 import type {
   ManifestResponse,
   PropertyResponse,
   PropertyQueryRequest,
-  SignedCookiesWithCloudFront,
+  DerivativeRequest,
+  TranslationJobResponse,
+  ManifestChild,
 } from "@/types/aps/types";
-import type { GeometryData } from "@/types/aps/geometry";
-import { parseOBJContent, calculateBoundingBox } from "./obj-parser";
+import type { BoundingBox, GeometryResponse } from "@/types/aps/geometry";
+import { BaseAPSService } from "./base-service";
+import { env } from "@/env.js";
 
-export interface TranslationJobResponse {
-  jobId: string;
-  urn: string;
-  status: string;
-}
+const MAX_RETRIES = 30; // 最多等待30次
+const RETRY_DELAY = 2000; // 每次等待2秒
 
 export class DerivativeService extends BaseAPSService {
-  constructor() {
-    super();
+  constructor(
+    clientId: string = env.FORGE_CLIENT_ID,
+    clientSecret: string = env.FORGE_CLIENT_SECRET,
+    scope = "data:read data:write data:create bucket:create bucket:read",
+  ) {
+    super(clientId, clientSecret, scope);
   }
 
   /**
    * Start translation job for a file
    */
-  public async translateFile(urn: string) {
+  public async translateFile(urn: string): Promise<TranslationJobResponse> {
+    console.log("\n=== Starting translation to SVF2 ===");
+    console.log("URN:", urn);
+
+    const body: DerivativeRequest = {
+      input: {
+        urn,
+      },
+      output: {
+        destination: {
+          region: "us",
+        },
+        formats: [
+          {
+            type: "svf2",
+            views: ["2d", "3d"],
+          },
+        ],
+      },
+    };
+
     const response = await this.fetch(
-      `https://developer.api.autodesk.com/modelderivative/v2/designdata/job`,
+      "https://developer.api.autodesk.com/modelderivative/v2/designdata/job",
       {
         method: "POST",
-        body: JSON.stringify({
-          input: {
-            urn,
-          },
-          output: {
-            formats: [
-              {
-                type: "obj",
-              },
-            ],
-          },
-        }),
+        headers: {
+          "Content-Type": "application/json",
+          "x-ads-force": "true", // 强制重新转换
+        },
+        body: JSON.stringify(body),
       },
     );
 
@@ -46,13 +62,66 @@ export class DerivativeService extends BaseAPSService {
       throw new Error(`Failed to start translation: ${response.statusText}`);
     }
 
-    return (await response.json()) as TranslationJobResponse;
+    const result = await response.json();
+    console.log("Translation job started successfully");
+    console.log("Job result:", result);
+
+    return result;
+  }
+
+  /**
+   * Start OBJ translation job for specific objects
+   */
+  public async translateToObj(
+    urn: string,
+    modelGuid: string,
+    objectIds: number[],
+  ): Promise<TranslationJobResponse> {
+    const body: DerivativeRequest = {
+      input: {
+        urn,
+      },
+      output: {
+        destination: {
+          region: "us",
+        },
+        formats: [
+          {
+            type: "obj",
+            advanced: {
+              modelGuid,
+              objectIds,
+            },
+          },
+        ],
+      },
+    };
+
+    const response = await this.fetch(
+      "https://developer.api.autodesk.com/modelderivative/v2/designdata/job",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(body),
+      },
+    );
+
+    if (!response.ok) {
+      throw new Error(`Failed to start translation: ${response.statusText}`);
+    }
+
+    return response.json();
   }
 
   /**
    * Get manifest for a file
    */
   public async getManifest(urn: string): Promise<ManifestResponse> {
+    console.log("\n=== Getting manifest ===");
+    console.log("URN:", urn);
+
     const response = await this.fetch(
       `https://developer.api.autodesk.com/modelderivative/v2/designdata/${urn}/manifest`,
     );
@@ -61,7 +130,11 @@ export class DerivativeService extends BaseAPSService {
       throw new Error(`Failed to get manifest: ${response.statusText}`);
     }
 
-    return (await response.json()) as ManifestResponse;
+    const manifest = await response.json();
+    console.log("Manifest status:", manifest.status);
+    console.log("Manifest progress:", manifest.progress);
+
+    return manifest;
   }
 
   /**
@@ -70,146 +143,25 @@ export class DerivativeService extends BaseAPSService {
   public async getProperties(
     urn: string,
     guid: string,
+    query?: PropertyQueryRequest,
   ): Promise<PropertyResponse> {
-    const response = await this.fetch(
+    const url = new URL(
       `https://developer.api.autodesk.com/modelderivative/v2/designdata/${urn}/metadata/${guid}/properties`,
     );
+
+    const response = await this.fetch(url.toString(), {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(query || {}),
+    });
 
     if (!response.ok) {
       throw new Error(`Failed to get properties: ${response.statusText}`);
     }
 
-    return (await response.json()) as PropertyResponse;
-  }
-
-  /**
-   * Query specific properties
-   */
-  public async queryProperties(
-    urn: string,
-    guid: string,
-    query: PropertyQueryRequest,
-  ): Promise<PropertyResponse> {
-    const response = await this.fetch(
-      `https://developer.api.autodesk.com/modelderivative/v2/designdata/${urn}/metadata/${guid}/properties:query`,
-      {
-        method: "POST",
-        body: JSON.stringify(query),
-      },
-    );
-
-    if (!response.ok) {
-      throw new Error(`Failed to query properties: ${response.statusText}`);
-    }
-
-    return (await response.json()) as PropertyResponse;
-  }
-
-  /**
-   * Get signed cookies for downloading OBJ file
-   */
-  public async getSignedCookies(
-    urn: string,
-    objUrn: string,
-  ): Promise<SignedCookiesWithCloudFront> {
-    const response = await this.fetch(
-      `https://developer.api.autodesk.com/modelderivative/v2/designdata/${urn}/manifest/${objUrn}/signedcookies`,
-    );
-
-    if (!response.ok) {
-      throw new Error(`Failed to get signed cookies: ${response.statusText}`);
-    }
-
-    // Extract cookies from response headers
-    const cookies: Record<string, string> = {};
-    const setCookieHeader = response.headers.get("set-cookie");
-
-    if (setCookieHeader) {
-      const cookiePairs = setCookieHeader.split(",").map((pair) => pair.trim());
-      for (const cookiePair of cookiePairs) {
-        const [cookieStr] = cookiePair.split(";");
-        const [name, value] = cookieStr?.split("=") ?? [];
-        if (name?.includes("CloudFront")) {
-          cookies[name.trim()] = value?.trim() ?? "";
-        }
-      }
-    }
-
-    const data = (await response.json()) as SignedCookiesWithCloudFront;
-
-    // Check if we have all required CloudFront cookies
-    const requiredCookies = [
-      "CloudFront-Key-Pair-Id",
-      "CloudFront-Policy",
-      "CloudFront-Signature",
-    ] as const;
-
-    const missingCookies = requiredCookies.filter((name) => !cookies[name]);
-    if (missingCookies.length > 0) {
-      console.warn("Missing required cookies:", missingCookies);
-      console.warn("Available cookies:", cookies);
-      console.warn(
-        "Response headers:",
-        Object.fromEntries(response.headers.entries()),
-      );
-      throw new Error(
-        `Missing required CloudFront cookies: ${missingCookies.join(", ")}`,
-      );
-    }
-
-    return {
-      ...data,
-      cookies: {
-        "CloudFront-Key-Pair-Id": cookies["CloudFront-Key-Pair-Id"] ?? "",
-        "CloudFront-Policy": cookies["CloudFront-Policy"] ?? "",
-        "CloudFront-Signature": cookies["CloudFront-Signature"] ?? "",
-      },
-    };
-  }
-
-  /**
-   * Download OBJ file
-   */
-  public async downloadObj(
-    urn: string,
-    objUrn: string,
-  ): Promise<{
-    data: ArrayBuffer;
-    contentType: string;
-  }> {
-    // Get signed cookies first
-    const signedCookies = await this.getSignedCookies(urn, objUrn);
-
-    if (!signedCookies.cookies) {
-      throw new Error("Failed to get CloudFront signed cookies");
-    }
-
-    // Format cookies for request
-    const cookieStr = Object.entries(signedCookies.cookies)
-      .filter(([_, value]) => value) // Only include cookies that have values
-      .map(([key, value]) => `${key}=${value}`)
-      .join("; ");
-
-    if (!cookieStr) {
-      throw new Error("No valid CloudFront cookies found");
-    }
-
-    // Download the file
-    const response = await fetch(signedCookies.url, {
-      headers: {
-        Cookie: cookieStr,
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to download OBJ file: ${response.statusText}`);
-    }
-
-    const data = await response.arrayBuffer();
-    return {
-      data,
-      contentType: signedCookies["content-type"],
-    };
+    return response.json();
   }
 
   /**
@@ -217,26 +169,58 @@ export class DerivativeService extends BaseAPSService {
    */
   public async getGeometryData(
     urn: string,
-    objUrn: string,
-  ): Promise<GeometryData> {
-    const objFile = await this.downloadObj(urn, objUrn);
-    const objContent = new TextDecoder().decode(objFile.data);
-    const geometry = parseOBJContent(objContent);
-    const boundingBox = calculateBoundingBox(geometry.vertices);
+    derivativeUrn: string,
+  ): Promise<GeometryResponse> {
+    const response = await this.fetch(
+      `https://developer.api.autodesk.com/modelderivative/v2/designdata/${urn}/metadata/${derivativeUrn}/geometry`,
+    );
 
-    if (!boundingBox) {
-      throw new Error("Failed to calculate bounding box: no vertices found");
+    if (!response.ok) {
+      throw new Error(`Failed to get geometry data: ${response.statusText}`);
     }
 
-    return {
-      geometry,
-      stats: {
-        vertexCount: geometry.vertices.length,
-        faceCount: geometry.faces.length,
-        normalCount: geometry.normals.length,
-        uvCount: geometry.uvs.length,
-      },
-      boundingBox,
-    };
+    return response.json();
+  }
+
+  /**
+   * 快速获取模型尺寸信息，不需要等待完整的 SVF2 转换
+   */
+  public async getModelDimensions(
+    urn: string,
+    modelGuid: string,
+    objectIds: number[],
+  ): Promise<BoundingBox> {
+    // 1. 开始 OBJ 转换
+    await this.translateToObj(urn, modelGuid, objectIds);
+
+    // 2. 等待 OBJ 转换完成
+    let retries = 0;
+    let manifest: ManifestResponse;
+    while (retries < MAX_RETRIES) {
+      manifest = await this.getManifest(urn);
+      const objDerivative = manifest.derivatives?.find(
+        (d) => d.outputType === "obj" && d.status === "success",
+      );
+
+      if (objDerivative?.children) {
+        const objFile = objDerivative.children.find(
+          (c): c is ManifestChild & { urn: string } =>
+            c.role === "obj" &&
+            c.type === "resource" &&
+            typeof c.urn === "string",
+        );
+
+        if (objFile?.urn) {
+          // 3. 获取几何数据
+          const geometryData = await this.getGeometryData(urn, objFile.urn);
+          return geometryData.data.geometryData.boundingBox;
+        }
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY));
+      retries++;
+    }
+
+    throw new Error("Timeout waiting for OBJ derivative");
   }
 }
