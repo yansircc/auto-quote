@@ -174,7 +174,7 @@ export function calculateMinArea(rectangles: Rectangle2D[]): AreaResult {
     spacing,
   );
 
-  // 转换回我们的格式
+  // 转换回业务格式
   const layout: PlacedRectangle[] = finalBoxes.map((box) => {
     const originalRect = rectangles[box.index];
     if (!originalRect) {

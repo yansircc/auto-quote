@@ -6,6 +6,7 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import { generateMold } from "@/lib/mold/generator";
 import { type Product } from "@/types/domain/product";
 import { type Rectangle } from "@/types/core/geometry";
+import { MOLD_CONSTANTS } from "@/types/mold/generator";
 
 interface SceneProps {
   product?: Product;
@@ -128,14 +129,7 @@ export const Scene: React.FC<SceneProps> = ({ product, products, layout }) => {
         [product],
         singleLayout,
         {
-          material: {
-            color: 0x88ccee, // 淡蓝色
-            opacity: 0.85, // 略微透明
-            metalness: 0.1, // 低金属度，更像塑料
-            roughness: 0.2, // 较光滑
-            clearcoat: 1.0, // 强清漆效果
-            clearcoatRoughness: 0.1, // 光滑的清漆
-          },
+          material: MOLD_CONSTANTS.DEFAULT_MOLD_OPTIONS,
         },
       );
 

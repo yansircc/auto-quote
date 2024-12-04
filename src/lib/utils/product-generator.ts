@@ -107,6 +107,12 @@ export function generateRandomProduct(
     finalConfig.dimensions.maxHeight,
   );
 
+  // TODO: 随机生成材料，level: 紧急且重要
+  // const material = getRandomMaterial();
+  // 获取对应密度并计算重量，替换掉后面的随机重量
+  // const density = getDensity(material);
+  // const weight = volume * density;
+
   // Calculate volume and surface area
   const { volume, surfaceArea } = generateVolumeAndSurface(
     length,
@@ -160,12 +166,14 @@ export function generateRandomProducts(
   if (identical) {
     // 如果需要相同的产品，只生成一个然后复制
     const baseProduct = generateRandomProduct(1, config);
-    return Array(count).fill(null).map((_, index) => ({
-      ...baseProduct,
-      id: index + 1,
-    }));
+    return Array(count)
+      .fill(null)
+      .map((_, index) => ({
+        ...baseProduct,
+        id: index + 1,
+      }));
   }
-  
+
   return Array(count)
     .fill(null)
     .map((_, index) => generateRandomProduct(index + 1, config));

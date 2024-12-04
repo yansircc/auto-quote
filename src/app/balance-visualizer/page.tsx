@@ -41,11 +41,7 @@ export default function BalanceVisualizerPage() {
 
   // 生成新的随机产品并计算布局
   const handleGenerateProducts = () => {
-    const newProducts = generateRandomProducts(
-      productCount,
-      undefined,
-      identical,
-    );
+    const newProducts = generateRandomProducts(productCount);
 
     // 1. 将产品转换为 Rectangle2D 数组
     const rectangles: Rectangle2D[] = newProducts.map((product) => ({
@@ -55,6 +51,31 @@ export default function BalanceVisualizerPage() {
 
     // 2. 计算最小面积布局
     const layoutResult = calculateMinArea(rectangles);
+    // TODO: 紧急且重要
+    // 根据布局的长宽，计算出模具的边缘间距
+    // const moldEdgeMargin = calculateEdgeMargin(
+    //   layoutResult.length,
+    //   layoutResult.width,
+    // );
+    // 根据Product最大高度计算模具底部间距
+    // const moldBottomMargin = calculateBottomMargin(
+    //   Math.max(...newProducts.map((p) => p.dimensions?.height ?? 0)),
+    // );
+    // 生成临时的随机模具材料、密度和单位价格
+    // const { moldMaterial, moldDensity, moldUnitPrice } = getRandomMold();
+    // 此时，有了产品的总体积，模具的总体积以及模具的边缘间距和底部间距，可以计算出模具的重量
+    // const moldWeight = calculateMoldWeight(
+    //   newProducts.reduce((acc, p) => acc + p.volume, 0),
+    //   moldEdgeMargin,
+    //   moldBottomMargin,
+    //   moldMaterial,
+    // );
+    // 模具的总价格也能计算出来
+    // const moldTotalPrice = calculateMoldTotalPrice(
+    //   moldWeight,
+    //   moldUnitPrice,
+    // );
+    // 以上信息，都应该通过zustand管理起来
 
     // 3. 将布局结果转换为 Rectangle 数组
     const transformedLayout = layoutResult.layout.map(

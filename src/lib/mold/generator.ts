@@ -144,6 +144,7 @@ export function generateMold(
   const maxHeight = Math.max(...products.map((p) => p.dimensions?.height ?? 0));
 
   // 2. 计算模具尺寸
+  // TODO: 需要替换成在/Users/yansir/code/moldall/auto-quote/src/app/balance-visualizer/page.tsx文件中计算得到的MoldEdgeMargin和MoldBottomMargin，应该以参数形式，把zustand的state从某处传入
   const xyMargin = options.margin?.xy ?? DEFAULT_MARGIN.XY;
   const zMargin = options.margin?.z ?? DEFAULT_MARGIN.Z;
 
