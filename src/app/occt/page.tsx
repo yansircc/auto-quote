@@ -1,62 +1,17 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  analyzeMeshGeometry,
-  type GeometricProperties,
-} from "@/lib/occt-utils";
-
-// 由于occt-import-js是CommonJS模块，我们需要在这里直接导入
-let occtModule: typeof import("occt-import-js") | null = null;
-let occtInstance: typeof import("occt-import-js").default | null = null;
-
-if (typeof window !== "undefined") {
-  // 仅在客户端环境下导入
-  occtModule = require("occt-import-js");
-}
+import { OCCTService } from "@/lib/occt-service";
+import type { GeometricProperties, OCCTResult } from "@/lib/occt-service";
 
 export default function OCCTPage() {
-  const [modelData, setModelData] = useState<any>(null);
+  const [modelData, setModelData] = useState<OCCTResult | null>(null);
   const [geometryData, setGeometryData] = useState<GeometricProperties | null>(
     null,
   );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const form = useForm({
-    defaultValues: {
-      file: undefined,
-    },
-  });
-
-  useEffect(() => {
-    // 初始化OCCT
-    const initOCCT = async () => {
-      try {
-        if (!occtModule) {
-          throw new Error("Failed to load OCCT module");
-        }
-
-        // 初始化实例
-        occtInstance = await occtModule({
-          // 指定WASM文件的位置
-          locateFile: (path: string) => {
-            if (path.endsWith(".wasm")) {
-              return "/node_modules/occt-import-js/dist/occt-import-js.wasm";
-            }
-            return path;
-          },
-        });
-        console.log("OCCT initialized successfully");
-      } catch (err) {
-        console.error("Failed to initialize OCCT:", err);
-        setError("Failed to initialize OCCT viewer");
-      }
-    };
-
-    void initOCCT();
-  }, []);
 
   const handleFileChange = async (
     event: React.ChangeEvent<HTMLInputElement>,
@@ -70,38 +25,15 @@ export default function OCCTPage() {
     setGeometryData(null);
 
     try {
-      if (!occtInstance) {
-        occtInstance = await occtModule({
-          locateFile: (path: string) => {
-            if (path.endsWith(".wasm")) {
-              return "/node_modules/occt-import-js/dist/occt-import-js.wasm";
-            }
-            return path;
-          },
-        });
-      }
-
       const arrayBuffer = await file.arrayBuffer();
-      const result = await occtInstance.ReadStepFile(
-        new Uint8Array(arrayBuffer),
-        {
-          linearDeflection: 0.1,
-          angularDeflection: 0.5,
-        },
-      );
+      const fileBuffer = new Uint8Array(arrayBuffer);
 
-      if (result.success) {
-        setModelData(result);
+      // 使用 OCCTService 处理文件
+      const occtService = OCCTService.getInstance();
+      const result = await occtService.processSTEPFile(fileBuffer);
 
-        if (result.meshes && result.meshes.length > 0) {
-          const positions = result.meshes[0].attributes.position.array;
-          const indices = result.meshes[0].index.array;
-          const geometry = analyzeMeshGeometry(positions, indices);
-          setGeometryData(geometry);
-        }
-      } else {
-        setError("Failed to load STEP file");
-      }
+      setModelData(result.modelData);
+      setGeometryData(result.geometryData);
     } catch (err) {
       console.error("Error processing file:", err);
       setError(err instanceof Error ? err.message : "Failed to process file");
@@ -298,7 +230,7 @@ export default function OCCTPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle>拓扑特征</CardTitle>
+              <CardTitle>拓扑特���</CardTitle>
             </CardHeader>
             <CardContent>
               <dl className="space-y-2">
