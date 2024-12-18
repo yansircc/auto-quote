@@ -41,14 +41,15 @@ function validateDistribution(groups: Product[][]): {
 /**
  * Find all possible ways to distribute products across different molds
  */
-export function findOptimalDistribution(products: Product[]): DistributionResult {
+export function findOptimalDistribution(products: Product[], skipValidation = false): DistributionResult {
   // Generate all possible distributions
   const distributions = generateAllPossibleCombinations({
     items: products,
-    validate: validateDistribution,
+    validate: skipValidation ? undefined : validateDistribution,
     maxGroups: products.length, // Maximum one product per mold
     minItemsPerGroup: 1        // At least one product per mold
   });
+  console.log(distributions.length);
 
   if (distributions.length === 0) {
     return {
@@ -61,11 +62,16 @@ export function findOptimalDistribution(products: Product[]): DistributionResult
   }
 
   // Convert the results into our desired format
-  const validDistributions = distributions
-    .filter((dist): dist is { groups: Product[][]; validationResult: ResponseData[] } => 
-      dist.validationResult !== undefined && 
-      dist.validationResult.length === dist.groups.length
-    );
+  const validDistributions = skipValidation 
+    ? distributions.map(dist => ({
+        groups: dist.groups,
+        validationResult: dist.groups.map(() => ({ totalSolutions: 1 })) as ResponseData[]
+      }))
+    : distributions
+        .filter((dist): dist is { groups: Product[][]; validationResult: ResponseData[] } => 
+          dist.validationResult !== undefined && 
+          dist.validationResult.length === dist.groups.length
+        );
 
   const solutions: DistributionSolution[] = validDistributions
     .map((dist, index) => ({
