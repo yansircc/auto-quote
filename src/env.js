@@ -8,9 +8,9 @@ export const env = createEnv({
    */
   server: {
     NODE_ENV: z.enum(["development", "test", "production"]),
-    FORGE_CLIENT_ID: z.string(),
-    FORGE_CLIENT_SECRET: z.string(),
-    APS_BUCKET: z.string(),
+    // FORGE_CLIENT_ID: z.string(),
+    // FORGE_CLIENT_SECRET: z.string(),
+    // APS_BUCKET: z.string(),
   },
 
   /**
@@ -28,9 +28,9 @@ export const env = createEnv({
    */
   runtimeEnv: {
     NODE_ENV: process.env.NODE_ENV,
-    FORGE_CLIENT_ID: process.env.FORGE_CLIENT_ID,
-    FORGE_CLIENT_SECRET: process.env.FORGE_CLIENT_SECRET,
-    APS_BUCKET: process.env.APS_BUCKET,
+    // FORGE_CLIENT_ID: process.env.FORGE_CLIENT_ID,
+    // FORGE_CLIENT_SECRET: process.env.FORGE_CLIENT_SECRET,
+    // APS_BUCKET: process.env.APS_BUCKET,
     // NEXT_PUBLIC_CLIENTVAR: process.env.NEXT_PUBLIC_CLIENTVAR,
   },
   /**

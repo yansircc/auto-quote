@@ -1,0 +1,42 @@
+# Version control
+.git
+.gitignore
+
+# Dependencies
+node_modules
+bun.lockb
+
+# Next.js build output
+.next
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Development files
+README.md
+*.log
+.eslintrc.cjs
+prettier.config.js
+*.config.ts
+*.config.js
+!next.config.ts
+!postcss.config.js
+!tailwind.config.ts
+
+# Testing
+coverage
+__tests__
+*.test.*
+*.spec.*
+
+# Editor directories
+.idea
+.vscode
+*.swp
+*.swo
+
+# Keep WASM files
+!public/wasm
+!public/node_modules
