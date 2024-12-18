@@ -1,6 +1,10 @@
-import type { Product } from '@/types/domain/product';
-import type { ShapeFeatures, DimensionFeatures, ValidationResult } from '@/types/algorithm/balance/geometry';
-import type { GeometryScoreConfig } from '../config';
+import type { Product } from "@/types/domain/product";
+import type {
+  ShapeFeatures,
+  DimensionFeatures,
+  ValidationResult,
+} from "@/types/algorithm/balance/geometry";
+import type { GeometryScoreConfig } from "../config";
 
 export interface FeatureExtractor {
   validateProduct(product: Product): ValidationResult;
@@ -21,9 +25,11 @@ export abstract class BaseFeatureExtractor implements FeatureExtractor {
   }
 
   protected isValidDimension(value: number): boolean {
-    return typeof value === 'number' && 
-           isFinite(value) && 
-           value > 0 &&
-           value < Number.MAX_SAFE_INTEGER;
+    return (
+      typeof value === "number" &&
+      isFinite(value) &&
+      value > 0 &&
+      value < Number.MAX_SAFE_INTEGER
+    );
   }
 }

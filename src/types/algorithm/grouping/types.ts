@@ -1,4 +1,4 @@
-import type { Product } from '../../domain/product';
+import type { Product } from "../../domain/product";
 
 /**
  * 分组信息

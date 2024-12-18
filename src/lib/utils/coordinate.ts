@@ -75,7 +75,7 @@ export function toThreeJSCoordinates(point: Point3D, scale = 0.01) {
  */
 export function createLayoutItemWithHeight(
   rect: Rectangle,
-  height: number
+  height: number,
 ): LayoutItemWithHeight {
   return {
     ...rect,
@@ -89,12 +89,11 @@ export function createLayoutItemWithHeight(
  * @param defaultCenter 如果无法计算中心点时的默认值
  * @returns 加权中心点
  */
-export function calculateWeightedCenter<T extends { center: Point2D; weight: number }>(
-  items: T[],
-  defaultCenter: Point2D
-): Point2D {
+export function calculateWeightedCenter<
+  T extends { center: Point2D; weight: number },
+>(items: T[], defaultCenter: Point2D): Point2D {
   const totalWeight = items.reduce((sum, item) => sum + item.weight, 0);
-  
+
   if (totalWeight === 0 || items.length === 0) {
     return defaultCenter;
   }
@@ -104,7 +103,7 @@ export function calculateWeightedCenter<T extends { center: Point2D; weight: num
       x: sum.x + (item.center.x * item.weight) / totalWeight,
       y: sum.y + (item.center.y * item.weight) / totalWeight,
     }),
-    { x: 0, y: 0 }
+    { x: 0, y: 0 },
   );
 }
 
@@ -114,12 +113,11 @@ export function calculateWeightedCenter<T extends { center: Point2D; weight: num
  * @param defaultCenter 如果无法计算中心点时的默认值
  * @returns 加权中心点
  */
-export function calculateWeighted3DCenter<T extends { center: Point3D; weight: number }>(
-  items: T[],
-  defaultCenter: Point3D
-): Point3D {
+export function calculateWeighted3DCenter<
+  T extends { center: Point3D; weight: number },
+>(items: T[], defaultCenter: Point3D): Point3D {
   const totalWeight = items.reduce((sum, item) => sum + item.weight, 0);
-  
+
   if (totalWeight === 0 || items.length === 0) {
     return defaultCenter;
   }
@@ -130,6 +128,6 @@ export function calculateWeighted3DCenter<T extends { center: Point3D; weight: n
       y: sum.y + (item.center.y * item.weight) / totalWeight,
       z: sum.z + (item.center.z * item.weight) / totalWeight,
     }),
-    { x: 0, y: 0, z: 0 }
+    { x: 0, y: 0, z: 0 },
   );
 }

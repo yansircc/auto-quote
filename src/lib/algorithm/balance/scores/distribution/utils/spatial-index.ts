@@ -1,4 +1,4 @@
-import type { Point3D } from '@/types/core/geometry';
+import type { Point3D } from "@/types/core/geometry";
 
 /**
  * 八叉树节点接口
@@ -34,21 +34,17 @@ export class SpatialIndex {
     const center: Point3D = {
       x: (min.x + max.x) / 2,
       y: (min.y + max.y) / 2,
-      z: (min.z + max.z) / 2
+      z: (min.z + max.z) / 2,
     };
 
-    const size = Math.max(
-      max.x - min.x,
-      max.y - min.y,
-      max.z - min.z
-    );
+    const size = Math.max(max.x - min.x, max.y - min.y, max.z - min.z);
 
     // 创建根节点
     this.root = {
       center,
       size,
       points: points.map((point, index) => ({ point, index })),
-      children: new Array<OctreeNode | null>(8).fill(null)
+      children: new Array<OctreeNode | null>(8).fill(null),
     };
 
     // 递归构建八叉树
@@ -80,7 +76,10 @@ export class SpatialIndex {
    * @private
    */
   private subdivide(node: OctreeNode): void {
-    if (node.points.length <= this.maxPointsPerNode || node.size <= this.minNodeSize) {
+    if (
+      node.points.length <= this.maxPointsPerNode ||
+      node.size <= this.minNodeSize
+    ) {
       return;
     }
 
@@ -92,14 +91,14 @@ export class SpatialIndex {
       const childCenter = {
         x: center.x + (i & 1 ? halfSize : -halfSize) / 2,
         y: center.y + (i & 2 ? halfSize : -halfSize) / 2,
-        z: center.z + (i & 4 ? halfSize : -halfSize) / 2
+        z: center.z + (i & 4 ? halfSize : -halfSize) / 2,
       };
 
       node.children[i] = {
         center: childCenter,
         size: halfSize,
         points: [],
-        children: new Array<OctreeNode | null>(8).fill(null)
+        children: new Array<OctreeNode | null>(8).fill(null),
       };
     }
 
@@ -140,13 +139,13 @@ export class SpatialIndex {
    */
   findNearestNeighbor(
     point: Point3D,
-    maxDistance = Infinity
+    maxDistance = Infinity,
   ): { index: number; distance: number } | null {
     if (!this.root) return null;
 
     const nearest = {
       index: -1,
-      distance: maxDistance
+      distance: maxDistance,
     };
 
     this.findNearestInNode(point, this.root, nearest);
@@ -161,7 +160,7 @@ export class SpatialIndex {
   private findNearestInNode(
     point: Point3D,
     node: OctreeNode,
-    nearest: { index: number; distance: number }
+    nearest: { index: number; distance: number },
   ): void {
     // 检查当前节点中的点
     for (const item of node.points) {
@@ -175,7 +174,7 @@ export class SpatialIndex {
     // 如果有子节点，递归检查相关的子节点
     if (node.children[0]) {
       const octant = this.getOctant(point, node.center);
-      
+
       // 先检查点所在的八分区
       this.findNearestInNode(point, node.children[octant]!, nearest);
 

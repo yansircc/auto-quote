@@ -4,7 +4,10 @@
  * @param digits 小数位数，默认为2
  * @returns 格式化后的字符串
  */
-export function formatNumber(num: number | undefined | null, digits = 2): string {
+export function formatNumber(
+  num: number | undefined | null,
+  digits = 2,
+): string {
   if (num === undefined || num === null) return "-";
   return num.toFixed(digits);
 }

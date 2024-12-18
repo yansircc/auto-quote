@@ -48,7 +48,10 @@ export function ScoreCard({ score, className }: ScoreCardProps) {
           </div>
           <Progress
             value={score.details.geometry.overall}
-            className={cn("h-2", getProgressColor(score.details.geometry.overall))}
+            className={cn(
+              "h-2",
+              getProgressColor(score.details.geometry.overall),
+            )}
           />
         </div>
         <div className="space-y-2">
@@ -72,7 +75,10 @@ export function ScoreCard({ score, className }: ScoreCardProps) {
           </div>
           <Progress
             value={score.details.distribution.overall}
-            className={cn("h-2", getProgressColor(score.details.distribution.overall))}
+            className={cn(
+              "h-2",
+              getProgressColor(score.details.distribution.overall),
+            )}
           />
         </div>
         <div className="mt-4 text-xs text-muted-foreground">

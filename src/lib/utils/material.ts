@@ -2,13 +2,13 @@
  * 材料类型
  */
 export interface Material {
-  name: string;          // 材料名称
-  type: string;          // 材料类型
-  density: number;       // 密度 (g/cm³)
-  meltTemp: number;      // 熔点 (°C)
-  moldTemp: number;      // 模具温度 (°C)
-  shrinkage: number;     // 收缩率 (%)
-  color?: string;        // 颜色
+  name: string; // 材料名称
+  type: string; // 材料类型
+  density: number; // 密度 (g/cm³)
+  meltTemp: number; // 熔点 (°C)
+  moldTemp: number; // 模具温度 (°C)
+  shrinkage: number; // 收缩率 (%)
+  color?: string; // 颜色
 }
 
 /**
@@ -79,7 +79,7 @@ export const COMMON_MATERIALS: Material[] = [
     moldTemp: 70,
     shrinkage: 0.4,
   },
-] as const;  // 使用 const 断言确保数组不会被修改
+] as const; // 使用 const 断言确保数组不会被修改
 
 /**
  * 随机获取一个材料

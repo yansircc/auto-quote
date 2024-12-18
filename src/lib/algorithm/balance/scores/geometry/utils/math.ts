@@ -1,23 +1,30 @@
-import type { GeometryScoreConfig } from '../config';
+import type { GeometryScoreConfig } from "../config";
 
 /**
  * 计算容差值
  */
-export function calculateTolerance(value: number, config: GeometryScoreConfig): number {
-  return Math.max(Math.abs(value) * config.tolerance.ratio, config.tolerance.minimum);
+export function calculateTolerance(
+  value: number,
+  config: GeometryScoreConfig,
+): number {
+  return Math.max(
+    Math.abs(value) * config.tolerance.ratio,
+    config.tolerance.minimum,
+  );
 }
 
 /**
  * 比较两个浮点数是否相等
  */
-export function areNumbersEqual(a: number, b: number, tolerance: { ratio: number; minimum: number }): boolean {
+export function areNumbersEqual(
+  a: number,
+  b: number,
+  tolerance: { ratio: number; minimum: number },
+): boolean {
   const absoluteDiff = Math.abs(a - b);
   const relativeDiff = absoluteDiff / Math.max(Math.abs(a), Math.abs(b));
-  
-  return (
-    absoluteDiff <= tolerance.minimum ||
-    relativeDiff <= tolerance.ratio
-  );
+
+  return absoluteDiff <= tolerance.minimum || relativeDiff <= tolerance.ratio;
 }
 
 /**
@@ -35,9 +42,9 @@ export function safeDivide(numerator: number, denominator: number): number {
  * 使用S型曲线和阈值处理来优化评分分布
  */
 export function applyNonlinearMapping(
-  value: number, 
+  value: number,
   exponent: number,
-  _config: GeometryScoreConfig
+  _config: GeometryScoreConfig,
 ): number {
   // 确保输入值在有效范围内
   const normalizedValue = Math.max(0, Math.min(1, value));
@@ -46,7 +53,7 @@ export function applyNonlinearMapping(
   if (normalizedValue < 0.3) {
     return normalizedValue * 0.5;
   }
-  
+
   // 对于一般情况，使用指数映射
   return Math.pow(normalizedValue, exponent);
 }

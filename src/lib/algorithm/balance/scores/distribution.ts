@@ -108,12 +108,11 @@ export function calculateDistributionScore(
   centerY /= totalVolume || 1;
 
   const maxDimension = Math.max(
-    ...Object.values(layout).map((rect) =>
-      Math.max(rect.width, rect.length),
-    ),
+    ...Object.values(layout).map((rect) => Math.max(rect.width, rect.length)),
   );
 
-  centerDeviation = Math.sqrt(centerX * centerX + centerY * centerY) / maxDimension;
+  centerDeviation =
+    Math.sqrt(centerX * centerX + centerY * centerY) / maxDimension;
 
   // 5. 计算体积平衡相关指标
   const volumeBalance = calculateVolumeBalance(layout, products);
@@ -132,14 +131,16 @@ export function calculateDistributionScore(
 
   const score = Math.min(
     100,
-    100 * (
-      weights.isotropy * isotropy +
-      weights.centerDeviation * (1 - centerDeviation) +
-      weights.volumeBalance.densityVariance * (volumeBalance.densityVariance / 100) +
-      weights.volumeBalance.heightBalance * (volumeBalance.heightBalance / 100) +
-      weights.volumeBalance.massDistribution * (volumeBalance.massDistribution / 100) +
-      weights.volumeBalance.symmetry * (volumeBalance.symmetry / 100)
-    ),
+    100 *
+      (weights.isotropy * isotropy +
+        weights.centerDeviation * (1 - centerDeviation) +
+        weights.volumeBalance.densityVariance *
+          (volumeBalance.densityVariance / 100) +
+        weights.volumeBalance.heightBalance *
+          (volumeBalance.heightBalance / 100) +
+        weights.volumeBalance.massDistribution *
+          (volumeBalance.massDistribution / 100) +
+        weights.volumeBalance.symmetry * (volumeBalance.symmetry / 100)),
   );
 
   return {
@@ -213,13 +214,13 @@ function calculateVolumeBalance(
  */
 function calculateSymmetry(layout: LayoutMap): number {
   const rects = Object.values(layout);
-  
+
   // 找到边界盒
   const minX = Math.min(...rects.map((r) => r.x));
   const maxX = Math.max(...rects.map((r) => r.x + r.width));
   const minY = Math.min(...rects.map((r) => r.y));
   const maxY = Math.max(...rects.map((r) => r.y + r.length));
-  
+
   const centerX = (minX + maxX) / 2;
   const centerY = (minY + maxY) / 2;
 

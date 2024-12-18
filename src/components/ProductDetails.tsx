@@ -12,7 +12,9 @@ interface ProductDetailsProps {
 
 export function ProductDetails({ product }: ProductDetailsProps) {
   // 获取材料信息
-  const material = product.material ? (JSON.parse(product.material) as Material) : undefined;
+  const material = product.material
+    ? (JSON.parse(product.material) as Material)
+    : undefined;
 
   return (
     <Card>
@@ -48,7 +50,7 @@ export function ProductDetails({ product }: ProductDetailsProps) {
                   ((product.dimensions?.width ?? 0) *
                     (product.dimensions?.length ?? 0) *
                     (product.dimensions?.height ?? 0)) /
-                    1000
+                    1000,
                 )}
               </div>
             </div>
@@ -56,11 +58,11 @@ export function ProductDetails({ product }: ProductDetailsProps) {
               <div className="text-gray-500">密度 (g/cm³)</div>
               <div className="font-medium">
                 {formatNumber(
-                  (product.weight ?? 0) /
+                  ((product.weight ?? 0) /
                     ((product.dimensions?.width ?? 0) *
                       (product.dimensions?.length ?? 0) *
-                      (product.dimensions?.height ?? 0)) *
-                    1000
+                      (product.dimensions?.height ?? 0))) *
+                    1000,
                 )}
               </div>
             </div>
@@ -85,19 +87,27 @@ export function ProductDetails({ product }: ProductDetailsProps) {
                 </div>
                 <div>
                   <div className="text-gray-500">密度 (g/cm³)</div>
-                  <div className="font-medium">{formatNumber(material.density)}</div>
+                  <div className="font-medium">
+                    {formatNumber(material.density)}
+                  </div>
                 </div>
                 <div>
                   <div className="text-gray-500">熔点 (°C)</div>
-                  <div className="font-medium">{formatNumber(material.meltTemp)}</div>
+                  <div className="font-medium">
+                    {formatNumber(material.meltTemp)}
+                  </div>
                 </div>
                 <div>
                   <div className="text-gray-500">模具温度 (°C)</div>
-                  <div className="font-medium">{formatNumber(material.moldTemp)}</div>
+                  <div className="font-medium">
+                    {formatNumber(material.moldTemp)}
+                  </div>
                 </div>
                 <div>
                   <div className="text-gray-500">收缩率 (%)</div>
-                  <div className="font-medium">{formatNumber(material.shrinkage)}</div>
+                  <div className="font-medium">
+                    {formatNumber(material.shrinkage)}
+                  </div>
                 </div>
               </div>
             </div>
@@ -119,7 +129,9 @@ export function ProductDetails({ product }: ProductDetailsProps) {
               <div>
                 <div className="text-gray-500">流动路径</div>
                 <div className="font-medium">
-                  {formatNumber(product.flowData?.calculatedFlowPath?.length ?? 0)}
+                  {formatNumber(
+                    product.flowData?.calculatedFlowPath?.length ?? 0,
+                  )}
                 </div>
               </div>
             </div>

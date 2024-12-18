@@ -1,14 +1,14 @@
 import type { Rectangle, Point2D } from "@/types/core/geometry";
 import type { Product } from "@/types/domain/product";
-import type { DetailedFlowScore, FlowPath } from "@/types/algorithm/balance/types";
+import type {
+  DetailedFlowScore,
+  FlowPath,
+} from "@/types/algorithm/balance/types";
 
 /**
  * 计算流动路径信息
  */
-function calculateFlowPath(
-  rect: Rectangle,
-  injectionPoint: Point2D,
-): FlowPath {
+function calculateFlowPath(rect: Rectangle, injectionPoint: Point2D): FlowPath {
   const center: Point2D = {
     x: rect.x + rect.width / 2,
     y: rect.y + rect.length / 2,
@@ -17,7 +17,7 @@ function calculateFlowPath(
   // 计算流动距离（从注胶点到产品中心的距离）
   const distance = Math.sqrt(
     Math.pow(center.x - injectionPoint.x, 2) +
-    Math.pow(center.y - injectionPoint.y, 2),
+      Math.pow(center.y - injectionPoint.y, 2),
   );
 
   // 计算流动阻力（基于距离和面积）
@@ -43,7 +43,9 @@ export function calculateDetailedFlowScore(
   injectionPoint: Point2D,
 ): DetailedFlowScore {
   // 1. 计算每个产品的流动路径
-  const flowPaths = layout.map((rect) => calculateFlowPath(rect, injectionPoint));
+  const flowPaths = layout.map((rect) =>
+    calculateFlowPath(rect, injectionPoint),
+  );
 
   // 2. 计算流动路径平衡性
   const distances = flowPaths.map((path) => path.distance);
@@ -82,8 +84,8 @@ export function calculateDetailedFlowScore(
   const overall = Math.min(
     100,
     weights.flowPath * flowPathBalance +
-    weights.surfaceArea * surfaceAreaBalance +
-    weights.volume * volumeBalance,
+      weights.surfaceArea * surfaceAreaBalance +
+      weights.volume * volumeBalance,
   );
 
   return {

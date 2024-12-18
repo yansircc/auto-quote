@@ -36,7 +36,7 @@ export function calculateBalanceScore(
 ): BalanceScore {
   // 1. 验证输入数据
   if (!validateInput(layout, products)) {
-   throw new Error("Invalid input data");
+    throw new Error("Invalid input data");
   }
 
   try {
@@ -58,10 +58,7 @@ export function calculateBalanceScore(
       {},
     );
 
-    const distributionScore = calculateDistributionScore(
-      layoutMap,
-      products,
-    );
+    const distributionScore = calculateDistributionScore(layoutMap, products);
 
     // 3. 定义权重
     const weights = {

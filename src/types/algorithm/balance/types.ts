@@ -19,7 +19,6 @@ export interface BalanceScore {
  * 详细的分布平衡分数，用于可视化展示
  */
 
-
 /**
  * 几何特征评分
  */
