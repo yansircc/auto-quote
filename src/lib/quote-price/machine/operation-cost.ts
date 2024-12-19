@@ -1,6 +1,6 @@
 import type { Product } from "../product/types";
 import type { MachineConfig, ProcessingConfig } from "./types";
-import { getTonnageRate } from "./tonnage";
+import { machineList } from "src/lib/constants/price-constant";
 
 /**
  * 根据机器吨位计算每模次的加工费用
@@ -9,7 +9,16 @@ import { getTonnageRate } from "./tonnage";
  */
 export function calculateOperationCostPerShot(machineTonnage: number): number {
   // 伪代码
-  return 0;
+  if(machineTonnage <= 0) {
+    throw new Error('机器吨位不能为零跟负数');
+  }
+
+  const machine = machineList.find(machine => parseInt(machine.name.replace('T', '')) >= machineTonnage);
+  if(!machine) {
+    throw new Error('没有找到对应的机器');
+  }
+
+  return machine.machiningFee;
 }
 
 /**

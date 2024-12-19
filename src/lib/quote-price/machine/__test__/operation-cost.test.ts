@@ -7,34 +7,31 @@ describe("机器运行成本计算", () => {
       const tonnage = 50; // 50吨
       const cost = calculateOperationCostPerShot(tonnage);
 
-      // 假设成本计算公式：
-      // 基础成本 = 2元/模次
-      // 吨位系数 = 吨位 / 100
-      // 最终成本 = 基础成本 * (1 + 吨位系数)
-      // 2 * (1 + 50/100) = 3元/模次
-      expect(cost).toBe(3);
+      
+      expect(cost).toBe(1.2);
     });
 
     it("计算中型机器的每模次成本", () => {
       const tonnage = 500; // 500吨
       const cost = calculateOperationCostPerShot(tonnage);
       // 2 * (1 + 500/100) = 12元/模次
-      expect(cost).toBe(12);
+      expect(cost).toBe(7);
     });
 
     it("计算大型机器的每模次成本", () => {
       const tonnage = 2000; // 2000吨
-      const cost = calculateOperationCostPerShot(tonnage);
-      // 2 * (1 + 2000/100) = 42元/模次
-      expect(cost).toBe(42);
+      expect(() => calculateOperationCostPerShot(tonnage)).toThrow(
+        "没有找到对应的机器",
+      );
+      
     });
 
     it("处理异常输入", () => {
       expect(() => calculateOperationCostPerShot(-50)).toThrow(
-        "机器吨位不能为负数",
+        "机器吨位不能为零跟负数",
       );
       expect(() => calculateOperationCostPerShot(0)).toThrow(
-        "机器吨位不能为零",
+        "机器吨位不能为零跟负数",
       );
     });
 
@@ -43,7 +40,7 @@ describe("机器运行成本计算", () => {
       const cost = calculateOperationCostPerShot(tonnage);
       // 2 * (1 + 123.45/100) = 4.469元/模次
       // 四舍五入到2位小数
-      expect(cost).toBe(4.47);
+      expect(cost).toBe(1.5);
     });
   });
 });
