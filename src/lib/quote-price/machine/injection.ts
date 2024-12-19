@@ -14,7 +14,16 @@ export function calculateInjectionVolume(
   // TODO:
   // 1. 计算每个产品的体积 × 密度 × 穴数
   // 2. 求和得到总注胶量
-  return 0;
+  if (products.length !== cavities.length) {
+    throw new Error('产品和穴数数量不一致');
+  }
+
+  const totalVolume = products.reduce((sum, product, index) => {
+    const cavity = cavities[index]!;
+    const volume = product.netVolume * product.material.density * cavity;
+    return sum + volume;
+  }, 0);
+  return totalVolume;
 }
 
 /**
@@ -29,5 +38,13 @@ export function calculateSafeInjectionVolume(
 ): number {
   // TODO:
   // 1. 使用安全系数计算安全注胶量
-  return 0;
+  const safetyFactor = 1.2; // Standard safety factor of 20%
+  const safeVolume = volume * safetyFactor;
+  
+  // TODO: 检查安全注胶量是否超过机器容量
+  if (safeVolume > config.maxInjectionVolume) {
+    throw new Error('注胶量超过机器最大容量');
+  }
+  
+  return safeVolume;
 }
