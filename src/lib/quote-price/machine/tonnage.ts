@@ -4,6 +4,7 @@ import {
   calculateInjectionVolume,
   calculateSafeInjectionVolume,
 } from "./injection";
+import { machineList } from "src/lib/constants/price-constant";
 
 /**
  * 根据模具尺寸与注胶量确定需要的机器吨位
@@ -20,7 +21,34 @@ export function determineMachineTonnage(
   injectionVolume: number,
 ): number {
   // 伪代码
-  return 0;
+  if(moldWidth <= 0 || moldHeight <= 0 || moldDepth <= 0) {
+    throw new Error('模具尺寸不能为零跟负数');
+  }
+
+  if(injectionVolume <= 0) {
+    throw new Error('注胶量不能为零跟负数');
+  }
+
+  const moldWidthActual = Math.min(moldWidth, moldDepth);
+  const eligibleMachines = machineList
+      .filter(machine => 
+        moldWidthActual <= machine.moldWidth &&
+        moldHeight <= machine.moldHeight &&
+        (injectionVolume / 0.8) <= machine.injectionVolume
+      )
+      .sort((a, b) => {
+        const aValue = parseInt(a.name.replace('T', ''));
+        const bValue = parseInt(b.name.replace('T', ''));
+        return aValue - bValue;
+      });
+
+  if(eligibleMachines.length > 0) {
+    const machineName = eligibleMachines[0]?.name ?? '';
+    return parseInt(machineName.replace('T', ''));
+  }
+  else {
+    throw new Error('没有合适的机器');
+  }
 }
 
 /**

@@ -8,6 +8,7 @@ export interface MachineConfig {
   smallBatchThreshold: number; // 小批量阈值（默认1000模次）
   smallBatchRates: number[]; // 小批量费率数组
   safetyFactor: number; // 注胶安全系数（默认0.8）
+  maxInjectionVolume: number; // 机器最大注胶量
 }
 
 /**
