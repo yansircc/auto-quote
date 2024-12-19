@@ -1,19 +1,19 @@
-import { determineMachineTonnage } from '../tonnage';
-import { describe, it, expect } from 'vitest';
+import { determineMachineTonnage } from "../tonnage";
+import { describe, it, expect } from "vitest";
 
-describe('机器吨位计算', () => {
-  describe('determineMachineTonnage', () => {
-    it('计算标准尺寸模具的机器吨位', () => {
-      const moldWidth = 300;    // 300mm
-      const moldHeight = 400;   // 400mm
-      const moldDepth = 200;    // 200mm
+describe("机器吨位计算", () => {
+  describe("determineMachineTonnage", () => {
+    it("计算标准尺寸模具的机器吨位", () => {
+      const moldWidth = 300; // 300mm
+      const moldHeight = 400; // 400mm
+      const moldDepth = 200; // 200mm
       const injectionVolume = 500; // 500cm³
 
       const tonnage = determineMachineTonnage(
         moldWidth,
         moldHeight,
         moldDepth,
-        injectionVolume
+        injectionVolume,
       );
 
       // 假设吨位计算公式：
@@ -27,7 +27,7 @@ describe('机器吨位计算', () => {
       expect(tonnage).toBe(540);
     });
 
-    it('计算小型模具的机器吨位', () => {
+    it("计算小型模具的机器吨位", () => {
       const tonnage = determineMachineTonnage(100, 150, 80, 100);
       // 100mm * 150mm = 15000mm² = 150cm²
       // 150cm² * 0.3吨/cm² = 45吨
@@ -36,7 +36,7 @@ describe('机器吨位计算', () => {
       expect(tonnage).toBe(49.5);
     });
 
-    it('计算大型模具的机器吨位', () => {
+    it("计算大型模具的机器吨位", () => {
       const tonnage = determineMachineTonnage(800, 1000, 400, 2000);
       // 800mm * 1000mm = 800000mm² = 8000cm²
       // 8000cm² * 0.3吨/cm² = 2400吨
@@ -45,24 +45,32 @@ describe('机器吨位计算', () => {
       expect(tonnage).toBe(7200);
     });
 
-    it('处理异常输入', () => {
-      expect(() => determineMachineTonnage(-300, 400, 200, 500))
-        .toThrow('模具尺寸不能为负数');
-      expect(() => determineMachineTonnage(300, -400, 200, 500))
-        .toThrow('模具尺寸不能为负数');
-      expect(() => determineMachineTonnage(300, 400, -200, 500))
-        .toThrow('模具尺寸不能为负数');
-      expect(() => determineMachineTonnage(300, 400, 200, -500))
-        .toThrow('注胶量不能为负数');
-      
-      expect(() => determineMachineTonnage(0, 400, 200, 500))
-        .toThrow('模具尺寸不能为零');
-      expect(() => determineMachineTonnage(300, 0, 200, 500))
-        .toThrow('模具尺寸不能为零');
-      expect(() => determineMachineTonnage(300, 400, 0, 500))
-        .toThrow('模具尺寸不能为零');
-      expect(() => determineMachineTonnage(300, 400, 200, 0))
-        .toThrow('注胶量不能为零');
+    it("处理异常输入", () => {
+      expect(() => determineMachineTonnage(-300, 400, 200, 500)).toThrow(
+        "模具尺寸不能为负数",
+      );
+      expect(() => determineMachineTonnage(300, -400, 200, 500)).toThrow(
+        "模具尺寸不能为负数",
+      );
+      expect(() => determineMachineTonnage(300, 400, -200, 500)).toThrow(
+        "模具尺寸不能为负数",
+      );
+      expect(() => determineMachineTonnage(300, 400, 200, -500)).toThrow(
+        "注胶量不能为负数",
+      );
+
+      expect(() => determineMachineTonnage(0, 400, 200, 500)).toThrow(
+        "模具尺寸不能为零",
+      );
+      expect(() => determineMachineTonnage(300, 0, 200, 500)).toThrow(
+        "模具尺寸不能为零",
+      );
+      expect(() => determineMachineTonnage(300, 400, 0, 500)).toThrow(
+        "模具尺寸不能为零",
+      );
+      expect(() => determineMachineTonnage(300, 400, 200, 0)).toThrow(
+        "注胶量不能为零",
+      );
     });
   });
 });
