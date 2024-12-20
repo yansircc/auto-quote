@@ -7,6 +7,7 @@
  * @return {number} 成本，单位为RMB
  */
 
+import { defaultMoldMaterialDensity, maxCalculatedWeight, minCalculatedWeight, minSalesWeight, moldMaterialCostStepOne, moldMaterialCostStepTwo, moldMaterialPerPrice, moldPriceDifferList, operatingExpenseList } from "src/lib/constants/price-constant";
 import type { Mold, MoldConfig } from "./types";
 
 /**
@@ -18,7 +19,13 @@ export function calculateMoldMaterialCost(mold: Mold): number {
   // TODO:
   // 1. 计算模具体积 = 宽度 × 高度 × 深度
   // 2. 材料成本 = 体积 × 材料密度 × 材料单价
-  return 0;
+  if (mold.dimensions.width <= 0 || mold.dimensions.height <= 0 || mold.dimensions.depth <= 0) {
+    throw new Error('模具尺寸不能为负数或0');
+  }
+  const moldVolume = mold.dimensions.width * mold.dimensions.height * mold.dimensions.depth;
+  const materialWeight = moldVolume * defaultMoldMaterialDensity;
+  const materialCost = Math.max(materialWeight, minSalesWeight) * moldMaterialPerPrice;
+  return materialCost;
 }
 
 /**
@@ -28,13 +35,24 @@ export function calculateMoldMaterialCost(mold: Mold): number {
  * @returns {number} 运维费用
  */
 export function calculateMaintenanceFee(
-  materialCost: number,
+  moldWeight: number,
   config: MoldConfig,
 ): number {
   // TODO:
   // 1. 判断材料成本是否超过阈值
   // 2. 根据不同阈值使用对应费率计算
-  return 0;
+  if (moldWeight <= 0) {
+    throw new Error('模具重量不能为负数或0');
+  }
+  if (moldWeight <= minCalculatedWeight) {
+    return Math.max(moldWeight, minSalesWeight) * moldMaterialPerPrice * moldMaterialCostStepOne;
+  }
+  else if (moldWeight > maxCalculatedWeight) {
+    throw new Error('模具重量超过阈值');
+  }
+  else {
+    return moldWeight * moldMaterialPerPrice * moldMaterialCostStepTwo;
+  }
 }
 
 /**
@@ -44,13 +62,20 @@ export function calculateMaintenanceFee(
  * @returns {number} 毛利
  */
 export function calculateGrossProfit(
-  weight: number,
+  moldWeight: number,
   config: MoldConfig,
 ): number {
   // TODO:
   // 1. 根据重量找到对应的阈值区间
   // 2. 使用对应的费率计算毛利
-  return 0;
+  if (moldWeight <= 0) {
+    throw new Error('模具重量不能为负数或0');
+  }
+  const runningFee = operatingExpenseList.find(rule => moldWeight <= rule.maxWeight);
+  if (!runningFee) {
+    throw new Error('模具重量超过阈值');
+  }
+  return runningFee.price;
 }
 
 /**
@@ -62,37 +87,78 @@ export function calculateGrossProfit(
 export function calculateProcessingFee(mold: Mold, config: MoldConfig): number {
   // TODO:
   // 1. 根据模具材料找到对应的加工费用
-  return 0;
+  if (mold.weight <= 0) {
+    throw new Error('模具重量不能为负数或0');
+  }
+
+  let differPrice = 0;
+  const differPriceCoefficientItem = moldPriceDifferList.find(rule => mold.material.name == rule.name.trim());
+  if(!differPriceCoefficientItem){
+    throw new Error('模具材料不存在');
+  }
+  differPrice = mold.weight * differPriceCoefficientItem.coefficient;
+
+  return differPrice;
 }
 
 /**
  * 计算模具总成本
- * @param {Mold} mold 模具信息
- * @param {MoldConfig} config 模具配置
+ * @param {number} materialCost 模具材料成本
+ * @param {number} maintenanceFee 供应商运维费
+ * @param {number} grossProfit 毛利
+ * @param {number} processingFee 额外加工费
  * @returns {number} 总成本
  */
-export function calculateTotalMoldCost(mold: Mold, config: MoldConfig): number {
+export function calculateTotalMoldCost(
+  materialCost: number,
+  maintenanceFee: number,
+  grossProfit: number,
+  processingFee: number,
+): number {
   // TODO:
   // 1. 计算材料成本
   // 2. 计算供应商运维费
   // 3. 计算毛利
   // 4. 计算额外加工费
   // 5. 求和得到总成本
-  return 0;
+  if (materialCost <= 0 || maintenanceFee <= 0 || processingFee <= 0) {
+    throw new Error('成本不能为负数或0');
+  }
+  return materialCost + maintenanceFee + processingFee;
 }
 
 /**
- * 计算模具额外加工费
- * @param {Mold} mold 模具信息
- * @param {MoldConfig} config 模具配置
- * @returns {number} 额外加工费总和
+ * 计算模具加工费用
+ * @param {number} materialProcessingFee 材料加工费
+ * @param {number} structureProcessingFee 结构加工费
+ * @param {number} surfaceTreatmentFee 表面处理费
+ * @returns {number} 总加工费用
  */
-export function calculateExtraProcessingFee(
-  mold: Mold,
-  config: MoldConfig,
+export function calculateMoldProcessingFee(
+  materialProcessingFee: number,
+  structureProcessingFee: number,
+  surfaceTreatmentFee: number,
 ): number {
-  // TODO:
-  // 1. 计算额外加工费
-  // 2. 求和得到总额外加工费
-  return 0;
+  // 伪代码：总加工费用 = 材料加工费 + 结构加工费 + 表面处理费
+  return materialProcessingFee + structureProcessingFee + surfaceTreatmentFee;
+}
+
+/**
+ * 计算模具售价
+ * @param {number} materialCost 模具材料成本
+ * @param {number} maintenanceFee 供应商运维费
+ * @param {number} grossProfit 毛利
+ * @param {number} processingFee 额外加工费
+ * @returns {number} 售价
+ */
+export function calculateMoldPrice(
+  materialCost: number,
+  maintenanceFee: number,
+  grossProfit: number,
+  processingFee: number,
+): number {
+  if (materialCost <= 0 || maintenanceFee <= 0 || grossProfit <= 0 || processingFee <= 0) {
+    throw new Error('成本不能为负数或0');
+  }
+  return materialCost + maintenanceFee + processingFee + grossProfit;
 }

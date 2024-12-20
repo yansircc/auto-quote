@@ -1,3 +1,4 @@
+import { minSalesWeight, moldMaterialList } from "src/lib/constants/price-constant";
 import type { MoldMaterial } from "./types";
 
 /**
@@ -6,8 +7,16 @@ import type { MoldMaterial } from "./types";
  * @returns {MoldMaterial | null} 模具材料信息
  */
 export function getMoldMaterial(materialId: string): MoldMaterial | null {
-  // 伪代码：从数据库或配置中获取模具材料信息
-  return null;
+  const material = moldMaterialList.find(material => material.name === materialId);
+  if (!material) {
+    throw new Error(`没有找到模具材料: ${materialId}`);
+  }
+  return {
+    id: material.name,
+    name: material.name,
+    density: material.density,
+    pricePerKg: material.price,
+  };
 }
 
 /**
@@ -18,10 +27,15 @@ export function getMoldMaterial(materialId: string): MoldMaterial | null {
  */
 export function calculateMoldMaterialCost(
   material: MoldMaterial,
-  volume: number,
+  moldVolume: number,
 ): number {
   // TODO:
   // 1. 根据体积和密度计算重量
   // 2. 根据重量和单价计算成本
-  return 0;
+  if (moldVolume < 0) {
+    throw new Error('模具体积不能为负数');
+  }
+
+  const moldWeight = moldVolume * material.density;
+  return Math.max(moldWeight, minSalesWeight) * material.pricePerKg;
 }
