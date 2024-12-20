@@ -4,7 +4,7 @@ import {
   calculateInjectionVolume,
   calculateSafeInjectionVolume,
 } from "./injection";
-import { machineList } from "src/lib/constants/price-constant";
+import { injectSafetyFactor, machineList } from "src/lib/constants/price-constant";
 
 /**
  * 根据模具尺寸与注胶量确定需要的机器吨位
@@ -34,7 +34,7 @@ export function determineMachineTonnage(
       .filter(machine => 
         moldWidthActual <= machine.moldWidth &&
         moldHeight <= machine.moldHeight &&
-        (injectionVolume / 0.8) <= machine.injectionVolume
+        (injectionVolume / injectSafetyFactor) <= machine.injectionVolume
       )
       .sort((a, b) => {
         const aValue = parseInt(a.name.replace('T', ''));
@@ -61,7 +61,7 @@ export function determineMachineTonnage(
 export function calculateRequiredTonnage(
   products: Product[],
   cavities: number[],
-  config: MachineConfig,
+  config: MachineConfig | undefined,
 ): number {
   // TODO:
   // 1. 计算总注胶量
@@ -95,12 +95,32 @@ export function checkTonnageInRange(
  * @param {MachineConfig} config 机器配置
  * @returns {number} 费率
  */
-export function getTonnageRate(tonnage: number, config: MachineConfig): number {
+export function getTonnageRate(tonnage: number, config: MachineConfig | undefined): number {
   // TODO:
   // 1. 在吨位阈值数组中找到对应区间
   // 2. 返回该区间对应的费率
-  return 0;
+  
+  const machine = machineList.find(machine => parseInt(machine.name.replace('T', '')) >= tonnage);
+  if (!machine) {
+    throw new Error('没有找到对应的机器');
+  }
+  return machine.machiningFee;
 }
+
+
+/**
+ * 获取吨位对应的小批量加工费
+ * @param {number} tonnage 机器吨位
+ * @param {MachineConfig} config 机器配置
+ * @returns {number} 小批量加工费
+ */
+export function getSmallBatchMachiningFee(tonnage: number, config: MachineConfig | undefined): number {
+  const machine = machineList.find(machine => parseInt(machine.name.replace('T', '')) >= tonnage);
+  if (!machine) {
+    throw new Error('没有找到对应的机器');
+  }
+  return machine.smallBatchMachiningFee;
+} 
 
 /**
  * 计算最佳机器吨位
@@ -110,11 +130,15 @@ export function getTonnageRate(tonnage: number, config: MachineConfig): number {
  */
 export function calculateOptimalTonnage(
   requiredTonnage: number,
-  config: MachineConfig,
+  config: MachineConfig | undefined,
 ): number {
   // TODO:
   // 1. 在满足所需吨位的前提下
   // 2. 选择成本最优的机器吨位
   // 3. 考虑机器的利用率
-  return 0;
+  const machine = machineList.find(machine => parseInt(machine.name.replace('T', '')) >= requiredTonnage);
+  if (!machine) {
+    throw new Error('没有找到对应的机器');
+  }
+  return parseInt(machine.name.replace('T', ''));
 }

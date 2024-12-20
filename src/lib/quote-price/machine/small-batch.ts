@@ -1,5 +1,5 @@
 import type { MachineConfig } from "./types";
-import { machineList } from "src/lib/constants/price-constant";
+import { machineList, smallBatchThresholdValue } from "src/lib/constants/price-constant";
 
 /**
  * 计算小批量费用
@@ -17,7 +17,7 @@ export function calculateSmallBatchFee(
   // 1. 检查是否达到小批量阈值（默认1000模次）
   // 2. 根据吨位找到对应的费率
   // 3. 计算小批量费用
-  const smallBatchThreshold = config.smallBatchThreshold ?? 1000;
+  const smallBatchThreshold = config.smallBatchThreshold ?? smallBatchThresholdValue;
   
   // 如果模次数大于等于阈值，不收取小批量费用
   if (shots >= smallBatchThreshold) {

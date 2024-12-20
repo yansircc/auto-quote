@@ -1,4 +1,4 @@
-import { moldMaterialList } from "src/lib/constants/price-constant";
+import { minSalesWeight, moldMaterialList } from "src/lib/constants/price-constant";
 import type { MoldMaterial } from "./types";
 
 /**
@@ -37,5 +37,5 @@ export function calculateMoldMaterialCost(
   }
 
   const moldWeight = moldVolume * material.density;
-  return Math.max(moldWeight, 100) * material.pricePerKg;
+  return Math.max(moldWeight, minSalesWeight) * material.pricePerKg;
 }

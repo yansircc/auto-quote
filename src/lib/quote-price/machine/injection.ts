@@ -1,3 +1,4 @@
+import { injectSafetyFactor } from "src/lib/constants/price-constant";
 import type { Product } from "../product/types";
 import type { MachineConfig } from "./types";
 
@@ -38,7 +39,7 @@ export function calculateSafeInjectionVolume(
 ): number {
   // TODO:
   // 1. 使用安全系数计算安全注胶量
-  const safetyFactor = 1.2; // Standard safety factor of 20%
+  const safetyFactor = injectSafetyFactor; // Standard safety factor of 20%
   const safeVolume = volume * safetyFactor;
   
   // TODO: 检查安全注胶量是否超过机器容量
