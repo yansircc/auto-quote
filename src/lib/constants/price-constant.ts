@@ -203,6 +203,7 @@ const machineList = [
     moldWidth: 360,
     moldHeight: 400,
     machiningFee: 1.2,
+    smallBatchMachiningFee: 1.2,
   },
   {
     name: '150T',
@@ -210,6 +211,7 @@ const machineList = [
     moldWidth: 425,
     moldHeight: 450,
     machiningFee: 1.5,
+    smallBatchMachiningFee: 1.5,
   },
   {
     name: '170T',
@@ -217,6 +219,7 @@ const machineList = [
     moldWidth: 470,
     moldHeight: 480,
     machiningFee: 1.8,
+    smallBatchMachiningFee: 1.8,
   },
   {
     name: '180T',
@@ -224,6 +227,7 @@ const machineList = [
     moldWidth: 500,
     moldHeight: 500,
     machiningFee: 2,
+    smallBatchMachiningFee: 2,
   },
   {
     name: '200T',
@@ -231,13 +235,15 @@ const machineList = [
     moldWidth: 530,
     moldHeight: 550,
     machiningFee: 2.5,
-  },
+    smallBatchMachiningFee: 2.5,
+    },
   {
     name: '250T',
     injectionVolume: 600,
     moldWidth: 580,
     moldHeight: 600,
     machiningFee: 3,
+    smallBatchMachiningFee: 3,
   },
   {
     name: '300T',
@@ -245,6 +251,7 @@ const machineList = [
     moldWidth: 635,
     moldHeight: 650,
     machiningFee: 3.5,
+    smallBatchMachiningFee: 3.5,
   },
   {
     name: '350T',
@@ -252,6 +259,7 @@ const machineList = [
     moldWidth: 690,
     moldHeight: 700,
     machiningFee: 4,
+    smallBatchMachiningFee: 4,
   },
   {
     name: '400T',
@@ -259,6 +267,7 @@ const machineList = [
     moldWidth: 700,
     moldHeight: 720,
     machiningFee: 5,
+    smallBatchMachiningFee: 5,
   },
   {
     name: '450T',
@@ -266,6 +275,7 @@ const machineList = [
     moldWidth: 740,
     moldHeight: 750,
     machiningFee: 6,
+    smallBatchMachiningFee: 6,
   },
   {
     name: '500T',
@@ -273,6 +283,7 @@ const machineList = [
     moldWidth: 780,
     moldHeight: 800,
     machiningFee: 7,
+    smallBatchMachiningFee: 7,
   },
   {
     name: '550T',
@@ -280,6 +291,7 @@ const machineList = [
     moldWidth: 820,
     moldHeight: 900,
     machiningFee: 8,
+    smallBatchMachiningFee: 8,
   },
   {
     name: '650T',
@@ -287,6 +299,7 @@ const machineList = [
     moldWidth: 930,
     moldHeight: 1000,
     machiningFee: 10,
+    smallBatchMachiningFee: 10,
   },
   {
     name: '800T',
@@ -294,13 +307,15 @@ const machineList = [
     moldWidth: 1000,
     moldHeight: 1100,
     machiningFee: 15,
+    smallBatchMachiningFee: 15,
   },
   {
     name: '1100T',
     injectionVolume: 4636,
     moldWidth: 1160,
     moldHeight: 1200,
-    machiningFee: 20,
+    machiningFee: 20, 
+    smallBatchMachiningFee: 20,
   },
   {
     name: '1850T',
@@ -308,12 +323,17 @@ const machineList = [
     moldWidth: 1550,
     moldHeight: 1650,
     machiningFee: 35,
+    smallBatchMachiningFee: 35,
   }
 ] as const;
 
 const fixedLossRate = 1.1; // 固定损耗率：未来根据颜色会有不同
 const defaultMoldMaterialDensity = 0.00000785;
-
+const injectSafetyFactor = 0.8;
+const minCalculatedWeight = 100;
+const maxCalculatedWeight = 4000;
+const moldMaterialCostStepOne = 4;
+const moldMaterialCostStepTwo = 3;
 
 const operatingExpenseList = [
   { maxWeight: 100, price: 9000 },
