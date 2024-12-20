@@ -330,12 +330,15 @@ const machineList = [
 const fixedLossRate = 1.1; // 固定损耗率：未来根据颜色会有不同
 const defaultMoldMaterialDensity = 0.00000785;
 const injectSafetyFactor = 0.8;
+const moldMaterialPerPrice = 10;
 const minSalesWeight = 100;
 const minCalculatedWeight = 1000;
 const maxCalculatedWeight = 4000;
 const moldMaterialCostStepOne = 4;
 const moldMaterialCostStepTwo = 3;
 const smallBatchThresholdValue = 1000;
+
+const productProfitRate = 1.5;
 
 const operatingExpenseList = [
   { maxWeight: 100, price: 9000 },
@@ -580,5 +583,7 @@ export {
   maxCalculatedWeight,
   moldMaterialCostStepOne,
   moldMaterialCostStepTwo,
-  smallBatchThresholdValue
+  smallBatchThresholdValue,
+  moldMaterialPerPrice,
+  productProfitRate
 };

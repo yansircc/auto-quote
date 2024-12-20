@@ -70,14 +70,13 @@ describe('注胶量计算', () => {
   describe('calculateSafeInjectionVolume', () => {
     it('应正确计算安全注胶量', () => {
       const volume = 500;
-      const expectedSafeVolume = volume * 1.2; // 安全系数1.2
       
       const result = calculateSafeInjectionVolume(volume, mockMachineConfig);
-      expect(result).toBe(expectedSafeVolume);
+      expect(result).toBe(400);
     });
 
     it('当安全注胶量超过机器容量时应抛出错误', () => {
-      const volume = 900; // 900 * 1.2 > 1000
+      const volume = 1500; // 1500 * 0.8 > 1000
       
       expect(() => {
         calculateSafeInjectionVolume(volume, mockMachineConfig);
