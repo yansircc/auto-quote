@@ -1,12 +1,31 @@
-import type { Product } from "../../product/types";
+import type { Rectangle, SpacingCalculator } from "./types";
 
 /**
- * 计算型腔间距
- * @param {Product[]} products 产品列表
- * @returns {number} 型腔间距
+ * 固定的腔体间距
  */
-export function calculateCavitySpacing(products: Product[]): number {
-  // TODO:
-  // 根据产品尺寸计算需要的最小间距
-  return 0;
-}
+const CAVITY_MARGIN = 15;
+
+/**
+ * 腔体间距计算器
+ */
+export const cavitySpacing: SpacingCalculator = {
+  /**
+   * 计算打包时的尺寸（包含间距）
+   */
+  getPackingSize(rect: Rectangle): Rectangle {
+    return {
+      width: rect.width + 2 * CAVITY_MARGIN,
+      height: rect.height + 2 * CAVITY_MARGIN,
+    };
+  },
+
+  /**
+   * 计算实际位置（减去间距）
+   */
+  getActualPosition(x: number, y: number): { x: number; y: number } {
+    return {
+      x: x + CAVITY_MARGIN,
+      y: y + CAVITY_MARGIN,
+    };
+  },
+};
