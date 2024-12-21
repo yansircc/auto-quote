@@ -1,17 +1,25 @@
+/**
+ * 三维空间中的点
+ */
 export interface Point3D {
   x: number;
   y: number;
   z: number;
 }
 
-export interface Cavity {
-  width: number;
-  height: number;
-  volume: number;
-  position?: Point3D;  
+/**
+ * 基础长方体属性（仅包含尺寸）
+ */
+export interface BaseCuboid {
+  width: number; // x 方向的长度
+  height: number; // y 方向的长度
+  depth: number; // z 方向的长度
 }
 
-export interface CavityPosition {
+/**
+ * 完整的长方体定义（包含位置和重量）
+ */
+export interface Cuboid extends BaseCuboid {
   position: Point3D;
-  volume: number;
+  weight?: number; // 可选的重量
 }

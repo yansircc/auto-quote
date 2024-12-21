@@ -1,5 +1,5 @@
 import type { Product } from "../../../product/types";
-import { calculateGeometricBalance } from "./geometric";
+import { calculateGeometricBalance } from "./geometry/geometric-balance";
 import { calculateDistributionBalance } from "./distribution";
 import { calculateFlowBalance } from "./flow";
 
@@ -53,6 +53,6 @@ export function calculateLayoutScore(
   return totalScore >= config.minScore ? totalScore : 0;
 }
 
-export * from "./geometric";
+export * from "./geometry/geometric-balance";
 export * from "./distribution";
 export * from "./flow";

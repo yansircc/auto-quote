@@ -1,5 +1,5 @@
-import * as fs from 'fs';
-import * as path from 'path';
+import * as fs from "fs";
+import * as path from "path";
 
 interface Rectangle {
   width: number;
@@ -25,9 +25,9 @@ const defaultOptions: LayoutVisualizerOptions = {
   padding: 50,
   fontSize: 14,
   strokeWidth: 1,
-  backgroundColor: '#ffffff',
-  rectStrokeColor: '#666666',
-  textColor: '#333333'
+  backgroundColor: "#ffffff",
+  rectStrokeColor: "#666666",
+  textColor: "#333333",
 };
 
 function drawDistanceMarker(
@@ -36,11 +36,11 @@ function drawDistanceMarker(
   x2: number,
   y2: number,
   distance: number,
-  opt: LayoutVisualizerOptions
+  opt: LayoutVisualizerOptions,
 ): string {
   const isVertical = x1 === x2;
   const markerLength = 10;
-  let svg = '';
+  let svg = "";
 
   if (isVertical) {
     // 垂直间距标注
@@ -51,11 +51,11 @@ function drawDistanceMarker(
       svg += `
         <line x1="${x}" y1="${y}" x2="${x}" y2="${y + height}"
           stroke="${opt.textColor}" stroke-width="${opt.strokeWidth}" stroke-dasharray="2,2"/>
-        <line x1="${x - markerLength/2}" y1="${y}" x2="${x + markerLength/2}" y2="${y}"
+        <line x1="${x - markerLength / 2}" y1="${y}" x2="${x + markerLength / 2}" y2="${y}"
           stroke="${opt.textColor}" stroke-width="${opt.strokeWidth}"/>
-        <line x1="${x - markerLength/2}" y1="${y + height}" x2="${x + markerLength/2}" y2="${y + height}"
+        <line x1="${x - markerLength / 2}" y1="${y + height}" x2="${x + markerLength / 2}" y2="${y + height}"
           stroke="${opt.textColor}" stroke-width="${opt.strokeWidth}"/>
-        <text x="${x - 5}" y="${y + height/2}" 
+        <text x="${x - 5}" y="${y + height / 2}" 
           font-family="Arial" font-size="${opt.fontSize * 0.8}" fill="${opt.textColor}"
           text-anchor="end" dominant-baseline="middle">
           ${distance}
@@ -70,11 +70,11 @@ function drawDistanceMarker(
       svg += `
         <line x1="${x}" y1="${y}" x2="${x + width}" y2="${y}"
           stroke="${opt.textColor}" stroke-width="${opt.strokeWidth}" stroke-dasharray="2,2"/>
-        <line x1="${x}" y1="${y - markerLength/2}" x2="${x}" y2="${y + markerLength/2}"
+        <line x1="${x}" y1="${y - markerLength / 2}" x2="${x}" y2="${y + markerLength / 2}"
           stroke="${opt.textColor}" stroke-width="${opt.strokeWidth}"/>
-        <line x1="${x + width}" y1="${y - markerLength/2}" x2="${x + width}" y2="${y + markerLength/2}"
+        <line x1="${x + width}" y1="${y - markerLength / 2}" x2="${x + width}" y2="${y + markerLength / 2}"
           stroke="${opt.textColor}" stroke-width="${opt.strokeWidth}"/>
-        <text x="${x + width/2}" y="${y - 5}" 
+        <text x="${x + width / 2}" y="${y - 5}" 
           font-family="Arial" font-size="${opt.fontSize * 0.8}" fill="${opt.textColor}"
           text-anchor="middle" dominant-baseline="baseline">
           ${distance}
@@ -87,13 +87,15 @@ function drawDistanceMarker(
 export function visualizeLayout(
   layout: PlacedRectangle[],
   filename: string,
-  options: Partial<LayoutVisualizerOptions> = {}
+  options: Partial<LayoutVisualizerOptions> = {},
 ): void {
   const opt = { ...defaultOptions, ...options };
 
   // 计算容器尺寸
-  const containerWidth = Math.max(...layout.map(rect => rect.x + rect.width));
-  const containerHeight = Math.max(...layout.map(rect => rect.y + rect.height));
+  const containerWidth = Math.max(...layout.map((rect) => rect.x + rect.width));
+  const containerHeight = Math.max(
+    ...layout.map((rect) => rect.y + rect.height),
+  );
   const width = containerWidth + opt.padding * 2;
   const height = containerHeight + opt.padding * 2;
 
@@ -117,7 +119,7 @@ export function visualizeLayout(
   // 绘制每个矩形
   layout.forEach((rect, index) => {
     const hue = (index * 60) % 360;
-    
+
     // 矩形轮廓和填充
     svg += `<rect x="${rect.x}" y="${rect.y}" width="${rect.width}" height="${rect.height}" 
       fill="hsla(${hue}, 70%, 80%, 0.2)" 
@@ -125,14 +127,14 @@ export function visualizeLayout(
       stroke-width="${opt.strokeWidth}"/>`;
 
     // 宽度标注（上边缘）
-    svg += `<text x="${rect.x + rect.width/2}" y="${rect.y - 5}" 
+    svg += `<text x="${rect.x + rect.width / 2}" y="${rect.y - 5}" 
       font-family="Arial" font-size="${opt.fontSize}" fill="${opt.textColor}"
       text-anchor="middle" dominant-baseline="baseline">
       ${rect.width}
     </text>`;
 
     // 高度标注（右边缘）
-    svg += `<text x="${rect.x + rect.width + 5}" y="${rect.y + rect.height/2}" 
+    svg += `<text x="${rect.x + rect.width + 5}" y="${rect.y + rect.height / 2}" 
       font-family="Arial" font-size="${opt.fontSize}" fill="${opt.textColor}"
       text-anchor="start" dominant-baseline="middle">
       ${rect.height}
@@ -142,34 +144,36 @@ export function visualizeLayout(
   // 添加间距标注
   for (const rect of layout) {
     // 查找右侧最近的矩形
-    const rightRect = layout.find(r => r.x > rect.x && 
-      r.y < rect.y + rect.height && 
-      r.y + r.height > rect.y);
+    const rightRect = layout.find(
+      (r) =>
+        r.x > rect.x && r.y < rect.y + rect.height && r.y + r.height > rect.y,
+    );
     if (rightRect) {
       const distance = rightRect.x - (rect.x + rect.width);
       svg += drawDistanceMarker(
         rect.x + rect.width,
-        rect.y + rect.height/2,
+        rect.y + rect.height / 2,
         rightRect.x,
-        rect.y + rect.height/2,
+        rect.y + rect.height / 2,
         distance,
-        opt
+        opt,
       );
     }
 
     // 查找下方最近的矩形
-    const bottomRect = layout.find(r => r.y > rect.y && 
-      r.x < rect.x + rect.width && 
-      r.x + r.width > rect.x);
+    const bottomRect = layout.find(
+      (r) =>
+        r.y > rect.y && r.x < rect.x + rect.width && r.x + r.width > rect.x,
+    );
     if (bottomRect) {
       const distance = bottomRect.y - (rect.y + rect.height);
       svg += drawDistanceMarker(
-        rect.x + rect.width/2,
+        rect.x + rect.width / 2,
         rect.y + rect.height,
-        rect.x + rect.width/2,
+        rect.x + rect.width / 2,
         bottomRect.y,
         distance,
-        opt
+        opt,
       );
     }
   }

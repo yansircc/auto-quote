@@ -1,19 +1,19 @@
-import { calculateCavityLayout } from '../cavity-layout';
-import { describe, it, expect } from 'vitest';
+import { calculateCavityLayout } from "../cavity-layout";
+import { describe, it, expect } from "vitest";
 // import { visualizeLayout } from './visualize/visualize-layout';
 
-describe('calculateMinArea', () => {
-  it('应该输出两个矩形的最小面积', () => {
+describe("calculateMinArea", () => {
+  it("应该输出两个矩形的最小面积", () => {
     // 2个边长为100的矩形
     const cuboids = [
       {
-      width: 100,
-      height: 100,
-    },
-    {
-      width: 100,
-      height: 100,
-    },
+        width: 100,
+        height: 100,
+      },
+      {
+        width: 100,
+        height: 100,
+      },
     ];
 
     const result = calculateCavityLayout(cuboids);
@@ -23,7 +23,7 @@ describe('calculateMinArea', () => {
     expect(area).toBe(230 * 100);
   });
 
-  it('应该正确处理4个不同尺寸的小矩形', () => {
+  it("应该正确处理4个不同尺寸的小矩形", () => {
     const cuboids = [
       {
         width: 120,
@@ -42,7 +42,7 @@ describe('calculateMinArea', () => {
         height: 40,
       },
     ];
-    
+
     // 预期结果：
     // - 总宽度 = 220
     // - 总高度 = 120
@@ -53,7 +53,7 @@ describe('calculateMinArea', () => {
     expect(area).toBe(220 * 120);
   });
 
-  it('应该正确处理3个不同尺寸的大矩形', () => {
+  it("应该正确处理3个不同尺寸的大矩形", () => {
     const cuboids = [
       {
         width: 300,
@@ -68,7 +68,7 @@ describe('calculateMinArea', () => {
         height: 180,
       },
     ];
-    
+
     // 预期结果：
     // - 总宽度 = 380
     // - 总高度 = 310
