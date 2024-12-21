@@ -1,5 +1,6 @@
+import { getMachineByTonnage } from "./common";
 import type { MachineConfig } from "./types";
-import { machineList, smallBatchThresholdValue } from "src/lib/constants/price-constant";
+import { smallBatchThresholdValue } from "src/lib/constants/price-constant";
 
 /**
  * 计算小批量费用
@@ -25,7 +26,7 @@ export function calculateSmallBatchFee(
   }
 
   // 获取对应吨位的费率
-  const machine = machineList.find(machine => parseInt(machine.name.replace('T', '')) === tonnage);
+  const machine = getMachineByTonnage(tonnage);
   if (!machine) {
     throw new Error('无法找到对应吨位的机器');
   }

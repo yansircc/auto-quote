@@ -329,7 +329,7 @@ const machineList = [
 
 const fixedLossRate = 1.1; // 固定损耗率：未来根据颜色会有不同
 const defaultMoldMaterialDensity = 0.00000785;
-const injectSafetyFactor = 0.8;
+const injectionSafetyFactor = 0.8;
 const moldMaterialPerPrice = 10;
 const minSalesWeight = 100;
 const minCalculatedWeight = 1000;
@@ -577,7 +577,7 @@ export {
   operatingExpenseList,
   exportPriceList,
   colorList,
-  injectSafetyFactor,
+  injectionSafetyFactor,
   minSalesWeight,
   minCalculatedWeight,
   maxCalculatedWeight,

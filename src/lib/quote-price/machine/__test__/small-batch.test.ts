@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { calculateSmallBatchFee, calculateTotalSmallBatchFee } from "../small-batch";
-import { machineList } from "src/lib/constants/price-constant";
 import type { MachineConfig } from "../types";
+import { getMachineByTonnage } from "../common";
 
 describe('小批量费用计算', () => {
   const mockConfig: MachineConfig = {
@@ -23,7 +23,7 @@ describe('小批量费用计算', () => {
     it('当模次数小于阈值时，应收取小批量费用', () => {
       const shots = 800;
       const tonnage = 200;
-      const machine = machineList.find(m => parseInt(m.name.replace('T', '')) === tonnage);
+      const machine = getMachineByTonnage(tonnage);
       if (!machine) throw new Error('测试数据错误：未找到对应吨位的机器');
       
       const expectedFee = (mockConfig.smallBatchThreshold - shots) * (machine.machiningFee ?? 0);
@@ -35,7 +35,7 @@ describe('小批量费用计算', () => {
     it('当找不到对应吨位的机器时应抛出错误', () => {
       expect(() => {
         calculateSmallBatchFee(800, 999999, mockConfig);
-      }).toThrow('无法找到对应吨位的机器');
+      }).toThrow('没有找到对应的机器');
     });
 
   });

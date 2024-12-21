@@ -4,23 +4,23 @@ import {
   calculateProductionBatches 
 } from "../operation-cost";
 import { describe, it, expect } from "vitest";
-import { machineList } from "src/lib/constants/price-constant";
+import { getMachineByTonnage } from "../common";
 
 describe("机器运行成本计算", () => {
   describe("calculateOperationCostPerShot", () => {
     it("计算小型机器的每模次成本", () => {
       const tonnage = 50;
       const cost = calculateOperationCostPerShot(tonnage);
-      const expectedMachine = machineList.find(m => parseInt(m.name.replace('T', '')) >= tonnage);
+      const expectedMachine = getMachineByTonnage(tonnage);
       expect(cost).toBe(expectedMachine?.machiningFee);
     });
 
     it("处理异常输入", () => {
       expect(() => calculateOperationCostPerShot(-50)).toThrow(
-        "机器吨位不能为零跟负数"
+        "机器吨位不能为零或负数"
       );
       expect(() => calculateOperationCostPerShot(0)).toThrow(
-        "机器吨位不能为零跟负数"
+        "机器吨位不能为零或负数"
       );
     });
 

@@ -4,7 +4,8 @@ import {
   calculateInjectionVolume,
   calculateSafeInjectionVolume,
 } from "./injection";
-import { injectSafetyFactor, machineList } from "src/lib/constants/price-constant";
+import { injectionSafetyFactor, machineList } from "src/lib/constants/price-constant";
+import { getMachineByTonnage } from "./common";
 
 /**
  * 根据模具尺寸与注胶量确定需要的机器吨位
@@ -34,7 +35,7 @@ export function determineMachineTonnage(
       .filter(machine => 
         moldWidthActual <= machine.moldWidth &&
         moldHeight <= machine.moldHeight &&
-        (injectionVolume / injectSafetyFactor) <= machine.injectionVolume
+        (injectionVolume / injectionSafetyFactor) <= machine.injectionVolume
       )
       .sort((a, b) => {
         const aValue = parseInt(a.name.replace('T', ''));
@@ -100,7 +101,7 @@ export function getTonnageRate(tonnage: number, config: MachineConfig | undefine
   // 1. 在吨位阈值数组中找到对应区间
   // 2. 返回该区间对应的费率
   
-  const machine = machineList.find(machine => parseInt(machine.name.replace('T', '')) >= tonnage);
+  const machine = getMachineByTonnage(tonnage);
   if (!machine) {
     throw new Error('没有找到对应的机器');
   }
@@ -115,7 +116,7 @@ export function getTonnageRate(tonnage: number, config: MachineConfig | undefine
  * @returns {number} 小批量加工费
  */
 export function getSmallBatchMachiningFee(tonnage: number, config: MachineConfig | undefined): number {
-  const machine = machineList.find(machine => parseInt(machine.name.replace('T', '')) >= tonnage);
+  const machine = getMachineByTonnage(tonnage);
   if (!machine) {
     throw new Error('没有找到对应的机器');
   }
@@ -136,7 +137,7 @@ export function calculateOptimalTonnage(
   // 1. 在满足所需吨位的前提下
   // 2. 选择成本最优的机器吨位
   // 3. 考虑机器的利用率
-  const machine = machineList.find(machine => parseInt(machine.name.replace('T', '')) >= requiredTonnage);
+  const machine = getMachineByTonnage(requiredTonnage);
   if (!machine) {
     throw new Error('没有找到对应的机器');
   }
