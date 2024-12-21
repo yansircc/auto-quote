@@ -1,3 +1,5 @@
+import { injectionSafetyFactor } from "src/lib/constants/price-constant";
+
 /**
  * 计算产品净体积
  * @param {{width: number; height: number; depth: number}} productDimensions 产品尺寸
@@ -11,7 +13,15 @@ export function calculateProductNetVolume(productDimensions: {
   // TODO:
   // 1. 根据产品的宽度、高度、深度计算净体积
   // 2. 净体积用于计算材料成本
-  return 0;
+  if (!productDimensions) {
+    throw new Error("产品尺寸不能为空");
+  }
+  if (productDimensions.width <= 0 || productDimensions.height <= 0 || productDimensions.depth <= 0) {
+    throw new Error("产品尺寸不能为负数或0");
+  }
+  const productVolume = productDimensions.width * productDimensions.height * productDimensions.depth;
+  //四舍五入保留三位小数
+  return Number(productVolume.toFixed(3));
 }
 
 /**
@@ -27,7 +37,16 @@ export function calculateProductBoundingVolume(productDimensions: {
   // TODO:
   // 1. 根据产品的宽度、高度、深度计算包络体积
   // 2. 包络体积用于布局优化和模具尺寸计算
-  return 0;
+  if (!productDimensions) {
+    throw new Error("产品尺寸不能为空");
+  }
+  if (productDimensions.width <= 0 || productDimensions.height <= 0 || productDimensions.depth <= 0) {
+    throw new Error("产品尺寸不能为负数或0");
+  }
+  const productVolume = productDimensions.width * productDimensions.height * productDimensions.depth;
+  //四舍五入保留三位小数
+  return Number(productVolume.toFixed(3));
+
 }
 
 /**
@@ -38,10 +57,12 @@ export function calculateProductBoundingVolume(productDimensions: {
  */
 export function calculateInjectionVolume(
   netVolume: number,
-  safetyFactor: number,
 ): number {
   // TODO:
   // 1. 安全注胶体积 = 净体积 / 安全系数
   // 2. 用于确定机器吨位和加工费用
-  return 0;
+  if (netVolume <= 0) {
+    throw new Error("净体积不能为负数或0");
+  }
+  return netVolume / injectionSafetyFactor;
 }

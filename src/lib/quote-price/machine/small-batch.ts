@@ -1,5 +1,6 @@
+import { getMachineByTonnage } from "./common";
 import type { MachineConfig } from "./types";
-import { getTonnageRate } from "./tonnage";
+import { smallBatchThresholdValue } from "src/lib/constants/price-constant";
 
 /**
  * 计算小批量费用
@@ -17,7 +18,27 @@ export function calculateSmallBatchFee(
   // 1. 检查是否达到小批量阈值（默认1000模次）
   // 2. 根据吨位找到对应的费率
   // 3. 计算小批量费用
-  return 0;
+  const smallBatchThreshold = config.smallBatchThreshold ?? smallBatchThresholdValue;
+  
+  // 如果模次数大于等于阈值，不收取小批量费用
+  if (shots >= smallBatchThreshold) {
+    return 0;
+  }
+
+  // 获取对应吨位的费率
+  const machine = getMachineByTonnage(tonnage);
+  if (!machine) {
+    throw new Error('无法找到对应吨位的机器');
+  }
+  console.log("machine: ", machine)
+  const rate = machine.machiningFee ?? 0;
+  if (!rate) {
+    throw new Error('无法找到对应吨位的费率');
+  } 
+
+  // 计算小批量费用：(阈值 - 实际模次) * 费率
+  const fee = (smallBatchThreshold - shots) * rate;
+  return fee;
 }
 
 /**
@@ -36,5 +57,15 @@ export function calculateTotalSmallBatchFee(
   // 1. 遍历每趟生产的模次
   // 2. 分别计算每趟的小批量费用
   // 3. 求和得到总费用
-  return 0;
+  if (!batchShots.length) {
+    throw new Error('模次数组不能为空');
+  }
+
+  // 计算每趟的小批量费用并求和
+  const totalFee = batchShots.reduce((sum, shots) => {
+    const batchFee = calculateSmallBatchFee(shots, tonnage, config);
+    return sum + batchFee;
+  }, 0);
+
+  return totalFee;
 }
