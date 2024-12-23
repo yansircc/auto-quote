@@ -8,14 +8,14 @@ import type {
   SpacingCalculator,
 } from "./types";
 
-const DEFAULT_OPTIONS: Required<Omit<LayoutOptions, 'spacing'>> = {
+const DEFAULT_OPTIONS: Required<Omit<LayoutOptions, "spacing">> = {
   maxIterations: 8,
   allowRotation: true,
 };
 
 // 默认的间距计算器（不添加间距）
 const DEFAULT_SPACING: SpacingCalculator = {
-  getPackingSize: rect => ({ ...rect }),
+  getPackingSize: (rect) => ({ ...rect }),
   getActualPosition: (x, y) => ({ x, y }),
 };
 
@@ -57,11 +57,12 @@ function smartPacking(
 
   // 尝试不同的旋转组合
   for (let i = 0; i < maxIterations; i++) {
-    const currentRotations = i === 0
-      ? getOptimalRotations(sortedRectangles)
-      : i === 1
-        ? createRotationArray(rectangles.length, false)
-        : rectangles.map(() => Math.random() < 0.5);
+    const currentRotations =
+      i === 0
+        ? getOptimalRotations(sortedRectangles)
+        : i === 1
+          ? createRotationArray(rectangles.length, false)
+          : rectangles.map(() => Math.random() < 0.5);
 
     // 跳过不允许旋转时的旋转组合
     if (!allowRotation && i > 0) break;
@@ -71,9 +72,9 @@ function smartPacking(
       const isRotated = Boolean(currentRotations[i]);
       const width = isRotated ? rect.height : rect.width;
       const height = isRotated ? rect.width : rect.height;
-      
+
       const spacedSize = spacing.getPackingSize({ width, height });
-      
+
       return {
         w: spacedSize.width,
         h: spacedSize.height,
@@ -99,9 +100,13 @@ function smartPacking(
       bestFill = fill;
 
       // 计算实际布局
-      const layout: PlacedRectangle[] = boxes.map(box => {
-        const width = box.isRotated ? box.originalRect.height : box.originalRect.width;
-        const height = box.isRotated ? box.originalRect.width : box.originalRect.height;
+      const layout: PlacedRectangle[] = boxes.map((box) => {
+        const width = box.isRotated
+          ? box.originalRect.height
+          : box.originalRect.width;
+        const height = box.isRotated
+          ? box.originalRect.width
+          : box.originalRect.height;
         const actualPos = spacing.getActualPosition(box.x ?? 0, box.y ?? 0);
 
         return {

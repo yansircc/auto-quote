@@ -9,6 +9,7 @@
 
 import { defaultMoldMaterialDensity, maxCalculatedWeight, minCalculatedWeight, minSalesWeight, moldMaterialCostStepOne, moldMaterialCostStepTwo, moldMaterialPerPrice, moldPriceDifferList, operatingExpenseList } from "src/lib/constants/price-constant";
 import type { Mold, MoldConfig } from "./types";
+import { getMoldPriceDifferByMaterial, getOperatingExpenseByWeight } from "./common";
 
 /**
  * 计算模具材料成本
@@ -71,11 +72,8 @@ export function calculateGrossProfit(
   if (moldWeight <= 0) {
     throw new Error('模具重量不能为负数或0');
   }
-  const runningFee = operatingExpenseList.find(rule => moldWeight <= rule.maxWeight);
-  if (!runningFee) {
-    throw new Error('模具重量超过阈值');
-  }
-  return runningFee.price;
+  const runningFee = getOperatingExpenseByWeight(moldWeight);
+  return runningFee;
 }
 
 /**
@@ -92,11 +90,8 @@ export function calculateProcessingFee(mold: Mold, config: MoldConfig): number {
   }
 
   let differPrice = 0;
-  const differPriceCoefficientItem = moldPriceDifferList.find(rule => mold.material.name == rule.name.trim());
-  if(!differPriceCoefficientItem){
-    throw new Error('模具材料不存在');
-  }
-  differPrice = mold.weight * differPriceCoefficientItem.coefficient;
+  const differPriceCoefficient = getMoldPriceDifferByMaterial(mold.material.name);
+  differPrice = mold.weight * differPriceCoefficient;
 
   return differPrice;
 }
@@ -154,11 +149,17 @@ export function calculateMoldProcessingFee(
 export function calculateMoldPrice(
   materialCost: number,
   maintenanceFee: number,
-  grossProfit: number,
   processingFee: number,
+  grossProfit: number,
 ): number {
-  if (materialCost <= 0 || maintenanceFee <= 0 || grossProfit <= 0 || processingFee <= 0) {
+  if (materialCost <= 0 || maintenanceFee <= 0 || processingFee <= 0) {
     throw new Error('成本不能为负数或0');
+  }
+  if (grossProfit < 0) {
+    throw new Error('毛利不能为负数');
   }
   return materialCost + maintenanceFee + processingFee + grossProfit;
 }
+
+
+

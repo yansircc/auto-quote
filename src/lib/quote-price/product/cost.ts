@@ -1,8 +1,10 @@
 import type { ProcessingFeeConfig } from "./types";
 import type { Product } from "./types";
 import type { RiskAssessment } from "../risk/types";
+import { getMachineByTonnage,  } from "../machine/common";
+import { productProfitRate } from "src/lib/constants/price-constant";
 
-import { calculateMoldMaterialCost as calculateBasicMoldMaterialCost } from "../materials/mold-materials";
+
 
 /**
  * 计算单件产品的材料成本
@@ -12,7 +14,12 @@ import { calculateMoldMaterialCost as calculateBasicMoldMaterialCost } from "../
 export function calculateProductMaterialCost(product: Product): number {
   // TODO:
   // 1. 单件产品成本 = 产品净体积 × 产品材料密度 × 产品材料单价
-  return 0;
+  if (!product.netVolume || !product.material.density || !product.material.price) {
+    throw new Error("产品净体积、材料密度或材料单价不能为空");
+  }
+  const producuctWeight = product.netVolume * product.material.density;
+  const productMaterialUnitPrice = product.material.price;
+  return producuctWeight * productMaterialUnitPrice;
 }
 
 /**
@@ -24,7 +31,10 @@ export function calculateTotalMaterialCost(products: Product[]): number {
   // TODO:
   // 1. 计算每个产品的材料成本
   // 2. 总产品材料成本 = ∑(Q_i × 单件产品成本_i)
-  return 0;
+  return products.reduce((total, product) => {
+    const productMaterialCost = calculateProductMaterialCost(product);
+    return total + productMaterialCost * product.quantity;
+  }, 0);
 }
 
 /**
@@ -39,7 +49,16 @@ export function calculateMaterialWastage(
 ): number {
   // TODO:
   // 1. 总损耗费用 = 总产品材料成本 × 损耗系数
-  return 0;
+  if (!totalMaterialCost || !wastageRate) {
+    throw new Error("总产品材料成本或损耗系数不能为空");
+  }
+  if (wastageRate < 0 || wastageRate > 1) {
+    throw new Error("损耗系数必须在0到1之间");
+  }
+  if (totalMaterialCost <= 0) {
+    throw new Error("总产品材料成本不能为负或0");
+  }
+  return totalMaterialCost * wastageRate;
 }
 
 /**
@@ -60,11 +79,32 @@ export function calculateProcessingFee(
   // 1. 计算基础加工费：
   //    - 按模次计费
   //    - 费率由机器吨位决定
+  const machineFeeItem = getMachineByTonnage(tonnage);
+  if (!machineFeeItem) {
+    throw new Error("机器吨位对应的加工费不能为空");
+  }
+
+  if (tonnage <= 0 || shots <= 0 || minBatchThreshold <= 0 || batchCount <= 0) {
+    throw new Error('参数不能为负数或0');
+  }
+
+  // 基础费率计算（示例：每吨位每模次0.5元）
+  const baseRate = machineFeeItem.machiningFee;
+  let baseFee = baseRate * shots;
+
   // 2. 计算小批量费用：
   //    - 当单趟生产模次 < 阈值时收取
   //    - 费用和吨位相关
   //    - 按生产趟数收取
-  return 0;
+  const shotsPerBatch = shots / batchCount;
+  if (shotsPerBatch < minBatchThreshold) {
+    // 小批量附加费率
+    const smallBatchRate = machineFeeItem.smallBatchMachiningFee;
+    const smallBatchFee = smallBatchRate * batchCount;
+    baseFee += smallBatchFee;
+  }
+
+  return baseFee;
 }
 
 /**
@@ -83,7 +123,10 @@ export function calculateProductTotalPrice(
 ): number {
   // TODO:
   // 1. 产品总售价 = (总产品材料成本 + 总损耗费用 + 总加工成本) × (1 + 产品利润系数)
-  return 0;
+  if (materialCost <= 0 || wastage <= 0 || processingFee <= 0 || profitRate <= 0) {
+    throw new Error('成本不能为负数或0');
+  }
+  return (materialCost + wastage + processingFee) * productProfitRate;
 }
 
 /**
@@ -102,13 +145,25 @@ export function calculateRiskAdjustedCost(
   //    - 中等风险（31-60分）：基础费用 × (1 + 0.1)
   //    - 高风险（61-80分）：基础费用 × (1 + 0.2)
   //    - 极高风险（>80分）：基础费用 × (1 + 0.3)
-  return 0;
+  if (baseCost <= 0 || riskScore <= 0) {
+    throw new Error('成本跟风险评分不能为负数或0');
+  }
+  if (riskScore <= 30) {
+    return baseCost;
+  }
+  if (riskScore <= 60) {
+    return baseCost * (1 + 0.1);
+  }
+  if (riskScore <= 80) {
+    return baseCost * (1 + 0.2);
+  }
+  return baseCost * (1 + 0.3);
 }
 
 /**
  * 计算单件产品的材料成本
  * @param {number} productNetVolume 产品净体积
- * @param {number} productMaterialDensity 产品材料密度
+ * @param {number} productMaterialDensity 产品材��密度
  * @param {number} productMaterialUnitPrice 产品材料单价
  * @returns {number} 单件产品材料成本
  */
@@ -118,7 +173,11 @@ export function calculateProductMaterialCostOld(
   productMaterialUnitPrice: number,
 ): number {
   // 伪代码
-  return 0;
+  if (!productNetVolume || !productMaterialDensity || !productMaterialUnitPrice) {
+    throw new Error('产品净体积、材料密度或材料单价不能为空');
+  }
+  const productWeight = productNetVolume * productMaterialDensity;
+  return productWeight * productMaterialUnitPrice;
 }
 
 /**
@@ -132,7 +191,10 @@ export function calculateProductTotalCost(
   singleProductCost: number,
 ): number {
   // 伪代码
-  return 0;
+  if (productQuantity <= 0 || singleProductCost <= 0) {
+    throw new Error('产品数量或单件产品成本不能为负数或0');
+  }
+  return productQuantity * singleProductCost;
 }
 
 /**
@@ -145,7 +207,9 @@ export function calculateProductCost(
   materialCost: number,
   processingCost: number,
 ): number {
-  // 伪代码：产品成本 = 材料成本 + 加工成本
+  if (materialCost <= 0 || processingCost <= 0) {
+    throw new Error('材料成本或加工成本不能为负数或0');
+  }
   return materialCost + processingCost;
 }
 
@@ -165,37 +229,7 @@ export function calculateProcessingCost(
   return 0;
 }
 
-/**
- * 计算模具加工费用
- * @param {number} materialProcessingFee 材料加工费
- * @param {number} structureProcessingFee 结构加工费
- * @param {number} surfaceTreatmentFee 表面处理费
- * @returns {number} 总加工费用
- */
-export function calculateMoldProcessingFee(
-  materialProcessingFee: number,
-  structureProcessingFee: number,
-  surfaceTreatmentFee: number,
-): number {
-  // 伪代码：总加工费用 = 材料加工费 + 结构加工费 + 表面处理费
-  return 0;
-}
 
-/**
- * 计算模具售价
- * @param {number} moldMaterialCost 模具材料成本
- * @param {number} processingFee 加工费用
- * @param {number} profitRate 利润系数
- * @returns {number} 模具售价
- */
-export function calculateMoldPrice(
-  moldMaterialCost: number,
-  processingFee: number,
-  profitRate: number,
-): number {
-  // 伪代码：模具售价 = (模具材料成本 + 加工费用) × (1 + 利润系数)
-  return 0;
-}
 
 /**
  * 计算生产加工费用
@@ -210,7 +244,17 @@ export function calculateProductionProcessingFee(
   config: ProcessingFeeConfig,
 ): number {
   // 伪代码：计算基础加工费和小批量费用
-  return 0;
+  const machineFeeItem = getMachineByTonnage(tonnage);
+  if (!machineFeeItem) {
+    throw new Error("机器吨位对应的加工费不能为空");
+  }
+  const baseRate = machineFeeItem.machiningFee;
+  const baseFee = baseRate * shots;
+  let processingFee = 0;
+  if (shots < config.minBatchThreshold) {
+    processingFee = shots * machineFeeItem.smallBatchMachiningFee;
+  }
+  return baseFee + processingFee;
 }
 
 /**
@@ -224,5 +268,18 @@ export function calculateRiskAdjustedCostOld(
   riskAssessment: RiskAssessment,
 ): number {
   // 伪代码：最终总费用 = 基础总费用 × (1 + 风险调整系数)
-  return 0;
+  if (baseCost <= 0 || riskAssessment.score <= 0) {
+    throw new Error('基础总费用或风险评分不能为负数或0');
+  }
+  //按照之前的规则计算风险分
+  if (riskAssessment.score <= 30) {
+    return baseCost;
+  }
+  if (riskAssessment.score <= 60) {
+    return baseCost * (1 + 0.1);
+  }
+  if (riskAssessment.score <= 80) {
+    return baseCost * (1 + 0.2);
+  }
+  return baseCost * (1 + 0.3);
 }

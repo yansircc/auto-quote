@@ -1,5 +1,5 @@
-import { materialList } from "src/lib/constants/price-constant";
 import type { ProductMaterial } from "./types";
+import { getProductMaterialByName } from "./common";
 
 /**
  * 获取产品材料信息
@@ -7,10 +7,7 @@ import type { ProductMaterial } from "./types";
  * @returns {ProductMaterial | null} 产品材料信息
  */
 export function getProductMaterial(materialId: string): ProductMaterial | null {
-  const material = materialList.find(material => material.name === materialId);
-  if (!material) {
-    throw new Error(`没有找到产品材料: ${materialId}`);
-  }
+  const material = getProductMaterialByName(materialId);
   return {
     id: material.name,
     name: material.name,
@@ -46,3 +43,4 @@ export function calculateProductMaterialCost(
   // 根据单价计算成本（元）
   return weight * material.pricePerKg;
 }
+

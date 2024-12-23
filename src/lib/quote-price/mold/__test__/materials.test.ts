@@ -1,58 +1,59 @@
-import {
-  getMaterialDensity,
-  getMaterialUnitPrice,
-} from "../materials/material-types";
 import { describe, it, expect } from "vitest";
+import {
+  getProductMaterialDensityByName,
+  getProductMaterialPriceByName,
+} from "../../materials/common";
 
 describe("材料属性测试", () => {
   describe("getMaterialDensity", () => {
-    it("获取钢材的密度", () => {
-      const density = getMaterialDensity("steel");
-      // 钢材密度约为 7.85 g/cm³
-      expect(density).toBe(7.85);
+    it("应该返回正确的ABS密度", () => {
+      const density = getProductMaterialDensityByName("ABS");
+
+      expect(density).toBe(0.0012);
     });
 
-    it("获取铝材的密度", () => {
-      const density = getMaterialDensity("aluminum");
-      // 铝材密度约为 2.7 g/cm³
-      expect(density).toBe(2.7);
+    it("应该返回正确的PC密度", () => {
+      const density = getProductMaterialDensityByName("PC");
+
+      expect(density).toBe(0.0012);
     });
 
-    it("获取铜材的密度", () => {
-      const density = getMaterialDensity("copper");
-      // 铜材密度约为 8.96 g/cm³
-      expect(density).toBe(8.96);
+    it("应该返回正确的PP密度", () => {
+      const density = getProductMaterialDensityByName("PP");
+
+      expect(density).toBe(0.001);
     });
 
-    it("处理未知材料类型", () => {
-      expect(() => getMaterialDensity("unknown_material")).toThrow(
-        "未知的材料类型",
+    
+    it("对于未知材料类型应该抛出错误", () => {
+      expect(() => getProductMaterialDensityByName("unknown_material")).toThrow(
+        "没有找到对应的产品材料",
       );
     });
   });
 
   describe("getMaterialUnitPrice", () => {
-    it("获取钢材的单价", () => {
-      const price = getMaterialUnitPrice("steel");
+    it("应该返回正确的ABS单价", () => {
+      const price = getProductMaterialPriceByName("ABS");
       // 假设钢材单价为 50 元/kg
-      expect(price).toBe(50);
+      expect(price).toBe(0.013);
     });
 
-    it("获取铝材的单价", () => {
-      const price = getMaterialUnitPrice("aluminum");
+    it("应该返回正确的PC单价", () => {
+      const price = getProductMaterialPriceByName("PC");
       // 假设铝材单价为 80 元/kg
-      expect(price).toBe(80);
+      expect(price).toBe(0.023);
     });
 
-    it("获取铜材的单价", () => {
-      const price = getMaterialUnitPrice("copper");
+    it("应该返回正确的PP单价", () => {
+      const price = getProductMaterialPriceByName("PP");
       // 假设铜材单价为 120 元/kg
-      expect(price).toBe(120);
+      expect(price).toBe(0.011);
     });
 
-    it("处理未知材料类型", () => {
-      expect(() => getMaterialUnitPrice("unknown_material")).toThrow(
-        "未知的材料类型",
+    it("对于未知材料类型应该抛出错误", () => {
+      expect(() => getProductMaterialPriceByName("unknown_material")).toThrow(
+        "没有找到对应的产品材料",
       );
     });
   });

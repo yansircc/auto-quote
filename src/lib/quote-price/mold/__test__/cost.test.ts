@@ -110,7 +110,7 @@ describe("模具成本计算", () => {
         material: { ...mockMold.material, name: "未知材料" }
       };
       expect(() => calculateProcessingFee(unknownMaterialMold, mockConfig))
-        .toThrow('模具材料不存在');
+        .toThrow('没有找到对应的模具材料价格差异');
     });
   });
 
@@ -130,3 +130,4 @@ describe("模具成本计算", () => {
     });
   });
 });
+
