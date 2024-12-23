@@ -34,7 +34,7 @@ interface SpacingCalculator {
    * 计算打包时的尺寸（包含间距）
    */
   getPackingSize(rect: Rectangle): Rectangle;
-  
+
   /**
    * 计算实际位置（减去间距）
    */

@@ -18,7 +18,7 @@ export function calculateCavityLayout(rectangles: Rectangle[]): LayoutResult {
   let maxX = -Infinity;
   let maxY = -Infinity;
 
-  baseResult.layout.forEach(rect => {
+  baseResult.layout.forEach((rect) => {
     const right = rect.x + rect.width;
     const bottom = rect.y + rect.height;
 
@@ -29,7 +29,7 @@ export function calculateCavityLayout(rectangles: Rectangle[]): LayoutResult {
   });
 
   // 平移所有矩形到原点
-  const layout: PlacedRectangle[] = baseResult.layout.map(rect => ({
+  const layout: PlacedRectangle[] = baseResult.layout.map((rect) => ({
     ...rect,
     x: rect.x - minX,
     y: rect.y - minY,
