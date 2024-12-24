@@ -5,7 +5,7 @@ import type {
   WorkerResult,
   OptimizerProgress,
 } from "./types";
-import { GeometricBalanceConfig as defaultConfig } from "../constants";
+import { DEFAULT_CONFIG } from "../constants";
 import { CONFIG_RANGES } from "./optimizer-config";
 import { runBalanceTests } from "../__tests__/test-runner";
 import type cliProgress from "cli-progress";
@@ -202,7 +202,7 @@ export function bruteForceSearchSingleThread(
   totalConfigs: number;
 } {
   try {
-    const config = { ...defaultConfig, ...baseConfig };
+    const config = { ...DEFAULT_CONFIG, ...baseConfig };
     const stats = { total: 0, valid: 0 };
     let bestConfig: GeometricConfig | null = null;
     let bestScore = -Infinity;

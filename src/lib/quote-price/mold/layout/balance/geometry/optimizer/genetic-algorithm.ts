@@ -1,7 +1,7 @@
 import type { GeometricConfig } from "../types";
 import type { Range, ConfigRange } from "../types";
 import { runBalanceTests } from "../__tests__/test-runner";
-import { GeometricBalanceConfig as defaultConfig } from "../constants";
+import { DEFAULT_CONFIG } from "../constants";
 import { CONFIG_RANGES } from "./optimizer-config";
 
 function isRange(value: unknown): value is Range {
@@ -22,7 +22,7 @@ function isConfigRange(value: unknown): value is ConfigRange {
  * 生成随机配置
  */
 function generateRandomConfig(): GeometricConfig {
-  const config = structuredClone(defaultConfig);
+  const config = structuredClone(DEFAULT_CONFIG);
 
   function randomizeObject(
     obj: Record<string, unknown>,

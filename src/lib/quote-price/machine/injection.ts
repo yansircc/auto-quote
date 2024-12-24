@@ -16,7 +16,7 @@ export function calculateInjectionVolume(
   // 1. 计算每个产品的体积 × 密度 × 穴数
   // 2. 求和得到总注胶量
   if (products.length !== cavities.length) {
-    throw new Error('产品和穴数数量不一致');
+    throw new Error("产品和穴数数量不一致");
   }
 
   const totalVolume = products.reduce((sum, product, index) => {
@@ -39,13 +39,13 @@ export function calculateSafeInjectionVolume(
 ): number {
   // TODO:
   // 1. 使用安全系数计算安全注胶量
-  
+
   const safeVolume = volume / injectionSafetyFactor;
-  
+
   // TODO: 检查安全注胶量是否超过机器容量
   if (safeVolume > config.maxInjectionVolume) {
-    throw new Error('注胶量超过机器最大容量');
+    throw new Error("注胶量超过机器最大容量");
   }
-  
+
   return safeVolume;
 }

@@ -16,10 +16,17 @@ export function calculateProductNetVolume(productDimensions: {
   if (!productDimensions) {
     throw new Error("产品尺寸不能为空");
   }
-  if (productDimensions.width <= 0 || productDimensions.height <= 0 || productDimensions.depth <= 0) {
+  if (
+    productDimensions.width <= 0 ||
+    productDimensions.height <= 0 ||
+    productDimensions.depth <= 0
+  ) {
     throw new Error("产品尺寸不能为负数或0");
   }
-  const productVolume = productDimensions.width * productDimensions.height * productDimensions.depth;
+  const productVolume =
+    productDimensions.width *
+    productDimensions.height *
+    productDimensions.depth;
   //四舍五入保留三位小数
   return Number(productVolume.toFixed(3));
 }
@@ -40,13 +47,19 @@ export function calculateProductBoundingVolume(productDimensions: {
   if (!productDimensions) {
     throw new Error("产品尺寸不能为空");
   }
-  if (productDimensions.width <= 0 || productDimensions.height <= 0 || productDimensions.depth <= 0) {
+  if (
+    productDimensions.width <= 0 ||
+    productDimensions.height <= 0 ||
+    productDimensions.depth <= 0
+  ) {
     throw new Error("产品尺寸不能为负数或0");
   }
-  const productVolume = productDimensions.width * productDimensions.height * productDimensions.depth;
+  const productVolume =
+    productDimensions.width *
+    productDimensions.height *
+    productDimensions.depth;
   //四舍五入保留三位小数
   return Number(productVolume.toFixed(3));
-
 }
 
 /**
@@ -55,9 +68,7 @@ export function calculateProductBoundingVolume(productDimensions: {
  * @param {number} safetyFactor 安全系数 (默认0.8)
  * @returns {number} 安全注胶体积
  */
-export function calculateInjectionVolume(
-  netVolume: number,
-): number {
+export function calculateInjectionVolume(netVolume: number): number {
   // TODO:
   // 1. 安全注胶体积 = 净体积 / 安全系数
   // 2. 用于确定机器吨位和加工费用

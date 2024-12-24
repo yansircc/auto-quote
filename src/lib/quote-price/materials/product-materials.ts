@@ -7,7 +7,12 @@ import { getProductMaterialByName } from "./common";
  * @returns {ProductMaterial | null} 产品材料信息
  */
 export function getProductMaterial(materialId: string): ProductMaterial | null {
-  const material = getProductMaterialByName(materialId);
+  const material = materialList.find(
+    (material) => material.name === materialId,
+  );
+  if (!material) {
+    throw new Error(`没有找到产品材料: ${materialId}`);
+  }
   return {
     id: material.name,
     name: material.name,
@@ -31,15 +36,15 @@ export function calculateProductMaterialCost(
   // 2. 根据密度计算重量
   // 3. 根据单价计算成本
   if (volume < 0) {
-    throw new Error('产品体积不能为负数');
+    throw new Error("产品体积不能为负数");
   }
 
   // 考虑材料收缩率计算实际体积
   const actualVolume = volume * (1 + material.shrinkageRate ?? 0);
-  
+
   // 根据密度计算重量（g）
   const weight = actualVolume * material.density;
-  
+
   // 根据单价计算成本（元）
   return weight * material.pricePerKg;
 }

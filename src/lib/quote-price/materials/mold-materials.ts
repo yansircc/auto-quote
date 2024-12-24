@@ -1,4 +1,7 @@
-import { minSalesWeight, } from "src/lib/constants/price-constant";
+import {
+  minSalesWeight,
+  moldMaterialList,
+} from "src/lib/constants/price-constant";
 import type { MoldMaterial } from "./types";
 import { getMoldMaterialByName } from "./common";
 
@@ -8,7 +11,12 @@ import { getMoldMaterialByName } from "./common";
  * @returns {MoldMaterial | null} 模具材料信息
  */
 export function getMoldMaterial(materialId: string): MoldMaterial | null {
-  const material = getMoldMaterialByName(materialId);
+  const material = moldMaterialList.find(
+    (material) => material.name === materialId,
+  );
+  if (!material) {
+    throw new Error(`没有找到模具材料: ${materialId}`);
+  }
   return {
     id: material.name,
     name: material.name,
@@ -31,7 +39,7 @@ export function calculateMoldMaterialCost(
   // 1. 根据体积和密度计算重量
   // 2. 根据重量和单价计算成本
   if (moldVolume < 0) {
-    throw new Error('模具体积不能为负数');
+    throw new Error("模具体积不能为负数");
   }
 
   const moldWeight = moldVolume * material.density;
