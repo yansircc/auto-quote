@@ -149,11 +149,14 @@ export function calculateMoldProcessingFee(
 export function calculateMoldPrice(
   materialCost: number,
   maintenanceFee: number,
-  grossProfit: number,
   processingFee: number,
+  grossProfit: number,
 ): number {
-  if (materialCost <= 0 || maintenanceFee <= 0 || grossProfit <= 0 || processingFee <= 0) {
+  if (materialCost <= 0 || maintenanceFee <= 0 || processingFee <= 0) {
     throw new Error('成本不能为负数或0');
+  }
+  if (grossProfit < 0) {
+    throw new Error('毛利不能为负数');
   }
   return materialCost + maintenanceFee + processingFee + grossProfit;
 }

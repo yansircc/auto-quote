@@ -1,77 +1,185 @@
 import {
   calculateProductMaterialCost,
-  calculateProductTotalCost,
+  calculateTotalMaterialCost,
+  calculateMaterialWastage,
+  calculateProcessingFee,
+  calculateProductTotalPrice,
+  calculateRiskAdjustedCost,
 } from "../cost";
 import { describe, it, expect } from "vitest";
+import type { Product } from "../types";
 
 describe("产品成本计算", () => {
   describe("calculateProductMaterialCost - 单件产品材料成本", () => {
-    it("计算单件产品的材料成本", () => {
-      const productNetVolume = 100; // 立方厘米
-      const productMaterialDensity = 0.91; // 克/立方厘米（示例：PP塑料密度）
-      const productMaterialUnitPrice = 15; // 元/千克
+    const mockProduct: Product = {
+      netVolume: 100, // cm³
+      material: {
+        density: 0.91, // g/cm³
+        price: 15, // 元/kg
+        name: "PP",
+        shrinkageRate: 0.02,
+        processingTemp: 180,
+      },
+      dimensions: {
+        width: 10,
+        depth: 5,
+        height: 3,
+      },
+      quantity: 1000,
+      id: "1",
+      name: "产品1",
+      color: "红色",
+      envelopeVolume: 150,
+    };
 
-      const cost = calculateProductMaterialCost(
-        productNetVolume,
-        productMaterialDensity,
-        productMaterialUnitPrice,
-      );
+    it("正确计算单件产品的材料成本", () => {
+      const cost = calculateProductMaterialCost(mockProduct);
 
-      // 具体预期值计算：
-      // 100 cm³ * 0.91 g/cm³ = 91g = 0.091kg
-      // 0.091kg * 15 元/kg = 1.365 元
-      expect(cost).toBe(1.365);
+      expect(cost).toBe(1365);
     });
 
-    it("处理零体积的情况", () => {
-      const cost = calculateProductMaterialCost(0, 0.91, 15);
-      expect(cost).toBe(0);
-    });
-
-    it("处理负数输入", () => {
-      expect(() => calculateProductMaterialCost(-100, 0.91, 15)).toThrow(
-        "产品体积不能为负数",
-      );
-      expect(() => calculateProductMaterialCost(100, -0.91, 15)).toThrow(
-        "材料密度不能为负数",
-      );
-      expect(() => calculateProductMaterialCost(100, 0.91, -15)).toThrow(
-        "材料单价不能为负数",
+    it("处理无效输入", () => {
+      const invalidProduct = { ...mockProduct, netVolume: 0 };
+      expect(() => calculateProductMaterialCost(invalidProduct)).toThrow(
+        "产品净体积、材料密度或材料单价不能为空",
       );
     });
   });
 
-  describe("calculateProductTotalCost - 总产品成本", () => {
-    it("计算指定数量的产品总成本", () => {
-      const productQuantity = 1000; // 产品数量
-      const singleProductCost = 1.365; // 单件成本（元）
+  describe("calculateTotalMaterialCost - 总材料成本", () => {
+    const mockProducts: Product[] = [
+      {
+        netVolume: 100,
+        material: {
+          density: 0.91,
+          price: 15,
+          name: "PP",
+          shrinkageRate: 0.02,
+          processingTemp: 180,
+        },
+        dimensions: {
+          width: 10,
+          depth: 5,
+          height: 3,
+        },
+        quantity: 1000,
+        id: "1",
+        name: "产品1",
+        color: "红色",
+        envelopeVolume: 150,
+      },
+      {
+        netVolume: 200,
+        material: {
+          density: 0.91,
+          price: 15,
+          name: "PP",
+          shrinkageRate: 0.02,
+          processingTemp: 180,
+        },
+        dimensions: {
+          width: 10,
+          depth: 5,
+          height: 3,
+        },
+        quantity: 500,
+        id: "2",
+        name: "产品2",
+        color: "蓝色",
+        envelopeVolume: 150,
+      },
+    ];
 
-      const totalCost = calculateProductTotalCost(
-        productQuantity,
-        singleProductCost,
-      );
+    it("正确计算多个产品的总材料成本", () => {
+      const totalCost = calculateTotalMaterialCost(mockProducts);
 
-      // 1000件 * 1.365元/件 = 1365元
-      expect(totalCost).toBe(1365);
+      expect(totalCost).toBe(2730000);
+    });
+  });
+
+  describe("calculateMaterialWastage - 材料损耗", () => {
+    it("正确计算材料损耗费用", () => {
+      const totalMaterialCost = 1000;
+      const wastageRate = 0.1;
+      const wastage = calculateMaterialWastage(totalMaterialCost, wastageRate);
+      expect(wastage).toBe(100);
     });
 
-    it("处理零数量的情况", () => {
-      const totalCost = calculateProductTotalCost(0, 1.365);
-      expect(totalCost).toBe(0);
-    });
-
-    it("处理非整数数量", () => {
-      expect(() => calculateProductTotalCost(100.5, 1.365)).toThrow(
-        "产品数量必须为整数",
+    it("处理无效损耗率", () => {
+      expect(() => calculateMaterialWastage(1000, -0.1)).toThrow(
+        "损耗系数必须在0到1之间",
+      );
+      expect(() => calculateMaterialWastage(1000, 1.1)).toThrow(
+        "损耗系数必须在0到1之间",
       );
     });
+  });
 
-    it("处理负数输入", () => {
-      expect(() => calculateProductTotalCost(-100, 1.365)).toThrow(
-        "产品数量不能为负数",
+  describe("calculateProcessingFee - 加工费用", () => {
+    it("正确计算正常批量的加工费", () => {
+      const fee = calculateProcessingFee(100, 1000, 500, 2);
+      expect(fee).toBeGreaterThan(0);
+    });
+
+    it("正确计算小批量的加工费", () => {
+      const fee = calculateProcessingFee(100, 200, 500, 2);
+      const normalFee = calculateProcessingFee(100, 1000, 500, 2);
+      expect(fee).toBeGreaterThan(normalFee / 5); // 小批量费用应该相对较高
+    });
+
+    it("处理无效输入", () => {
+      expect(() => calculateProcessingFee(-100, 1000, 500, 2)).toThrow(
+        "机器吨位不能为零或负数",
       );
-      expect(() => calculateProductTotalCost(100, -1.365)).toThrow(
-        "单件成本不能为负数",
+      expect(() => calculateProcessingFee(100, -1000, 500, 2)).toThrow(
+        "参数不能为负数或0",
+      );
+    });
+  });
+
+  describe("calculateProductTotalPrice - 产品总售价", () => {
+    it("正确计算产品总售价", () => {
+      const totalPrice = calculateProductTotalPrice(1000, 100, 200, 
+        0.2);
+
+      expect(totalPrice).toBeGreaterThan(0);
+    });
+
+    it("处理无效输入", () => {
+      expect(() => calculateProductTotalPrice(-1000, 100, 200, 0.2)).toThrow(
+        "成本不能为负数或0",
+      );
+    });
+  });
+
+  
+  describe("calculateRiskAdjustedCost - 风险调整", () => {
+    it("正确计算低风险调整（0-30分）", () => {
+      const cost = calculateRiskAdjustedCost(1000, 25);
+      expect(cost).toBe(1000); // 无需调整
+    });
+
+    it("正确计算中等风险调整（31-60分）", () => {
+      const cost = calculateRiskAdjustedCost(1000, 45);
+      expect(cost).toBe(1100); // 1000 * (1 + 0.1)
+    });
+
+    it("正确计算高风险调整（61-80分）", () => {
+      const cost = calculateRiskAdjustedCost(1000, 70);
+      expect(cost).toBe(1200); // 1000 * (1 + 0.2)
+    });
+
+    it("正确计算极高风险调整（>80分）", () => {
+      const cost = calculateRiskAdjustedCost(1000, 85);
+      expect(cost).toBe(1300); // 1000 * (1 + 0.3)
+    });
+
+    it("处理无效输入", () => {
+      expect(() => calculateRiskAdjustedCost(-1000, 50)).toThrow(
+        "成本跟风险评分不能为负数或0",
+      );
+      expect(() => calculateRiskAdjustedCost(1000, -50)).toThrow(
+        "成本跟风险评分不能为负数或0",
       );
     });
   });
