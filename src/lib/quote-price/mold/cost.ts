@@ -161,5 +161,3 @@ export function calculateMoldPrice(
   return materialCost + maintenanceFee + processingFee + grossProfit;
 }
 
-
-

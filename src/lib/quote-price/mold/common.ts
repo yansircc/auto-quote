@@ -1,8 +1,6 @@
 import { 
   operatingExpenseList, 
-  moldPriceDifferList, 
-  heightSetting,
-  borderSpaceRules
+  moldPriceDifferList 
 } from "src/lib/constants/price-constant";
 
 /**
@@ -45,42 +43,5 @@ export function getOperatingExpenseByWeight(weight: number): number {
   }
 
   return expenseItem.price;
-}
-
-
-/**
- * 根据模具高度获取安全高度
- * @param {number} width 模具宽度
- * @param {number} height 模具高度
- * @returns {number} 模具高度
- */
-export function getHeightByDimensions(width: number, height: number): number {
-  
-  const heightItem = heightSetting.find(
-    rule => height <= rule.maxHeight
-  );
-
-  if (!heightItem) {
-    throw new Error('模具高度超过安全高度阈值');
-  }
-
-  return heightItem.height;
-}
-
-/**
- * 根据模具宽度获取安全边距
- * @param {number} width 模具宽度
- * @returns {number} 模具边距
- */
-export function getMarginByWidth(width: number): number {
-  const borderSpaceItem = borderSpaceRules.find(
-    rule => width <= rule.maxLength
-  );
-
-  if (!borderSpaceItem) {
-    throw new Error('模具宽度超过安全边距阈值');
-  }
-
-  return borderSpaceItem.spacing;
 }
 
