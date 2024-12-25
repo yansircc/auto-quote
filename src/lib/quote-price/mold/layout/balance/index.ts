@@ -1,7 +1,7 @@
 import type { Product } from "../../../product/types";
 import { calculateGeometricBalance } from "./geometry/geometric-balance";
 import { calculateDistributionBalance } from "./distribution";
-import { calculateFlowBalance } from "./flow";
+import { calculateFlowBalance } from "./flow/flow-balance";
 
 /**
  * 布局评分配置
@@ -55,4 +55,4 @@ export function calculateLayoutScore(
 
 export * from "./geometry/geometric-balance";
 export * from "./distribution";
-export * from "./flow";
+export * from "./flow/flow-balance";

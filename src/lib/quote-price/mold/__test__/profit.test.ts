@@ -20,14 +20,10 @@ describe("calculateMoldSellingPrice", () => {
   });
 
   it("处理成本为零的情况", () => {
-    expect(() => calculateMoldPrice(
-      0, 0, 3000, 0
-    )).toThrow(
+    expect(() => calculateMoldPrice(0, 0, 3000, 0)).toThrow(
       "成本不能为负数或0",
     );
-
   });
-  
 
   it("处理不同毛利的情况", () => {
     const materialCost = 10000;
@@ -36,14 +32,14 @@ describe("calculateMoldSellingPrice", () => {
     const baseCost = materialCost + mockMaintenanceFee + mockProcessingFee; // 18000元
 
     // 无毛利情况
-    expect(
+    expect(() =>
       calculateMoldPrice(
         materialCost,
         mockMaintenanceFee,
         mockProcessingFee,
         0,
       ),
-    ).toBe(baseCost);
+    ).toThrow("毛利不能为负数或0");
 
     // 毛利
     expect(
@@ -56,20 +52,20 @@ describe("calculateMoldSellingPrice", () => {
     ).toBe(baseCost + 22000);
 
     // 负毛利
-    expect(() => calculateMoldPrice(
-      materialCost,
-      mockMaintenanceFee,
-      mockProcessingFee,
-      -2000
-    )).toThrow(
-      "毛利不能为负数",
-    );
+    expect(() =>
+      calculateMoldPrice(
+        materialCost,
+        mockMaintenanceFee,
+        mockProcessingFee,
+        -2000,
+      ),
+    ).toThrow("毛利不能为负数或0");
   });
 
   it("处理异常情况", () => {
     // 利润率不能低于 -1（-100%）
     expect(() => calculateMoldPrice(10000, 5000, 3000, -1000)).toThrow(
-      "毛利不能为负数",
+      "毛利不能为负数或0",
     );
 
     // 成本不能为负数

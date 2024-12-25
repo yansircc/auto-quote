@@ -7,15 +7,15 @@ import { machineList } from "src/lib/constants/price-constant";
  */
 export function getMachineByTonnage(tonnage: number) {
   if (tonnage <= 0) {
-    throw new Error('机器吨位不能为零或负数');
+    throw new Error("机器吨位不能为零或负数");
   }
 
-  const machine = machineList.find(machine => 
-    parseInt(machine.name.replace('T', '')) >= tonnage
+  const machine = machineList.find(
+    (machine) => parseInt(machine.name.replace("T", "")) >= tonnage,
   );
 
   if (!machine) {
-    throw new Error('没有找到对应的机器');
+    throw new Error("没有找到对应的机器");
   }
 
   return machine;

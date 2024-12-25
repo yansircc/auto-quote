@@ -18,8 +18,9 @@ describe("材料损耗计算", () => {
       const params = {
         productMaterialCost: 0,
       };
-      expect(() => 
-        calculateWasteCost(params.productMaterialCost)).toThrow("产品材料成本不能为空");
+      expect(() => calculateWasteCost(params.productMaterialCost)).toThrow(
+        "产品材料成本不能为空",
+      );
     });
 
     it("应该正确处理精确计算并保留两位小数", () => {
@@ -33,16 +34,15 @@ describe("材料损耗计算", () => {
 
     it("应该在参数为空时抛出错误", () => {
       // @ts-expect-error 测试空值情况
-      expect(() => calculateWasteCost(undefined))
-        .toThrow("产品材料成本不能为空");
+      expect(() => calculateWasteCost(undefined)).toThrow(
+        "产品材料成本不能为空",
+      );
       // @ts-expect-error 测试空值情况
-      expect(() => calculateWasteCost(null))
-        .toThrow("产品材料成本不能为空");
+      expect(() => calculateWasteCost(null)).toThrow("产品材料成本不能为空");
     });
 
     it("应该在材料成本为负数时抛出错误", () => {
-      expect(() => calculateWasteCost( -1000 ))
-        .toThrow("材料成本不能为负数");
+      expect(() => calculateWasteCost(-1000)).toThrow("材料成本不能为负数");
     });
   });
 });

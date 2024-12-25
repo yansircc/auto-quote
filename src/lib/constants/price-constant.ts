@@ -2,195 +2,195 @@
 
 const materialList = [
   {
-    name: 'ABS',
+    name: "ABS",
     density: 0.0012,
     price: 0.013,
   },
   {
-    name: 'ASA',
+    name: "ASA",
     density: 0.0012,
     price: 0.02,
   },
   {
-    name: 'GPPS',
+    name: "GPPS",
     density: 0.0012,
     price: 0.015,
   },
   {
-    name: 'HDPE',
+    name: "HDPE",
     density: 0.001,
     price: 0.011,
   },
   {
-    name: 'HIPS',
+    name: "HIPS",
     density: 0.0012,
     price: 0.012,
   },
   {
-    name: 'LDPE',
+    name: "LDPE",
     density: 0.001,
     price: 0.011,
   },
   {
-    name: 'PA6',
+    name: "PA6",
     density: 0.0012,
     price: 0.017,
   },
   {
-    name: 'PA66',
+    name: "PA66",
     density: 0.0012,
     price: 0.022,
   },
   {
-    name: 'PA66-GF',
+    name: "PA66-GF",
     density: 0.0014,
     price: 0.021,
   },
   {
-    name: 'PA6-GF',
+    name: "PA6-GF",
     density: 0.0014,
     price: 0.016,
   },
   {
-    name: 'PBT',
+    name: "PBT",
     density: 0.00135,
     price: 0.02,
   },
   {
-    name: 'PBT+GF',
+    name: "PBT+GF",
     density: 0.00155,
     price: 0.018,
   },
   {
-    name: 'PC',
+    name: "PC",
     density: 0.0012,
     price: 0.023,
   },
   {
-    name: 'PC+ABS',
+    name: "PC+ABS",
     density: 0.0012,
     price: 0.025,
   },
   {
-    name: 'PC+ASA',
+    name: "PC+ASA",
     density: 0.0012,
     price: 0.024,
   },
   {
-    name: 'PC+PBT',
+    name: "PC+PBT",
     density: 0.00125,
     price: 0.03,
   },
   {
-    name: 'PCTG',
+    name: "PCTG",
     density: 0.0012,
     price: 0.03,
   },
   {
-    name: 'PET',
+    name: "PET",
     density: 0.0014,
     price: 0.016,
   },
   {
-    name: 'PLA',
+    name: "PLA",
     density: 0.0013,
     price: 0.04,
   },
   {
-    name: 'PMMA',
+    name: "PMMA",
     density: 0.0012,
     price: 0.023,
   },
   {
-    name: 'POM',
+    name: "POM",
     density: 0.00145,
     price: 0.02,
   },
   {
-    name: 'PP',
+    name: "PP",
     density: 0.001,
     price: 0.011,
   },
   {
-    name: 'PP-EPDM',
+    name: "PP-EPDM",
     density: 0.0011,
     price: 0.022,
   },
   {
-    name: 'PP-GF',
+    name: "PP-GF",
     density: 0.00125,
     price: 0.012,
   },
   {
-    name: 'PPO',
+    name: "PPO",
     density: 0.0011,
     price: 0.03,
   },
   {
-    name: 'PPS',
+    name: "PPS",
     density: 0.0014,
     price: 0.072,
   },
   {
-    name: 'PPSU',
+    name: "PPSU",
     density: 0.0013,
     price: 0.19,
   },
   {
-    name: 'PP-TD',
+    name: "PP-TD",
     density: 0.001,
     price: 0.018,
   },
   {
-    name: 'PVC',
+    name: "PVC",
     density: 0.0014,
     price: 0.018,
   },
   {
-    name: 'SAN',
+    name: "SAN",
     density: 0.0011,
     price: 0.019,
   },
   {
-    name: 'TPE',
+    name: "TPE",
     density: 0.0012,
     price: 0.025,
   },
   {
-    name: 'TPU',
+    name: "TPU",
     density: 0.0012,
     price: 0.03,
   },
   {
-    name: 'TPV',
+    name: "TPV",
     density: 0.0011,
     price: 0.024,
-  }
+  },
 ] as const;
 
 const moldMaterialList = [
   {
-    name: 'NAK80',
+    name: "NAK80",
     density: 0.00000785,
     price: 0.013,
   },
   {
-    name: '718H',
+    name: "718H",
     density: 0.00000785,
     price: 0.013,
   },
   {
-    name: 'P20',
+    name: "P20",
     density: 0.00000785,
     price: 0.013,
   },
   {
-    name: 'H13',
+    name: "H13",
     density: 0.00000785,
     price: 0.013,
   },
   {
-    name: 'S136',
+    name: "S136",
     density: 0.00000785,
     price: 0.013,
   },
@@ -198,7 +198,7 @@ const moldMaterialList = [
 
 const machineList = [
   {
-    name: '120T',
+    name: "120T",
     injectionVolume: 153,
     moldWidth: 360,
     moldHeight: 400,
@@ -206,7 +206,7 @@ const machineList = [
     smallBatchMachiningFee: 1.2,
   },
   {
-    name: '150T',
+    name: "150T",
     injectionVolume: 260,
     moldWidth: 425,
     moldHeight: 450,
@@ -214,7 +214,7 @@ const machineList = [
     smallBatchMachiningFee: 1.5,
   },
   {
-    name: '170T',
+    name: "170T",
     injectionVolume: 300,
     moldWidth: 470,
     moldHeight: 480,
@@ -222,7 +222,7 @@ const machineList = [
     smallBatchMachiningFee: 1.8,
   },
   {
-    name: '180T',
+    name: "180T",
     injectionVolume: 350,
     moldWidth: 500,
     moldHeight: 500,
@@ -230,15 +230,15 @@ const machineList = [
     smallBatchMachiningFee: 2,
   },
   {
-    name: '200T',
+    name: "200T",
     injectionVolume: 450,
     moldWidth: 530,
     moldHeight: 550,
     machiningFee: 2.5,
     smallBatchMachiningFee: 2.5,
-    },
+  },
   {
-    name: '250T',
+    name: "250T",
     injectionVolume: 600,
     moldWidth: 580,
     moldHeight: 600,
@@ -246,7 +246,7 @@ const machineList = [
     smallBatchMachiningFee: 3,
   },
   {
-    name: '300T',
+    name: "300T",
     injectionVolume: 800,
     moldWidth: 635,
     moldHeight: 650,
@@ -254,7 +254,7 @@ const machineList = [
     smallBatchMachiningFee: 3.5,
   },
   {
-    name: '350T',
+    name: "350T",
     injectionVolume: 1000,
     moldWidth: 690,
     moldHeight: 700,
@@ -262,7 +262,7 @@ const machineList = [
     smallBatchMachiningFee: 4,
   },
   {
-    name: '400T',
+    name: "400T",
     injectionVolume: 1377,
     moldWidth: 700,
     moldHeight: 720,
@@ -270,7 +270,7 @@ const machineList = [
     smallBatchMachiningFee: 5,
   },
   {
-    name: '450T',
+    name: "450T",
     injectionVolume: 1700,
     moldWidth: 740,
     moldHeight: 750,
@@ -278,7 +278,7 @@ const machineList = [
     smallBatchMachiningFee: 6,
   },
   {
-    name: '500T',
+    name: "500T",
     injectionVolume: 2100,
     moldWidth: 780,
     moldHeight: 800,
@@ -286,7 +286,7 @@ const machineList = [
     smallBatchMachiningFee: 7,
   },
   {
-    name: '550T',
+    name: "550T",
     injectionVolume: 2400,
     moldWidth: 820,
     moldHeight: 900,
@@ -294,7 +294,7 @@ const machineList = [
     smallBatchMachiningFee: 8,
   },
   {
-    name: '650T',
+    name: "650T",
     injectionVolume: 2446,
     moldWidth: 930,
     moldHeight: 1000,
@@ -302,7 +302,7 @@ const machineList = [
     smallBatchMachiningFee: 10,
   },
   {
-    name: '800T',
+    name: "800T",
     injectionVolume: 3468,
     moldWidth: 1000,
     moldHeight: 1100,
@@ -310,21 +310,21 @@ const machineList = [
     smallBatchMachiningFee: 15,
   },
   {
-    name: '1100T',
+    name: "1100T",
     injectionVolume: 4636,
     moldWidth: 1160,
     moldHeight: 1200,
-    machiningFee: 20, 
+    machiningFee: 20,
     smallBatchMachiningFee: 20,
   },
   {
-    name: '1850T',
+    name: "1850T",
     injectionVolume: 7339,
     moldWidth: 1550,
     moldHeight: 1650,
     machiningFee: 35,
     smallBatchMachiningFee: 35,
-  }
+  },
 ] as const;
 
 const fixedLossRate = 1.1; // 固定损耗率：未来根据颜色会有不同
@@ -398,11 +398,11 @@ const exportPriceList = [
 ] as const;
 
 const moldPriceDifferList = [
-  { name: 'P20', coefficient: 0 },
-  { name: 'NAK80', coefficient: 15 },
-  { name: '718H', coefficient: 5 },
-  { name: 'H13', coefficient: 25 },
-  { name: 'S136', coefficient: 25 },
+  { name: "P20", coefficient: 0 },
+  { name: "NAK80", coefficient: 15 },
+  { name: "718H", coefficient: 5 },
+  { name: "H13", coefficient: 25 },
+  { name: "S136", coefficient: 25 },
 ] as const;
 
 const marginSpaceRules = [
@@ -556,13 +556,10 @@ const heightSetting = [
 //   { maxHeight: 190, height: 450 },
 //   { maxHeight: 200, height: 470 },
 //   { maxHeight: 210, height: 490 },
-// ] as const;  
-
+// ] as const;
 
 //定义颜色数组
-const colorList = [
-  '402C','805C','302C', '405C'
-];
+const colorList = ["402C", "805C", "302C", "405C"];
 
 export {
   materialList,
@@ -585,5 +582,5 @@ export {
   moldMaterialCostStepTwo,
   smallBatchThresholdValue,
   moldMaterialPerPrice,
-  productProfitRate
+  productProfitRate,
 };

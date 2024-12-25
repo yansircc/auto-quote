@@ -7,7 +7,17 @@
  * @return {number} 成本，单位为RMB
  */
 
-import { defaultMoldMaterialDensity, maxCalculatedWeight, minCalculatedWeight, minSalesWeight, moldMaterialCostStepOne, moldMaterialCostStepTwo, moldMaterialPerPrice, moldPriceDifferList, operatingExpenseList } from "src/lib/constants/price-constant";
+import {
+  defaultMoldMaterialDensity,
+  maxCalculatedWeight,
+  minCalculatedWeight,
+  minSalesWeight,
+  moldMaterialCostStepOne,
+  moldMaterialCostStepTwo,
+  moldMaterialPerPrice,
+  moldPriceDifferList,
+  operatingExpenseList,
+} from "src/lib/constants/price-constant";
 import type { Mold, MoldConfig } from "./types";
 import { getMoldPriceDifferByMaterial, getOperatingExpenseByWeight } from "./common";
 
@@ -20,12 +30,18 @@ export function calculateMoldMaterialCost(mold: Mold): number {
   // TODO:
   // 1. 计算模具体积 = 宽度 × 高度 × 深度
   // 2. 材料成本 = 体积 × 材料密度 × 材料单价
-  if (mold.dimensions.width <= 0 || mold.dimensions.height <= 0 || mold.dimensions.depth <= 0) {
-    throw new Error('模具尺寸不能为负数或0');
+  if (
+    mold.dimensions.width <= 0 ||
+    mold.dimensions.height <= 0 ||
+    mold.dimensions.depth <= 0
+  ) {
+    throw new Error("模具尺寸不能为负数或0");
   }
-  const moldVolume = mold.dimensions.width * mold.dimensions.height * mold.dimensions.depth;
+  const moldVolume =
+    mold.dimensions.width * mold.dimensions.height * mold.dimensions.depth;
   const materialWeight = moldVolume * defaultMoldMaterialDensity;
-  const materialCost = Math.max(materialWeight, minSalesWeight) * moldMaterialPerPrice;
+  const materialCost =
+    Math.max(materialWeight, minSalesWeight) * moldMaterialPerPrice;
   return materialCost;
 }
 
@@ -43,15 +59,17 @@ export function calculateMaintenanceFee(
   // 1. 判断材料成本是否超过阈值
   // 2. 根据不同阈值使用对应费率计算
   if (moldWeight <= 0) {
-    throw new Error('模具重量不能为负数或0');
+    throw new Error("模具重量不能为负数或0");
   }
   if (moldWeight <= minCalculatedWeight) {
-    return Math.max(moldWeight, minSalesWeight) * moldMaterialPerPrice * moldMaterialCostStepOne;
-  }
-  else if (moldWeight > maxCalculatedWeight) {
-    throw new Error('模具重量超过阈值');
-  }
-  else {
+    return (
+      Math.max(moldWeight, minSalesWeight) *
+      moldMaterialPerPrice *
+      moldMaterialCostStepOne
+    );
+  } else if (moldWeight > maxCalculatedWeight) {
+    throw new Error("模具重量超过阈值");
+  } else {
     return moldWeight * moldMaterialPerPrice * moldMaterialCostStepTwo;
   }
 }
@@ -70,10 +88,15 @@ export function calculateGrossProfit(
   // 1. 根据重量找到对应的阈值区间
   // 2. 使用对应的费率计算毛利
   if (moldWeight <= 0) {
-    throw new Error('模具重量不能为负数或0');
+    throw new Error("模具重量不能为负数或0");
   }
-  const runningFee = getOperatingExpenseByWeight(moldWeight);
-  return runningFee;
+  const runningFee = operatingExpenseList.find(
+    (rule) => moldWeight <= rule.maxWeight,
+  );
+  if (!runningFee) {
+    throw new Error("模具重量超过阈值");
+  }
+  return runningFee.price;
 }
 
 /**
@@ -86,12 +109,17 @@ export function calculateProcessingFee(mold: Mold, config: MoldConfig): number {
   // TODO:
   // 1. 根据模具材料找到对应的加工费用
   if (mold.weight <= 0) {
-    throw new Error('模具重量不能为负数或0');
+    throw new Error("模具重量不能为负数或0");
   }
 
   let differPrice = 0;
-  const differPriceCoefficient = getMoldPriceDifferByMaterial(mold.material.name);
-  differPrice = mold.weight * differPriceCoefficient;
+  const differPriceCoefficientItem = moldPriceDifferList.find(
+    (rule) => mold.material.name == rule.name.trim(),
+  );
+  if (!differPriceCoefficientItem) {
+    throw new Error("模具材料不存在");
+  }
+  differPrice = mold.weight * differPriceCoefficientItem.coefficient;
 
   return differPrice;
 }
@@ -117,7 +145,7 @@ export function calculateTotalMoldCost(
   // 4. 计算额外加工费
   // 5. 求和得到总成本
   if (materialCost <= 0 || maintenanceFee <= 0 || processingFee <= 0) {
-    throw new Error('成本不能为负数或0');
+    throw new Error("成本不能为负数或0");
   }
   return materialCost + maintenanceFee + processingFee;
 }
@@ -152,11 +180,15 @@ export function calculateMoldPrice(
   processingFee: number,
   grossProfit: number,
 ): number {
-  if (materialCost <= 0 || maintenanceFee <= 0 || processingFee <= 0) {
-    throw new Error('成本不能为负数或0');
+  if (
+    materialCost <= 0 ||
+    maintenanceFee <= 0 ||
+    processingFee <= 0
+  ) {
+    throw new Error("成本不能为负数或0");
   }
-  if (grossProfit < 0) {
-    throw new Error('毛利不能为负数');
+  if (grossProfit <= 0) {
+    throw new Error('毛利不能为负数或0');
   }
   return materialCost + maintenanceFee + processingFee + grossProfit;
 }

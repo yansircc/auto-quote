@@ -1,11 +1,14 @@
-import { 
-  calculateMoldMaterialCost, 
-  calculateMaintenanceFee, 
-  calculateGrossProfit, 
+import {
+  calculateMoldMaterialCost,
+  calculateMaintenanceFee,
+  calculateGrossProfit,
   calculateProcessingFee,
-  calculateTotalMoldCost 
+  calculateTotalMoldCost,
 } from "../cost";
-import { defaultMoldMaterialDensity,  moldMaterialPerPrice } from "src/lib/constants/price-constant";
+import {
+  defaultMoldMaterialDensity,
+  moldMaterialPerPrice,
+} from "src/lib/constants/price-constant";
 import { describe, it, expect } from "vitest";
 import type { Mold, MoldConfig } from "../types";
 
@@ -29,11 +32,11 @@ describe("模具成本计算", () => {
   // 创建一个基础的模具对象
   const mockMold: Mold = {
     dimensions: {
-      width: 100,  // mm
+      width: 100, // mm
       height: 100, // mm
-      depth: 100,  // mm
+      depth: 100, // mm
     },
-    weight: 10,    // kg
+    weight: 10, // kg
     material: {
       name: "718H", // 确保这个名字在 moldPriceDifferList 中存在
       density: defaultMoldMaterialDensity,
@@ -41,7 +44,6 @@ describe("模具成本计算", () => {
       id: "1",
     },
     cavityCount: 1,
-    
   };
 
   describe("calculateMoldMaterialCost", () => {
@@ -56,10 +58,11 @@ describe("模具成本计算", () => {
     it("处理非法尺寸", () => {
       const invalidMold = {
         ...mockMold,
-        dimensions: { width: -1, height: 100, depth: 100 }
+        dimensions: { width: -1, height: 100, depth: 100 },
       };
-      expect(() => calculateMoldMaterialCost(invalidMold))
-        .toThrow('模具尺寸不能为负数或0');
+      expect(() => calculateMoldMaterialCost(invalidMold)).toThrow(
+        "模具尺寸不能为负数或0",
+      );
     });
   });
 
@@ -70,13 +73,15 @@ describe("模具成本计算", () => {
     });
 
     it("处理非法重量", () => {
-      expect(() => calculateMaintenanceFee(-1, mockConfig))
-        .toThrow('模具重量不能为负数或0');
+      expect(() => calculateMaintenanceFee(-1, mockConfig)).toThrow(
+        "模具重量不能为负数或0",
+      );
     });
 
     it("处理超重模具", () => {
-      expect(() => calculateMaintenanceFee(100000, mockConfig))
-        .toThrow('模具重量超过阈值');
+      expect(() => calculateMaintenanceFee(100000, mockConfig)).toThrow(
+        "模具重量超过阈值",
+      );
     });
   });
 
@@ -87,8 +92,9 @@ describe("模具成本计算", () => {
     });
 
     it("处理非法重量", () => {
-      expect(() => calculateGrossProfit(-1, mockConfig))
-        .toThrow('模具重量不能为负数或0');
+      expect(() => calculateGrossProfit(-1, mockConfig)).toThrow(
+        "模具重量不能为负数或0",
+      );
     });
   });
 
@@ -100,17 +106,19 @@ describe("模具成本计算", () => {
 
     it("处理非法重量", () => {
       const invalidMold = { ...mockMold, weight: -1 };
-      expect(() => calculateProcessingFee(invalidMold, mockConfig))
-        .toThrow('模具重量不能为负数或0');
+      expect(() => calculateProcessingFee(invalidMold, mockConfig)).toThrow(
+        "模具重量不能为负数或0",
+      );
     });
 
     it("处理未知材料", () => {
       const unknownMaterialMold = {
         ...mockMold,
-        material: { ...mockMold.material, name: "未知材料" }
+        material: { ...mockMold.material, name: "未知材料" },
       };
-      expect(() => calculateProcessingFee(unknownMaterialMold, mockConfig))
-        .toThrow('没有找到对应的模具材料价格差异');
+      expect(() =>
+        calculateProcessingFee(unknownMaterialMold, mockConfig),
+      ).toThrow("模具材料不存在");
     });
   });
 
@@ -121,12 +129,15 @@ describe("模具成本计算", () => {
     });
 
     it("处理非法成本", () => {
-      expect(() => calculateTotalMoldCost(-1, 50, 30, 20))
-        .toThrow('成本不能为负数或0');
-      expect(() => calculateTotalMoldCost(100, -1, 30, 20))
-        .toThrow('成本不能为负数或0');
-      expect(() => calculateTotalMoldCost(100, 50, 30, -1))
-        .toThrow('成本不能为负数或0');
+      expect(() => calculateTotalMoldCost(-1, 50, 30, 20)).toThrow(
+        "成本不能为负数或0",
+      );
+      expect(() => calculateTotalMoldCost(100, -1, 30, 20)).toThrow(
+        "成本不能为负数或0",
+      );
+      expect(() => calculateTotalMoldCost(100, 50, 30, -1)).toThrow(
+        "成本不能为负数或0",
+      );
     });
   });
 });

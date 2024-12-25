@@ -42,7 +42,7 @@ export const ASPECT_RATIO = {
 } as const;
 
 // 默认几何平衡配置
-export const GeometricBalanceConfig: GeometricConfig = {
+export const DEFAULT_CONFIG: GeometricConfig = {
   weights: {
     volume: 0.1,
     aspectRatio: 0.1,

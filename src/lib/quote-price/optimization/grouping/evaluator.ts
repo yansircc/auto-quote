@@ -1,24 +1,43 @@
-import { RiskLevel } from "../../risk/types";
+import { type RiskConfig, RiskLevel } from "../../risk/types";
 import type { Product } from "../../product/types";
-import type { GroupingConfig } from "../types";
+import type { CavityConfig, GroupingConfig } from "../types";
 import { calculateRiskAssessment } from "../../risk";
+import { checkProductCompatibility } from "./compatibility";
 
 /**
  * 评估产品组合的风险
  * @param {Product[]} products 产品列表
  * @param {number[]} cavities 穴数列表
- * @param {GroupingConfig} config 分组配置
+ * @param {RiskConfig} riskConfig 风险配置
+ * @param {GroupingConfig} groupingConfig 分组配置
  * @returns {{ score: number; level: RiskLevel }} 风险评分和等级
  */
 export function evaluateGroupRisk(
   products: Product[],
   cavities: number[],
-  config: GroupingConfig,
+  riskConfig: RiskConfig,
 ): { score: number; level: RiskLevel } {
   // TODO:
   // 1. 使用 calculateRiskAssessment 计算风险
   // 2. 返回风险评分和等级
-  return { score: 0, level: RiskLevel.LOW };
+
+  if (!products.length || !cavities.length) {
+    throw new Error("产品列表或穴数列表不能为空");
+  }
+
+  if (products.length !== cavities.length) {
+    throw new Error("产品数量与穴数数量不匹配");
+  }
+
+  const riskAssessment = calculateRiskAssessment(
+    products,
+    cavities,
+    riskConfig,
+  );
+  return {
+    score: riskAssessment.score,
+    level: riskAssessment.level,
+  };
 }
 
 /**
@@ -40,7 +59,31 @@ export function evaluateGroupCost(
   //    - 中等风险：× (1 + 0.1)
   //    - 高风险：× (1 + 0.2)
   //    - 极高风险：× (1 + 0.3)
-  return 0;
+
+  if (!products.length || !cavities.length) {
+    throw new Error("产品列表或穴数列表不能为空");
+  }
+
+  // 计算基础成本
+  const baseCost = products.reduce((total, product, index) => {
+    return (
+      total +
+      product?.material?.price * product?.netVolume * (cavities[index] ?? 0)
+    );
+  }, 0);
+
+  // 根据风险等级调整成本
+  const riskMultipliers = {
+    [RiskLevel.LOW]: 1,
+    [RiskLevel.MEDIUM]: 1.1,
+    [RiskLevel.HIGH]: 1.2,
+    [RiskLevel.EXTREME]: 1.3,
+  };
+  if (!riskMultipliers[risk.level]) {
+    throw new Error(`Invalid risk level: ${risk.level}`);
+  }
+  const cost = baseCost * riskMultipliers[risk.level];
+  return Number(cost.toFixed(2));
 }
 
 /**
@@ -53,12 +96,65 @@ export function evaluateGroupCost(
 export function evaluateGroupFeasibility(
   products: Product[],
   cavities: number[],
-  config: GroupingConfig,
+  cavityConfig: CavityConfig,
+  groupingConfig: GroupingConfig,
 ): boolean {
   // TODO:
   // 1. 检查材料兼容性
   // 2. 检查颜色兼容性
   // 3. 检查穴数比例
   // 4. 检查风险是否可接受
-  return false;
+
+  if (!products.length || !cavities.length) {
+    throw new Error("产品列表或穴数列表不能为空");
+  }
+
+  if (products.length !== cavities.length) {
+    throw new Error("产品数量与穴数数量不匹配");
+  }
+
+  // 检查每对产品的兼容性
+  for (let i = 0; i < products.length - 1; i++) {
+    for (let j = i + 1; j < products.length; j++) {
+      const product1 = products[i];
+      const product2 = products[j];
+      if (
+        !product1 ||
+        !product2 ||
+        !checkProductCompatibility(product1, product2, groupingConfig)
+      ) {
+        return false;
+      }
+    }
+  }
+
+  // 检查穴数比例
+  const maxCavity = Math.max(...cavities);
+  const minCavity = Math.min(...cavities);
+  if (maxCavity / minCavity > cavityConfig.ratioConstraints.max) {
+    return false;
+  }
+
+  const riskConfig: RiskConfig = {
+    weights: {
+      materialDifference: 1,
+      colorTransition: 1,
+      quantityRatio: 1,
+      structure: 1,
+    },
+    thresholds: {
+      low: 30,
+      medium: 60,
+      high: 80,
+      extreme: 100,
+    },
+  };
+
+  // 检查风险是否可接受
+  const risk = evaluateGroupRisk(products, cavities, riskConfig);
+  if (risk.level === RiskLevel.EXTREME) {
+    return false;
+  }
+
+  return true;
 }
