@@ -1,6 +1,11 @@
 import { GeneticOptimizer } from "@/lib/algorithms/optimizer";
-import type { FlatParams, ConfigScores, ScoreDetails } from "./types/core";
-import type { OptimizerConfig } from "./types";
+import type {
+  FlatParams,
+  ConfigScores,
+  ScoreDetails,
+  OptimizerConfig,
+  OptimizerInstance,
+} from "./types";
 import {
   DEFAULT_OPTIMIZER_CONFIG,
   ScoreEvaluation,
@@ -16,19 +21,7 @@ import { getDefaultParams } from "./utils/param-converter";
  */
 export function createOptimizer<TInput, TConfig>(
   optimizer: OptimizerConfig<TInput, TConfig, FlatParams>,
-): {
-  evaluateTestScore: (params: FlatParams, verbose?: boolean) => number;
-  findBestConfig: (iterations?: number) => Promise<{
-    params: FlatParams;
-    config: TConfig;
-    scores: ConfigScores<TInput>;
-    previousScores: ConfigScores<TInput>;
-  }>;
-  params: FlatParams;
-  config: TConfig;
-  scores: ConfigScores<TInput>;
-  previousScores: ConfigScores<TInput>;
-} {
+): OptimizerInstance<TInput, TConfig, FlatParams> {
   const {
     flatParamsToConfig,
     calculateScore,
@@ -90,6 +83,20 @@ export function createOptimizer<TInput, TConfig>(
       avgScore,
       scores,
     };
+  }
+
+  /**
+   * 计算单个测试用例的得分
+   * @param input 输入数据
+   * @param params 配置参数
+   * @returns 原始分数
+   */
+  function getScore(input: TInput, params: FlatParams): number {
+    const config = flatParamsToConfig(params);
+    const result = calculateScore(input, config);
+    const actual = result.total;
+
+    return actual;
   }
 
   /**
@@ -182,6 +189,7 @@ export function createOptimizer<TInput, TConfig>(
 
   return {
     evaluateTestScore,
+    getScore,
     findBestConfig,
     params: defaultParams,
     config: defaultConfig,

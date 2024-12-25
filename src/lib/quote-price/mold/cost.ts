@@ -19,7 +19,10 @@ import {
   operatingExpenseList,
 } from "src/lib/constants/price-constant";
 import type { Mold, MoldConfig } from "./types";
-import { getMoldPriceDifferByMaterial, getOperatingExpenseByWeight } from "./common";
+import {
+  getMoldPriceDifferByMaterial,
+  getOperatingExpenseByWeight,
+} from "./common";
 
 /**
  * 计算模具材料成本
@@ -190,4 +193,3 @@ export function calculateMoldPrice(
   }
   return materialCost + maintenanceFee + processingFee + grossProfit;
 }
-

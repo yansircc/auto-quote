@@ -48,4 +48,3 @@ export function calculateProductMaterialCost(
   // 根据单价计算成本（元）
   return weight * material.pricePerKg;
 }
-

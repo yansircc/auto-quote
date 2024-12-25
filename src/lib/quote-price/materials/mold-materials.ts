@@ -45,4 +45,3 @@ export function calculateMoldMaterialCost(
   const moldWeight = moldVolume * material.density;
   return Math.max(moldWeight, minSalesWeight) * material.pricePerKg;
 }
-

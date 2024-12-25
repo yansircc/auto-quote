@@ -1,4 +1,7 @@
-import { moldMaterialList, materialList } from "src/lib/constants/price-constant";
+import {
+  moldMaterialList,
+  materialList,
+} from "src/lib/constants/price-constant";
 
 /**
  * 根据模具材料名称获取材料信息
@@ -7,15 +10,15 @@ import { moldMaterialList, materialList } from "src/lib/constants/price-constant
  */
 export function getMoldMaterialByName(materialName: string) {
   if (!materialName) {
-    throw new Error('模具材料名称不能为空');
+    throw new Error("模具材料名称不能为空");
   }
 
-  const material = moldMaterialList.find(material => 
-    material.name === materialName
+  const material = moldMaterialList.find(
+    (material) => material.name === materialName,
   );
 
   if (!material) {
-    throw new Error('没有找到对应的模具材料');
+    throw new Error("没有找到对应的模具材料");
   }
 
   return material;
@@ -48,15 +51,15 @@ export function getMoldMaterialPriceByName(materialName: string): number {
  */
 export function getProductMaterialByName(materialName: string) {
   if (!materialName) {
-    throw new Error('产品材料名称不能为空');
+    throw new Error("产品材料名称不能为空");
   }
 
-  const material = materialList.find(material => 
-    material.name === materialName
+  const material = materialList.find(
+    (material) => material.name === materialName,
   );
 
   if (!material) {
-    throw new Error('没有找到对应的产品材料');
+    throw new Error("没有找到对应的产品材料");
   }
 
   return material;
@@ -81,4 +84,3 @@ export function getProductMaterialPriceByName(materialName: string): number {
   const material = getProductMaterialByName(materialName);
   return material.price;
 }
-

@@ -59,6 +59,8 @@ export interface OptimizerInstance<
     scores: ConfigScores<TInput>;
     previousScores: ConfigScores<TInput>;
   }>;
+  /** 获取单个测试用例的得分 */
+  getScore: (input: TInput, params: TParams) => number;
   /** 当前参数 */
   params: TParams;
   /** 当前配置 */

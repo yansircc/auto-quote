@@ -207,35 +207,30 @@ export function calculateBatchOperationCosts(
   // 4. 累加所有批次的加工费
 
   if (!batches.length) {
-    throw new Error('产品批次不能为空');
+    throw new Error("产品批次不能为空");
   }
 
   if (tonnage <= 0) {
-    throw new Error('机器吨位必须大于0');
+    throw new Error("机器吨位必须大于0");
   }
 
   let totalCost = 0;
 
   // 遍历每个批次
-  batches.forEach(batch => {
+  batches.forEach((batch) => {
     // 计算批次内每个产品的模次
-    const batchShots = batch.map(product => 
-      Math.ceil(product.quantity / (product.cavityCount ?? 1))
+    const batchShots = batch.map((product) =>
+      Math.ceil(product.quantity / (product.cavityCount ?? 1)),
     );
 
     // 获取批次内最大模次
     const maxShots = Math.max(...batchShots);
 
     // 计算该批次的基础加工费
-    const batchCost = calculateBaseProcessingFee(
-      tonnage,
-      maxShots,
-      config
-    );
+    const batchCost = calculateBaseProcessingFee(tonnage, maxShots, config);
 
     totalCost += batchCost;
   });
 
   return totalCost;
 }
-

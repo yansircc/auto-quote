@@ -82,11 +82,17 @@ export interface PowerConfig {
 }
 
 /**
+ * 指标方向类型
+ */
+export type MetricDirection = "asc" | "desc"; // asc: 越大越好, desc: 越小越好
+
+/**
  * 计算单个指标的得分
  * @param value 指标值
  * @param thresholds 阈值配置
  * @param scores 分数配置
  * @param power 幂次配置或默认幂次
+ * @param direction 指标方向
  * @param smoothDecay 是否使用平滑衰减（针对超出范围的情况）
  */
 export function calculateMetricScore(
@@ -94,62 +100,84 @@ export function calculateMetricScore(
   thresholds: ThresholdConfig,
   scores: ScoreConfig,
   power: number | PowerConfig = 2,
+  direction: MetricDirection = "desc",
   smoothDecay = false,
 ) {
+  // 根据方向选择比较函数
+  const compareValue = (value: number, threshold: number): boolean => {
+    return direction === "asc"
+      ? value >= threshold // 越大越好
+      : value <= threshold; // 越小越好
+  };
+
   // 获取对应区间的幂次
   const getPower = (level: ScoreLevel): number => {
     if (typeof power === "number") return power;
     return power[level] ?? 2; // 默认使用2次幂
   };
 
-  if (value <= thresholds.perfect) {
+  // 计算比率（考虑方向）
+  const calculateRatio = (
+    value: number,
+    current: number,
+    next: number,
+  ): number => {
+    if (direction === "asc") {
+      // 越大越好：计算超出当前阈值的比例
+      return (value - current) / (next - current);
+    } else {
+      // 越小越好：计算低于当前阈值的比例
+      return (next - value) / (next - current);
+    }
+  };
+
+  // 根据方向判断是否达到完美
+  if (compareValue(value, thresholds.perfect)) {
+    const ratio =
+      direction === "asc"
+        ? (value - thresholds.perfect) / (1 - thresholds.perfect) // 越大越好
+        : value / thresholds.perfect; // 越小越好
+
     return (
       scores.perfect.base -
-      scores.perfect.factor *
-        Math.pow(value / thresholds.perfect, getPower("perfect"))
+      scores.perfect.factor * Math.pow(ratio, getPower("perfect"))
     );
   }
 
-  if (value <= thresholds.good) {
+  // 根据方向判断是否达到良好
+  if (compareValue(value, thresholds.good)) {
+    const ratio = calculateRatio(value, thresholds.perfect, thresholds.good);
     return (
-      scores.good.base -
-      scores.good.factor *
-        Math.pow(
-          (value - thresholds.perfect) / (thresholds.good - thresholds.perfect),
-          getPower("good"),
-        )
+      scores.good.base - scores.good.factor * Math.pow(ratio, getPower("good"))
     );
   }
 
-  if (value <= thresholds.medium) {
+  // 根据方向判断是否达到中等
+  if (compareValue(value, thresholds.medium)) {
+    const ratio = calculateRatio(value, thresholds.good, thresholds.medium);
     return (
       scores.medium.base -
-      scores.medium.factor *
-        Math.pow(
-          (value - thresholds.good) / (thresholds.medium - thresholds.good),
-          getPower("medium"),
-        )
+      scores.medium.factor * Math.pow(ratio, getPower("medium"))
     );
   }
 
-  if (value <= thresholds.bad) {
+  // 根据方向判断是否达到较差
+  if (compareValue(value, thresholds.bad)) {
+    const ratio = calculateRatio(value, thresholds.medium, thresholds.bad);
     return (
-      scores.bad.base -
-      scores.bad.factor *
-        Math.pow(
-          (value - thresholds.medium) / (thresholds.bad - thresholds.medium),
-          getPower("bad"),
-        )
+      scores.bad.base - scores.bad.factor * Math.pow(ratio, getPower("bad"))
     );
   }
 
   // 超出范围的情况
   if (smoothDecay) {
     const maxBadScore = scores.bad.base;
-    const minBadScore = maxBadScore * 0.3; // 最低分数为基础分数的30%
-    const maxBadValue = 1.0;
+    const minBadScore = maxBadScore * 0.3;
+    const maxBadValue = direction === "asc" ? 0 : 1.0;
     const normalizedExcess = Math.pow(
-      (value - thresholds.bad) / (maxBadValue - thresholds.bad),
+      direction === "asc"
+        ? (thresholds.bad - value) / (thresholds.bad - maxBadValue)
+        : (value - thresholds.bad) / (maxBadValue - thresholds.bad),
       0.8,
     );
 
@@ -160,9 +188,9 @@ export function calculateMetricScore(
   }
 
   // 不使用平滑衰减时，使用指数衰减
-  return (
-    scores.bad.base * Math.exp(-scores.bad.factor * (value - thresholds.bad))
-  );
+  const excessValue =
+    direction === "asc" ? thresholds.bad - value : value - thresholds.bad;
+  return scores.bad.base * Math.exp(-scores.bad.factor * excessValue);
 }
 
 /**
