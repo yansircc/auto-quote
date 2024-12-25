@@ -48,19 +48,19 @@ export function calculateGroupProcessingFee(
   maxTonnage: number,
   config: MachineConfig | undefined,
 ): number {
-  if(products.length === 0) {
-    throw new Error('产品列表不能为空');
+  if (products.length === 0) {
+    throw new Error("产品列表不能为空");
   }
 
   const machiningFee = getMachiningFeeByTonnage(maxTonnage);
-  
+
   // 使用Map来存储分组，key为"材料-颜色"的组合
   const groupMap = new Map<string, GroupItem[]>();
-    
+
   products.forEach((product, index) => {
     const key = `${product.material.name}-${product.color}`;
     const item = { product, shots: shots[index] ?? 0 };
-    
+
     if (!groupMap.has(key)) {
       groupMap.set(key, [item]);
     } else {
@@ -69,19 +69,19 @@ export function calculateGroupProcessingFee(
   });
 
   let totalFee = 0;
-  
+
   groupMap.forEach((group) => {
-    let remainingShots = [...group.map(item => item.shots)];
+    let remainingShots = [...group.map((item) => item.shots)];
     let groupFee = 0;
-  
+
     while (Math.max(...remainingShots) > 0) {
-      const minShots = Math.min(...remainingShots.filter(shots => shots > 0));
+      const minShots = Math.min(...remainingShots.filter((shots) => shots > 0));
       groupFee += minShots * machiningFee;
-      remainingShots = remainingShots.map(shots => 
-        shots > 0 ? shots - minShots : 0
+      remainingShots = remainingShots.map((shots) =>
+        shots > 0 ? shots - minShots : 0,
       );
     }
-    
+
     totalFee += groupFee;
   });
 
@@ -129,7 +129,10 @@ export function getMaxInjectionVolumeProduct(products: Product[]): Product {
 
   // 获取注胶量(重量)最大的产品
   const maxProduct = products.reduce((max, product) => {
-    return max.netVolume * max.material.density > product.netVolume * product.material.density ? max : product;
+    return max.netVolume * max.material.density >
+      product.netVolume * product.material.density
+      ? max
+      : product;
   }, products[0]!);
   return maxProduct;
 }
@@ -145,18 +148,18 @@ export function calculateProductionBatches(products: Product[]): Product[][] {
   // 2. 在材料组内按颜色分组
   // 3. 每个组就是一个生产批次
   if (!products || products.length === 0) {
-    throw new Error('产品列表不能为空');
+    throw new Error("产品列表不能为空");
   }
 
   // 使用Map进行两级分组
   const materialGroups = new Map<string, Map<string, Product[]>>();
 
-  products.forEach(product => {
+  products.forEach((product) => {
     if (!product.material?.name) {
-      throw new Error('产品材料信息不完整');
+      throw new Error("产品材料信息不完整");
     }
     if (!product.color) {
-      throw new Error('产品颜色信息不完整');
+      throw new Error("产品颜色信息不完整");
     }
 
     // 获取或创建材料分组
@@ -174,8 +177,8 @@ export function calculateProductionBatches(products: Product[]): Product[][] {
 
   // 将嵌套Map转换为二维数组
   const batches: Product[][] = [];
-  materialGroups.forEach(colorGroups => {
-    colorGroups.forEach(products => {
+  materialGroups.forEach((colorGroups) => {
+    colorGroups.forEach((products) => {
       batches.push(products);
     });
   });

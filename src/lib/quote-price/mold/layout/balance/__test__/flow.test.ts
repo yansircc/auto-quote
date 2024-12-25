@@ -1,4 +1,4 @@
-import { calculateFlowBalance } from "../flow";
+import { calculateFlowBalance } from "../flow/flow-balance";
 import type { Cuboid } from "../types";
 import { describe, it, expect } from "vitest";
 

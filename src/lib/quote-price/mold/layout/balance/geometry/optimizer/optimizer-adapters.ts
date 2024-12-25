@@ -1,5 +1,5 @@
 import type { GeometricConfig } from "../types";
-import type { Range, ConfigRange } from "./types";
+import type { Range, ConfigRange, OptimizerProgress } from "./types";
 import { bruteForceSearchSingleThread } from "./brute-force";
 import { findBestConfigGenetic } from "./genetic-algorithm";
 import { CONFIG_RANGES } from "./optimizer-config";
@@ -17,14 +17,6 @@ interface OptimizeOptions {
   searchRadius?: number;
   stepScale?: number;
   onProgress?: (progress: OptimizerProgress) => void;
-}
-
-export interface OptimizerProgress {
-  phase: "genetic" | "bruteforce";
-  currentStep: number;
-  totalSteps: number;
-  bestScore?: number;
-  message?: string;
 }
 
 /**

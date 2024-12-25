@@ -30,29 +30,35 @@ describe("产品体积计算", () => {
 
     it("应该在尺寸为空时抛出错误", () => {
       // @ts-expect-error 测试空值情况
-      expect(() => calculateProductNetVolume(undefined))
-        .toThrow("产品尺寸不能为空");
+      expect(() => calculateProductNetVolume(undefined)).toThrow(
+        "产品尺寸不能为空",
+      );
       // @ts-expect-error 测试空值情况
-      expect(() => calculateProductNetVolume(null))
-        .toThrow("产品尺寸不能为空");
+      expect(() => calculateProductNetVolume(null)).toThrow("产品尺寸不能为空");
     });
 
     it("应该在尺寸为0时抛出错误", () => {
-      expect(() => calculateProductNetVolume({ width: 0, height: 5, depth: 2 }))
-        .toThrow("产品尺寸不能为负数或0");
-      expect(() => calculateProductNetVolume({ width: 10, height: 0, depth: 2 }))
-        .toThrow("产品尺寸不能为负数或0");
-      expect(() => calculateProductNetVolume({ width: 10, height: 5, depth: 0 }))
-        .toThrow("产品尺寸不能为负数或0");
+      expect(() =>
+        calculateProductNetVolume({ width: 0, height: 5, depth: 2 }),
+      ).toThrow("产品尺寸不能为负数或0");
+      expect(() =>
+        calculateProductNetVolume({ width: 10, height: 0, depth: 2 }),
+      ).toThrow("产品尺寸不能为负数或0");
+      expect(() =>
+        calculateProductNetVolume({ width: 10, height: 5, depth: 0 }),
+      ).toThrow("产品尺寸不能为负数或0");
     });
 
     it("应该在尺寸为负数时抛出错误", () => {
-      expect(() => calculateProductNetVolume({ width: -10, height: 5, depth: 2 }))
-        .toThrow("产品尺寸不能为负数或0");
-      expect(() => calculateProductNetVolume({ width: 10, height: -5, depth: 2 }))
-        .toThrow("产品尺寸不能为负数或0");
-      expect(() => calculateProductNetVolume({ width: 10, height: 5, depth: -2 }))
-        .toThrow("产品尺寸不能为负数或0");
+      expect(() =>
+        calculateProductNetVolume({ width: -10, height: 5, depth: 2 }),
+      ).toThrow("产品尺寸不能为负数或0");
+      expect(() =>
+        calculateProductNetVolume({ width: 10, height: -5, depth: 2 }),
+      ).toThrow("产品尺寸不能为负数或0");
+      expect(() =>
+        calculateProductNetVolume({ width: 10, height: 5, depth: -2 }),
+      ).toThrow("产品尺寸不能为负数或0");
     });
   });
 
@@ -82,18 +88,22 @@ describe("产品体积计算", () => {
 
     it("应该在尺寸为空时抛出错误", () => {
       // @ts-expect-error 测试空值情况
-      expect(() => calculateProductBoundingVolume(undefined))
-        .toThrow("产品尺寸不能为空");
+      expect(() => calculateProductBoundingVolume(undefined)).toThrow(
+        "产品尺寸不能为空",
+      );
       // @ts-expect-error 测试空值情况
-      expect(() => calculateProductBoundingVolume(null))
-        .toThrow("产品尺寸不能为空");
+      expect(() => calculateProductBoundingVolume(null)).toThrow(
+        "产品尺寸不能为空",
+      );
     });
 
     it("应该在尺寸为0或负数时抛出错误", () => {
-      expect(() => calculateProductBoundingVolume({ width: 0, height: 5, depth: 2 }))
-        .toThrow("产品尺寸不能为负数或0");
-      expect(() => calculateProductBoundingVolume({ width: -10, height: 5, depth: 2 }))
-        .toThrow("产品尺寸不能为负数或0");
+      expect(() =>
+        calculateProductBoundingVolume({ width: 0, height: 5, depth: 2 }),
+      ).toThrow("产品尺寸不能为负数或0");
+      expect(() =>
+        calculateProductBoundingVolume({ width: -10, height: 5, depth: 2 }),
+      ).toThrow("产品尺寸不能为负数或0");
     });
   });
 
@@ -113,10 +123,10 @@ describe("产品体积计算", () => {
     });
 
     it("应该在净体积为0或负数时抛出错误", () => {
-      expect(() => calculateInjectionVolume(0))
-        .toThrow("净体积不能为负数或0");
-      expect(() => calculateInjectionVolume(-100))
-        .toThrow("净体积不能为负数或0");
+      expect(() => calculateInjectionVolume(0)).toThrow("净体积不能为负数或0");
+      expect(() => calculateInjectionVolume(-100)).toThrow(
+        "净体积不能为负数或0",
+      );
     });
   });
 });

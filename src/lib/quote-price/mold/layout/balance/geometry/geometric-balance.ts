@@ -1,4 +1,4 @@
-import { GeometricBalanceConfig as defaultConfig } from "./constants";
+import { DEFAULT_CONFIG } from "./constants";
 import type { GeometricConfig } from "./types";
 import type { BaseCuboid as Cuboid } from "../types";
 import { SHAPE_SIMILARITY, ASPECT_RATIO } from "./constants";
@@ -182,7 +182,7 @@ function calculateDimensionalConsistency(
  */
 export function calculateGeometricBalance(
   cuboids: Cuboid[],
-  config: GeometricConfig = defaultConfig,
+  config: GeometricConfig = DEFAULT_CONFIG,
 ): number {
   // 处理边界情况
   if (cuboids.length === 0) return 0;
