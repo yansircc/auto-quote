@@ -1,9 +1,4 @@
 /**
- * 核心类型
- */
-export type { RatioInput as AspectRatioInput } from "./core/types";
-
-/**
  * 运行器
  */
 export { runAspectRatioOptimizer } from "./runner";

@@ -25,4 +25,4 @@ export const optimizer: OptimizerInstance<ShapeInput, ShapeConfig, FlatParams> =
     testCases: TEST_CASES,
   });
 
-export const { findBestConfig } = optimizer;
+export const { findBestConfig, getScore } = optimizer;

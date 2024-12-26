@@ -1,15 +1,14 @@
 /**
- * 核心类型和配置
- */
-export type { PositionConfig, PositionInput } from "./core/types";
-export { PARAM_RANGES, SUM_CONSTRAINED_GROUPS } from "./core/config";
-
-/**
- * 参数映射工具
- */
-export { paramsToConfig } from "./utils/param-converter";
-
-/**
  * 运行器
  */
-export { runPositionOptimizer } from "./runner";
+export { runPositionDistributionOptimizer } from "./runner";
+
+/**
+ * 获取分数
+ */
+export { getScore as getPositionDistributionScore } from "./optimizer";
+
+/**
+ * 最佳参数
+ */
+export { BEST_PARAMS as POSITION_DISTRIBUTION_BEST_PARAMS } from "./scoring/best-params";

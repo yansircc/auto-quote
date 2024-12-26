@@ -17,7 +17,7 @@ interface OptimizationResult {
 /**
  * 测试间距均匀性优化器性能
  */
-async function runSpacingOptimizer(
+async function runSpacingUniformityOptimizer(
   iterations = 1,
 ): Promise<OptimizationResult> {
   const reporter = new ScoreReporter();
@@ -40,4 +40,4 @@ async function runSpacingOptimizer(
   });
 }
 
-export { runSpacingOptimizer };
+export { runSpacingUniformityOptimizer };

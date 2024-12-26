@@ -1,9 +1,4 @@
 /**
- * 核心类型
- */
-export type { DistributionInput as DistanceDistributionInput } from "./core/types";
-
-/**
  * 运行器
  */
 export { runDistributionOptimizer } from "./runner";

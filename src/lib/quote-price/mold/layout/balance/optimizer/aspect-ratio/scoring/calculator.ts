@@ -38,26 +38,6 @@ export function calculateScore(
     };
   }
 
-  // 添加合理性验证
-  if (
-    input.longestToShortest < input.middleToShortest ||
-    input.middleToShortest < input.longestToMiddle
-  ) {
-    if (!options.silent) {
-      console.log("Validation failed at:", new Error().stack);
-      console.log("input", input);
-      console.warn("Invalid ratio relationship");
-    }
-    return {
-      [RatioType.LongestToShortest]: 0,
-      [RatioType.MiddleToShortest]: 0,
-      [RatioType.LongestToMiddle]: 0,
-      bonus: 0,
-      penalty: 0,
-      total: 0,
-    };
-  }
-
   const {
     [RatioType.LongestToShortest]: longestToShortest,
     [RatioType.MiddleToShortest]: middleToShortest,

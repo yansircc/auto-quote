@@ -1,15 +1,14 @@
 /**
- * 核心类型和配置
- */
-export type { ShapeConfig, ShapeInput } from "./core/types";
-export { PARAM_RANGES, SUM_CONSTRAINED_GROUPS } from "./core/config";
-
-/**
- * 参数映射工具
- */
-export { paramsToConfig } from "./utils/param-converter";
-
-/**
  * 运行器
  */
-export { runShapeOptimizer } from "./runner";
+export { runShapeSimilarityOptimizer } from "./runner";
+
+/**
+ * 获取分数
+ */
+export { getScore as getShapeSimilarityScore } from "./optimizer";
+
+/**
+ * 最佳参数
+ */
+export { BEST_PARAMS as SHAPE_SIMILARITY_BEST_PARAMS } from "./scoring/best-params";

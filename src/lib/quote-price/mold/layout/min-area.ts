@@ -130,8 +130,8 @@ function smartPacking(
       bestArea = quality;
       bestFill = fill;
 
-      // 计算实际布局
       const layout: PlacedRectangle[] = boxes.map((box) => {
+        // 直接处理旋转后的实际尺寸
         const width = box.isRotated
           ? box.originalRect.height
           : box.originalRect.width;
@@ -140,25 +140,17 @@ function smartPacking(
           : box.originalRect.height;
         const actualPos = spacing.getActualPosition(box.x ?? 0, box.y ?? 0);
 
-        // 计算左上角坐标
+        // 计算左下角坐标（Y轴翻转）
         const x = actualPos.x;
-        const y = actualPos.y;
-
-        // 计算中心点坐标
-        const center = {
-          x: x + width / 2,
-          y: y + height / 2,
-        };
+        const y = packResult.h - (actualPos.y + height); // 关键修改：翻转Y轴
 
         return {
           index: box.originalIndex,
-          width,
+          width, // 这里的 width 和 height 已经是旋转后的实际尺寸
           height,
-          x,
-          y,
-          center,
-          rotated: box.isRotated,
-        };
+          x, // 左下角 x 坐标
+          y, // 左下角 y 坐标（笛卡尔坐标系）
+        } satisfies PlacedRectangle;
       });
 
       bestResult = {
@@ -176,7 +168,7 @@ function smartPacking(
  * 计算最小面积布局
  * @param rectangles 输入的矩形列表
  * @param options 布局选项
- * @returns {LayoutResult} 布局结果
+ * @returns {LayoutResult} 布局结果, 返回的是左下角对齐的布局,符合笛卡尔坐标系的定义
  */
 function calculateMinArea(
   rectangles: Rectangle[],

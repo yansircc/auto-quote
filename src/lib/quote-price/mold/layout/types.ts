@@ -15,11 +15,6 @@ interface PlacedRectangle extends Rectangle {
   index: number;
   x: number; // 左上角x坐标
   y: number; // 左上角y坐标
-  center: {
-    x: number; // 中心点x坐标
-    y: number; // 中心点y坐标
-  };
-  rotated: boolean; // 是否旋转
 }
 
 /**

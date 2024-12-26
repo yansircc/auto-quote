@@ -27,7 +27,11 @@ export interface OptimizerConfig<
   TParams extends Record<string, number>,
 > {
   /** 计算分数的函数 */
-  calculateScore: (input: TInput, config: TConfig, options?: { silent: boolean }) => ScoreResult;
+  calculateScore: (
+    input: TInput,
+    config: TConfig,
+    options?: { silent: boolean },
+  ) => ScoreResult;
 
   /** 将扁平参数转换为配置的函数 */
   flatParamsToConfig: (params: TParams) => TConfig;
