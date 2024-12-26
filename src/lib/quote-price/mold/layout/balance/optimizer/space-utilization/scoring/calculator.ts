@@ -54,7 +54,8 @@ export function calculateScore(input: SpaceInput, config: SpaceConfig) {
     config.thresholds[SpaceMetric.VolumeRatio],
     config.scores[SpaceMetric.VolumeRatio],
     volumeRatioPowers,
-    "asc",
+    false, // 不使用平滑衰减
+    "asc", // 越大越好
   );
 
   // 计算长宽高比均衡度得分（需要特殊处理）

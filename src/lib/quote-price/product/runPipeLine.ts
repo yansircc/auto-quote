@@ -1,12 +1,8 @@
 import type { Product } from "./types";
-import type {
-  MoldDimensions,
-  ProductPrice,
-  ProductPriceDimensions,
-} from "./product-schema";
+import type { MoldDimensions, ProductPrice } from "./product-schema";
 
 import { type Mold } from "../mold/types";
-import { calculateMinArea } from "../mold/layout";
+import { runAllScorers } from "../mold/layout";
 import { getMoldMaterial, type MoldMaterial } from "../materials";
 import {
   calculateGrossProfit,
@@ -15,20 +11,14 @@ import {
   calculateProcessingFee,
 } from "../mold/cost";
 import { getHeightByMaxProductHeight, getMarginByWidth } from "../mold/common";
-import { calculateProductPrice } from "./price";
-
-interface PipelineResult {
-  minimumArea: number;
-  moldPrice: number;
-  productPrices: ProductPrice[];
-}
+import { calculateCavityLayout } from "../mold/layout/cavity-layout";
+import { getMoldMaterialDensity, productToMold } from "./common";
 
 /**
- * 运行产品报价流水线
+ * 运行模具厂报价流水线
  * @param products 产品信息
  * @param moldConfig 模具配置
- * @param maxMachiningCost 最大加工成本
- * @returns 包含最小面积、模具价格和产品价格的结果
+ * @returns 包含最小面积、模具价格和产品价格以及评分的结果
  */
 export function runProductPricePipeline(
   products: Product[],
@@ -41,43 +31,50 @@ export function runProductPricePipeline(
   console.log("layoutResult before calculateMinArea");
 
   // 1. 计算最小面积
-  // const layoutResult = calculateMinArea(
-  //   products.map((product) => ({
-  //     width: product.dimensions.width,
-  //     height: product.dimensions.height,
-  //   })),
-  // );
-
-  const layoutResult = {
-    width: 200,
-    height: 200,
-    layout: [],
-  };
+  // 这里计算出来的layoutResult会发生变化？
+  const layoutResult = calculateCavityLayout(
+    products.map((product) => ({
+      width: product.dimensions.width,
+      height: product.dimensions.height,
+    })),
+  );
 
   console.log("layoutResult after calculateMinArea", layoutResult);
 
-  //计算模具高度
+  //2、计算模具高度
 
   const maxProductHeight = getHeightByMaxProductHeight(
     Math.max(...products.map((product) => product.dimensions.height)),
   );
 
-  //计算模具边距
+  //3、计算模具边距
   const moldMargin = Math.max(
     getMarginByWidth(layoutResult.width),
     getMarginByWidth(layoutResult.height),
   );
 
-  //计算模具重量
+  //4、计算模具重量
   const moldWeight =
-    (getMoldMaterial(moldMaterial.name)?.density ?? 0) *
+    getMoldMaterialDensity() *
     layoutResult.width *
     layoutResult.height *
     maxProductHeight;
 
-  //2。构建模具
-  //2。构建模具
+  console.log("moldWeight", moldWeight);
+
+  //5、 计算平衡布局的分数
+  const { weightedAverage, ...scores } = runAllScorers(
+    productToMold(products),
+    true,
+  );
+
+  console.log("scores", scores);
+  console.log("weightedAverage", weightedAverage);
+
+  //6、构建模具
   const mold: Mold = {
+    scores,
+    weightedAverage,
     material: {
       id: moldMaterial.id,
       name: moldMaterial.name,
@@ -109,86 +106,18 @@ export function runProductPricePipeline(
   const moldPrice =
     moldMaterialCost + maintenanceFee + processingFee + moldProfit;
 
-  // // 3. 转换为价格计算所的维度
-  // const priceDimensions: ProductPriceDimensions[] = products.map((product) => ({
-  //   productMaterial: product.material.name,
-  //   volume: product.netVolume,
-  //   productQuantity: product.quantity,
-  //   length: product.dimensions.length,
-  //   width: product.dimensions.width,
-  //   height: product.dimensions.height,
-  //   color: product.color,
-  //   density: product.material.density,
-  // }));
-
-  // // 4. 计算产品价格
-  // const initialPrices = calculateProductPrice(
-  //   priceDimensions,
-  //   maxMachiningCost,
-  // );
-
-  // // 5. 计算最终价格
-  // const productPrices = calculateProductFinalPrice(initialPrices);
-
   return {
+    scores: mold.scores,
+    weightedAverage: mold.weightedAverage,
     width: mold.dimensions.width,
     depth: mold.dimensions.height,
     height: mold.dimensions.depth,
     moldMaterial: mold.material.name,
     moldWeight: Number(mold.weight.toFixed(3)),
     moldPrice: Number(moldPrice.toFixed(3)),
-    maxInnerLength: 0,
-    maxInnerWidth: 0,
+    maxInnerLength: layoutResult.width,
+    maxInnerWidth: layoutResult.height,
     verticalMargin: moldMargin,
     horizontalMargin: moldMargin,
   };
-}
-
-/**
- * 获取产品报价的详细信息
- * @param result 流水线结果
- * @returns 格式化的报价信息
- */
-export function calculateProductFinalPrice(
-  paramsProducts: ProductPriceDimensions[],
-): ProductPrice[] {
-  const maxMachiningCost = 0;
-  const initialPrices = calculateProductPrice(paramsProducts, maxMachiningCost);
-
-  return calculateProductFinalPrice(initialPrices);
-}
-
-/**
- * 获取产品报价的详细信息
- * @param result 流水线结果
- * @returns 格式化的报价信息
- */
-export function getPriceDetails(result: PipelineResult): string {
-  const { minimumArea, moldPrice, productPrices } = result;
-
-  const totalProductPrice = productPrices.reduce(
-    (sum, product) => sum + (product.finalPrice || 0),
-    0,
-  );
-
-  return `
-模具信息:
-- 最小面积: ${minimumArea.toFixed(2)} mm²
-- 模具价格: ${moldPrice.toFixed(2)} 元
-
-产品信息:
-${productPrices
-  .map(
-    (product, index) => `
-产品 ${index + 1}:
-- 材料: ${product.productMaterial}
-- 数量: ${product.productQuantity}
-- 单价: ${(product.finalPrice / (product.productQuantity || 1)).toFixed(2)} 元
-- 总价: ${product.finalPrice.toFixed(2)} 元
-`,
-  )
-  .join("\n")}
-
-总价格: ${(moldPrice + totalProductPrice).toFixed(2)} 元
-`;
 }

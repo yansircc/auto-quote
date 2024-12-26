@@ -27,10 +27,13 @@ export function determineMachineTonnage(
     throw new Error("模具尺寸不能为零跟负数");
   }
 
+  console.log("moldWidth", moldWidth);
+  console.log("moldHeight", moldHeight);
+  console.log("moldDepth", moldDepth);
+  console.log("injectionVolume", injectionVolume);
   if (injectionVolume <= 0) {
     throw new Error("注胶量不能为零跟负数");
   }
-
   const moldWidthActual = Math.min(moldWidth, moldDepth);
   const eligibleMachines = machineList
     .filter(

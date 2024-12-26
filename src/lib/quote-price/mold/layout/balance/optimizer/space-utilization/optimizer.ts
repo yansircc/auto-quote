@@ -25,4 +25,4 @@ export const optimizer: OptimizerInstance<SpaceInput, SpaceConfig, FlatParams> =
     testCases: TEST_CASES,
   });
 
-export const { findBestConfig, evaluateTestScore, previousScores } = optimizer;
+export const { findBestConfig, getScore } = optimizer;

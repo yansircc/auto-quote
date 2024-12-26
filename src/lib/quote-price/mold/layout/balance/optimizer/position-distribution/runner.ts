@@ -17,7 +17,7 @@ interface OptimizationResult {
 /**
  * 测试位置分布优化器性能
  */
-async function runPositionOptimizer(
+async function runPositionDistributionOptimizer(
   iterations = 1,
 ): Promise<OptimizationResult> {
   const reporter = new ScoreReporter();
@@ -40,4 +40,4 @@ async function runPositionOptimizer(
   });
 }
 
-export { runPositionOptimizer };
+export { runPositionDistributionOptimizer };

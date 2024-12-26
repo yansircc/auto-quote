@@ -26,7 +26,7 @@ export function calculateOperationCostPerShot(machineTonnage: number): number {
 export function calculateBaseProcessingFee(
   tonnage: number,
   shots: number,
-  config: MachineConfig,
+  config: MachineConfig | undefined,
 ): number {
   const machiningFee = getMachiningFeeByTonnage(tonnage);
   return machiningFee * shots;

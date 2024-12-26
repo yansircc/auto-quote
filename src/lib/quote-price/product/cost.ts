@@ -250,7 +250,7 @@ export function calculateProcessingCost(
 export function calculateProductionProcessingFee(
   tonnage: number,
   shots: number,
-  config: ProcessingFeeConfig,
+  config: ProcessingFeeConfig | undefined,
 ): number {
   // 伪代码：计算基础加工费和小批量费用
   const machineFeeItem = getMachineByTonnage(tonnage);
@@ -260,7 +260,7 @@ export function calculateProductionProcessingFee(
   const baseRate = machineFeeItem.machiningFee;
   const baseFee = baseRate * shots;
   let processingFee = 0;
-  if (shots < config.minBatchThreshold) {
+  if (shots < (config?.minBatchThreshold ?? 1000)) {
     processingFee = shots * machineFeeItem.smallBatchMachiningFee;
   }
   return baseFee + processingFee;
