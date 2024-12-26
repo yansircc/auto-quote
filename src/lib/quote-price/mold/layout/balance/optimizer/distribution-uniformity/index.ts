@@ -1,15 +1,14 @@
 /**
- * 核心类型和配置
- */
-export type { UniformityInput, UniformityConfig } from "./core/types";
-export { PARAM_RANGES, SUM_CONSTRAINED_GROUPS } from "./core/config";
-
-/**
- * 优化器实例
- */
-export { findBestConfig } from "./optimizer";
-
-/**
  * 运行器
  */
 export { runUniformityOptimizer } from "./runner";
+
+/**
+ * 获取分数
+ */
+export { getScore as getDistributionUniformityScore } from "./optimizer";
+
+/**
+ * 最佳参数
+ */
+export { BEST_PARAMS as DISTRIBUTION_UNIFORMITY_BEST_PARAMS } from "./scoring/best-params";

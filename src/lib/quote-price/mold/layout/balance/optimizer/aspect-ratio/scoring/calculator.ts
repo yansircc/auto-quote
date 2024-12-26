@@ -14,7 +14,30 @@ import {
 /**
  * 计算长宽比评分
  */
-export function calculateScore(input: RatioInput, config: AspectRatioConfig) {
+export function calculateScore(
+  input: RatioInput,
+  config: AspectRatioConfig,
+  options = { silent: false },
+) {
+  // 添加基础验证
+  if (
+    input.longestToShortest <= 0 ||
+    input.middleToShortest <= 0 ||
+    input.longestToMiddle <= 0
+  ) {
+    if (!options.silent) {
+      console.warn("Invalid input: values must be positive");
+    }
+    return {
+      [RatioType.LongestToShortest]: 0,
+      [RatioType.MiddleToShortest]: 0,
+      [RatioType.LongestToMiddle]: 0,
+      bonus: 0,
+      penalty: 0,
+      total: 0,
+    };
+  }
+
   const {
     [RatioType.LongestToShortest]: longestToShortest,
     [RatioType.MiddleToShortest]: middleToShortest,

@@ -8,17 +8,28 @@ import type {
   SpacingCalculator,
 } from "./types";
 
+/**
+ * 默认的布局选项
+ */
 const DEFAULT_OPTIONS: Required<Omit<LayoutOptions, "spacing">> = {
   maxIterations: 8,
   allowRotation: true,
 };
 
-// 默认的间距计算器（不添加间距）
+/**
+ * 默认的间距计算器（不添加间距）
+ */
 const DEFAULT_SPACING: SpacingCalculator = {
   getPackingSize: (rect) => ({ ...rect }),
   getActualPosition: (x, y) => ({ x, y }),
 };
 
+/**
+ * 排序矩形
+ *
+ * @param rectangles - 矩形列表
+ * @returns {Rectangle[]} 排序后的矩形列表
+ */
 function sortRectangles(rectangles: Rectangle[]): Rectangle[] {
   return [...rectangles].sort((a, b) => {
     const areaA = a.width * a.height;
@@ -27,14 +38,34 @@ function sortRectangles(rectangles: Rectangle[]): Rectangle[] {
   });
 }
 
+/**
+ * 获取最优旋转
+ *
+ * @param rectangles - 矩形列表
+ * @returns {boolean[]} 旋转数组
+ */
 function getOptimalRotations(rectangles: Rectangle[]): boolean[] {
   return rectangles.map((rect): boolean => rect.width < rect.height);
 }
 
+/**
+ * 创建旋转数组
+ *
+ * @param length - 数组长度
+ * @param value - 数组元素值
+ * @returns {boolean[]} 旋转数组
+ */
 function createRotationArray(length: number, value: boolean): boolean[] {
   return Array.from({ length }).map(() => value);
 }
 
+/**
+ * 智能打包
+ *
+ * @param rectangles - 矩形列表
+ * @param options - 布局选项
+ * @returns {LayoutResult} 布局结果
+ */
 function smartPacking(
   rectangles: Rectangle[],
   options: LayoutOptions = {},
@@ -99,8 +130,8 @@ function smartPacking(
       bestArea = quality;
       bestFill = fill;
 
-      // 计算实际布局
       const layout: PlacedRectangle[] = boxes.map((box) => {
+        // 直接处理旋转后的实际尺寸
         const width = box.isRotated
           ? box.originalRect.height
           : box.originalRect.width;
@@ -109,13 +140,17 @@ function smartPacking(
           : box.originalRect.height;
         const actualPos = spacing.getActualPosition(box.x ?? 0, box.y ?? 0);
 
+        // 计算左下角坐标（Y轴翻转）
+        const x = actualPos.x;
+        const y = packResult.h - (actualPos.y + height); // 关键修改：翻转Y轴
+
         return {
-          width,
+          index: box.originalIndex,
+          width, // 这里的 width 和 height 已经是旋转后的实际尺寸
           height,
-          x: actualPos.x,
-          y: actualPos.y,
-          rotated: box.isRotated,
-        };
+          x, // 左下角 x 坐标
+          y, // 左下角 y 坐标（笛卡尔坐标系）
+        } satisfies PlacedRectangle;
       });
 
       bestResult = {
@@ -133,7 +168,7 @@ function smartPacking(
  * 计算最小面积布局
  * @param rectangles 输入的矩形列表
  * @param options 布局选项
- * @returns 布局结果
+ * @returns {LayoutResult} 布局结果, 返回的是左下角对齐的布局,符合笛卡尔坐标系的定义
  */
 function calculateMinArea(
   rectangles: Rectangle[],

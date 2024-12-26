@@ -9,11 +9,15 @@ export interface Point3D {
 
 /**
  * 基础长方体属性（仅包含尺寸）
+ * 在 3D 建模和计算机图形学中，立方体的尺寸通常遵循以下常见约定：
+ * Width (宽) → X 轴
+ * Depth (深) → Y 轴
+ * Height (高) → Z 轴
  */
 export interface BaseCuboid {
   width: number; // x 方向的长度
-  height: number; // y 方向的长度
-  depth: number; // z 方向的长度
+  depth: number; // y 方向的长度
+  height: number; // z 方向的长度
 }
 
 /**

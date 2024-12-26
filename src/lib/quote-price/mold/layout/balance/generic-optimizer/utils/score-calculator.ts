@@ -100,9 +100,15 @@ export function calculateMetricScore(
   thresholds: ThresholdConfig,
   scores: ScoreConfig,
   power: number | PowerConfig = 2,
-  direction: MetricDirection = "desc",
   smoothDecay = false,
+  direction: MetricDirection = "desc",
 ) {
+  // 添加基础安全检查
+  if (!Number.isFinite(value)) {
+    console.warn(`Invalid value: ${value}, returning minimum score`);
+    return SCORE.MIN;
+  }
+
   // 根据方向选择比较函数
   const compareValue = (value: number, threshold: number): boolean => {
     return direction === "asc"
@@ -122,12 +128,16 @@ export function calculateMetricScore(
     current: number,
     next: number,
   ): number => {
+    const denominator = direction === "asc" ? next - current : next - current;
+    // 防止除以零
+    if (Math.abs(denominator) < Number.EPSILON) {
+      return direction === "asc" ? 0 : 1;
+    }
+
     if (direction === "asc") {
-      // 越大越好：计算超出当前阈值的比例
-      return (value - current) / (next - current);
+      return Math.max(0, Math.min(1, (value - current) / denominator));
     } else {
-      // 越小越好：计算低于当前阈值的比例
-      return (next - value) / (next - current);
+      return Math.max(0, Math.min(1, (next - value) / denominator));
     }
   };
 
@@ -135,12 +145,19 @@ export function calculateMetricScore(
   if (compareValue(value, thresholds.perfect)) {
     const ratio =
       direction === "asc"
-        ? (value - thresholds.perfect) / (1 - thresholds.perfect) // 越大越好
-        : value / thresholds.perfect; // 越小越好
+        ? Math.max(
+            0,
+            Math.min(
+              1,
+              (value - thresholds.perfect) / (1 - thresholds.perfect),
+            ),
+          )
+        : Math.max(0, Math.min(1, value / thresholds.perfect));
 
-    return (
+    return Math.max(
+      SCORE.MIN,
       scores.perfect.base -
-      scores.perfect.factor * Math.pow(ratio, getPower("perfect"))
+        scores.perfect.factor * Math.pow(ratio, getPower("perfect")),
     );
   }
 
@@ -173,24 +190,38 @@ export function calculateMetricScore(
   if (smoothDecay) {
     const maxBadScore = scores.bad.base;
     const minBadScore = maxBadScore * 0.3;
-    const maxBadValue = direction === "asc" ? 0 : 1.0;
-    const normalizedExcess = Math.pow(
-      direction === "asc"
-        ? (thresholds.bad - value) / (thresholds.bad - maxBadValue)
-        : (value - thresholds.bad) / (maxBadValue - thresholds.bad),
-      0.8,
-    );
+    const maxBadValue = direction === "asc" ? 0 : thresholds.bad * 1.5; // 使用相对值而不是固定值
+
+    let normalizedExcess;
+    if (direction === "asc") {
+      normalizedExcess = Math.max(
+        0,
+        Math.min(1, (thresholds.bad - value) / (thresholds.bad - maxBadValue)),
+      );
+    } else {
+      normalizedExcess = Math.max(
+        0,
+        Math.min(1, (value - thresholds.bad) / (maxBadValue - thresholds.bad)),
+      );
+    }
 
     return Math.max(
       minBadScore,
-      maxBadScore - (maxBadScore - minBadScore) * normalizedExcess,
+      maxBadScore -
+        (maxBadScore - minBadScore) * Math.pow(normalizedExcess, 0.8),
     );
   }
 
-  // 不使用平滑衰减时，使用指数衰减
+  // 修改指数衰减计算
   const excessValue =
-    direction === "asc" ? thresholds.bad - value : value - thresholds.bad;
-  return scores.bad.base * Math.exp(-scores.bad.factor * excessValue);
+    direction === "asc"
+      ? Math.max(0, thresholds.bad - value)
+      : Math.max(0, value - thresholds.bad);
+
+  return Math.max(
+    SCORE.MIN,
+    scores.bad.base * Math.exp(-Math.min(scores.bad.factor * excessValue, 10)), // 限制指数范围
+  );
 }
 
 /**
@@ -246,22 +277,20 @@ export function calculatePenalty<T extends Record<string, number>>(
   let totalPenalty = 0;
   let exceedCount = 0;
 
-  // 计算各指标的惩罚
   for (const [key, value] of Object.entries(metrics)) {
     const badConfig = penalty.bad[key];
-    if (!badConfig) continue;
+    if (!badConfig || !Number.isFinite(value)) continue;
 
     const threshold = badConfig.threshold;
     const excess = Math.max(0, value - threshold);
 
     if (excess > 0) {
       exceedCount++;
-      const maxExcess = 1.0 - threshold;
+      const maxExcess = Math.max(threshold * 0.5, 1.0 - threshold); // 使用相对值
 
-      // 使用可配置的平滑函数
       const normalizedPenalty = useSquareRoot
-        ? Math.sqrt(excess / maxExcess)
-        : Math.pow(excess / maxExcess, smoothFactor);
+        ? Math.sqrt(Math.min(1, excess / maxExcess))
+        : Math.pow(Math.min(1, excess / maxExcess), smoothFactor);
 
       totalPenalty += badConfig.score * normalizedPenalty * scaleFactor;
     }
@@ -283,7 +312,7 @@ export function calculatePenalty<T extends Record<string, number>>(
     totalPenalty = Math.min(totalPenalty, combinedPenalty);
   }
 
-  return totalPenalty;
+  return Math.max(0, totalPenalty); // 确保惩罚分数非负
 }
 
 /**
@@ -295,21 +324,20 @@ export function calculateWeightedScore(
   scores: Record<string, number>,
   weights: Record<string, number>,
 ): number {
-  // 计算总权重和加权分数
   let totalWeight = 0;
   let weightedSum = 0;
 
-  // 遍历权重配置
   for (const [key, weight] of Object.entries(weights)) {
     const score = scores[key];
-    if (score === undefined) continue;
+    if (score === undefined || !Number.isFinite(weight)) continue;
 
     totalWeight += weight;
     weightedSum += weight * score;
   }
 
-  // 避免除以零
-  return totalWeight === 0 ? 0 : weightedSum / totalWeight;
+  if (totalWeight === 0) return SCORE.MIN;
+
+  return Math.max(SCORE.MIN, Math.min(SCORE.MAX, weightedSum / totalWeight));
 }
 
 /**

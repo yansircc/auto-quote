@@ -28,4 +28,4 @@ export const optimizer: OptimizerInstance<
   testCases: TEST_CASES,
 });
 
-export const { findBestConfig } = optimizer;
+export const { findBestConfig, getScore } = optimizer;

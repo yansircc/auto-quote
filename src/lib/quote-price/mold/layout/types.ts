@@ -12,9 +12,9 @@ interface Rectangle {
  * 带位置信息的矩形
  */
 interface PlacedRectangle extends Rectangle {
-  x: number;
-  y: number;
-  rotated: boolean;
+  index: number;
+  x: number; // 左上角x坐标
+  y: number; // 左上角y坐标
 }
 
 /**

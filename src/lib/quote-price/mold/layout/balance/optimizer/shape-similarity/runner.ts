@@ -17,7 +17,9 @@ interface OptimizationResult {
 /**
  * 测试形状相似度优化器性能
  */
-async function runShapeOptimizer(iterations = 1): Promise<OptimizationResult> {
+async function runShapeSimilarityOptimizer(
+  iterations = 1,
+): Promise<OptimizationResult> {
   const reporter = new ScoreReporter();
 
   return OptimizationProgressBar.runWithProgress<
@@ -38,4 +40,4 @@ async function runShapeOptimizer(iterations = 1): Promise<OptimizationResult> {
   });
 }
 
-export { runShapeOptimizer };
+export { runShapeSimilarityOptimizer };
