@@ -8,17 +8,28 @@ import type {
   SpacingCalculator,
 } from "./types";
 
+/**
+ * 默认的布局选项
+ */
 const DEFAULT_OPTIONS: Required<Omit<LayoutOptions, "spacing">> = {
   maxIterations: 8,
   allowRotation: true,
 };
 
-// 默认的间距计算器（不添加间距）
+/**
+ * 默认的间距计算器（不添加间距）
+ */
 const DEFAULT_SPACING: SpacingCalculator = {
   getPackingSize: (rect) => ({ ...rect }),
   getActualPosition: (x, y) => ({ x, y }),
 };
 
+/**
+ * 排序矩形
+ *
+ * @param rectangles - 矩形列表
+ * @returns {Rectangle[]} 排序后的矩形列表
+ */
 function sortRectangles(rectangles: Rectangle[]): Rectangle[] {
   return [...rectangles].sort((a, b) => {
     const areaA = a.width * a.height;
@@ -27,14 +38,34 @@ function sortRectangles(rectangles: Rectangle[]): Rectangle[] {
   });
 }
 
+/**
+ * 获取最优旋转
+ *
+ * @param rectangles - 矩形列表
+ * @returns {boolean[]} 旋转数组
+ */
 function getOptimalRotations(rectangles: Rectangle[]): boolean[] {
   return rectangles.map((rect): boolean => rect.width < rect.height);
 }
 
+/**
+ * 创建旋转数组
+ *
+ * @param length - 数组长度
+ * @param value - 数组元素值
+ * @returns {boolean[]} 旋转数组
+ */
 function createRotationArray(length: number, value: boolean): boolean[] {
   return Array.from({ length }).map(() => value);
 }
 
+/**
+ * 智能打包
+ *
+ * @param rectangles - 矩形列表
+ * @param options - 布局选项
+ * @returns {LayoutResult} 布局结果
+ */
 function smartPacking(
   rectangles: Rectangle[],
   options: LayoutOptions = {},
@@ -109,11 +140,23 @@ function smartPacking(
           : box.originalRect.height;
         const actualPos = spacing.getActualPosition(box.x ?? 0, box.y ?? 0);
 
+        // 计算左上角坐标
+        const x = actualPos.x;
+        const y = actualPos.y;
+
+        // 计算中心点坐标
+        const center = {
+          x: x + width / 2,
+          y: y + height / 2,
+        };
+
         return {
+          index: box.originalIndex,
           width,
           height,
-          x: actualPos.x,
-          y: actualPos.y,
+          x,
+          y,
+          center,
           rotated: box.isRotated,
         };
       });
@@ -133,7 +176,7 @@ function smartPacking(
  * 计算最小面积布局
  * @param rectangles 输入的矩形列表
  * @param options 布局选项
- * @returns 布局结果
+ * @returns {LayoutResult} 布局结果
  */
 function calculateMinArea(
   rectangles: Rectangle[],

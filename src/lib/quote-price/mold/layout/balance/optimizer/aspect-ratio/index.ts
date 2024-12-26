@@ -1,13 +1,7 @@
 /**
- * 核心类型和配置
+ * 核心类型
  */
-export type { AspectRatioConfig, RatioInput } from "./core/types";
-export { PARAM_RANGES, SUM_CONSTRAINED_GROUPS } from "./core/config";
-
-/**
- * 参数映射工具
- */
-export { paramsToConfig } from "./utils/param-converter";
+export type { RatioInput as AspectRatioInput } from "./core/types";
 
 /**
  * 运行器
@@ -17,4 +11,9 @@ export { runAspectRatioOptimizer } from "./runner";
 /**
  * 获取分数
  */
-export { getScore } from "./optimizer";
+export { getScore as getAspectRatioScore } from "./optimizer";
+
+/**
+ * 最佳参数
+ */
+export { BEST_PARAMS as ASPECT_RATIO_BEST_PARAMS } from "./scoring/best-params";

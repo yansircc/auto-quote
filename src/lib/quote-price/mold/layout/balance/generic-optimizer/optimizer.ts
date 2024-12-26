@@ -55,7 +55,9 @@ export function createOptimizer<TInput, TConfig>(
     // 遍历测试用例数组
     for (const testCase of testCases.cases) {
       // 计算得分
-      const result = calculateScore(testCase.input, userConfig);
+      const result = calculateScore(testCase.input, userConfig, {
+        silent: true,
+      });
       const actual = result.total;
 
       // 计算适应度得分

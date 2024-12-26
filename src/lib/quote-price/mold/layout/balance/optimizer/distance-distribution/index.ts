@@ -1,15 +1,19 @@
 /**
- * 核心类型和配置
+ * 核心类型
  */
-export type { DistributionConfig, DistributionInput } from "./core/types";
-export { PARAM_RANGES, SUM_CONSTRAINED_GROUPS } from "./core/config";
-
-/**
- * 参数映射工具
- */
-export { paramsToConfig } from "./utils/param-converter";
+export type { DistributionInput as DistanceDistributionInput } from "./core/types";
 
 /**
  * 运行器
  */
 export { runDistributionOptimizer } from "./runner";
+
+/**
+ * 获取分数
+ */
+export { getScore as getDistanceDistributionScore } from "./optimizer";
+
+/**
+ * 最佳参数
+ */
+export { BEST_PARAMS as DISTANCE_DISTRIBUTION_BEST_PARAMS } from "./scoring/best-params";
