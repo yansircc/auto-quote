@@ -8,18 +8,19 @@
  */
 
 import {
-  defaultMoldMaterialDensity,
-  maxCalculatedWeight,
-  minCalculatedWeight,
-  minSalesWeight,
-  moldMaterialCostStepOne,
-  moldMaterialCostStepTwo,
-  moldMaterialPerPrice,
   moldPriceDifferList,
   operatingExpenseList,
 } from "src/lib/constants/price-constant";
 import type { Mold, MoldConfig } from "./types";
-import { getMoldPriceDifferByMaterial, getOperatingExpenseByWeight } from "./common";
+import {
+  getMoldMaterialCostStepOne,
+  getMoldMaterialCostStepTwo,
+  getMoldMaterialDensity,
+  getMoldMaterialPerPrice,
+  getMoldMaxCalculatedWeight,
+  getMoldMinCalculatedWeight,
+  getMoldMinSalesWeight,
+} from "../product/common";
 
 /**
  * 计算模具材料成本
@@ -39,9 +40,10 @@ export function calculateMoldMaterialCost(mold: Mold): number {
   }
   const moldVolume =
     mold.dimensions.width * mold.dimensions.height * mold.dimensions.depth;
-  const materialWeight = moldVolume * defaultMoldMaterialDensity;
+  const materialWeight = moldVolume * getMoldMaterialDensity();
   const materialCost =
-    Math.max(materialWeight, minSalesWeight) * moldMaterialPerPrice;
+    Math.max(materialWeight, getMoldMinSalesWeight()) *
+    getMoldMaterialPerPrice();
   return materialCost;
 }
 
@@ -53,7 +55,7 @@ export function calculateMoldMaterialCost(mold: Mold): number {
  */
 export function calculateMaintenanceFee(
   moldWeight: number,
-  config: MoldConfig,
+  config: MoldConfig | null,
 ): number {
   // TODO:
   // 1. 判断材料成本是否超过阈值
@@ -61,16 +63,18 @@ export function calculateMaintenanceFee(
   if (moldWeight <= 0) {
     throw new Error("模具重量不能为负数或0");
   }
-  if (moldWeight <= minCalculatedWeight) {
+  if (moldWeight <= getMoldMinCalculatedWeight()) {
     return (
-      Math.max(moldWeight, minSalesWeight) *
-      moldMaterialPerPrice *
-      moldMaterialCostStepOne
+      Math.max(moldWeight, getMoldMinSalesWeight()) *
+      getMoldMaterialPerPrice() *
+      getMoldMaterialCostStepOne()
     );
-  } else if (moldWeight > maxCalculatedWeight) {
+  } else if (moldWeight > getMoldMaxCalculatedWeight()) {
     throw new Error("模具重量超过阈值");
   } else {
-    return moldWeight * moldMaterialPerPrice * moldMaterialCostStepTwo;
+    return (
+      moldWeight * getMoldMaterialPerPrice() * getMoldMaterialCostStepTwo()
+    );
   }
 }
 
@@ -82,7 +86,7 @@ export function calculateMaintenanceFee(
  */
 export function calculateGrossProfit(
   moldWeight: number,
-  config: MoldConfig,
+  config: MoldConfig | null,
 ): number {
   // TODO:
   // 1. 根据重量找到对应的阈值区间
@@ -105,7 +109,10 @@ export function calculateGrossProfit(
  * @param {MoldConfig} config 模具配置
  * @returns {number} 加工费用
  */
-export function calculateProcessingFee(mold: Mold, config: MoldConfig): number {
+export function calculateProcessingFee(
+  mold: Mold,
+  config: MoldConfig | null,
+): number {
   // TODO:
   // 1. 根据模具材料找到对应的加工费用
   if (mold.weight <= 0) {
@@ -180,16 +187,11 @@ export function calculateMoldPrice(
   processingFee: number,
   grossProfit: number,
 ): number {
-  if (
-    materialCost <= 0 ||
-    maintenanceFee <= 0 ||
-    processingFee <= 0
-  ) {
+  if (materialCost <= 0 || maintenanceFee <= 0 || processingFee <= 0) {
     throw new Error("成本不能为负数或0");
   }
   if (grossProfit <= 0) {
-    throw new Error('毛利不能为负数或0');
+    throw new Error("毛利不能为负数或0");
   }
   return materialCost + maintenanceFee + processingFee + grossProfit;
 }
-

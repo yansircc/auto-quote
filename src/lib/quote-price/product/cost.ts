@@ -1,10 +1,8 @@
 import type { ProcessingFeeConfig } from "./types";
 import type { Product } from "./types";
 import type { RiskAssessment } from "../risk/types";
-import { getMachineByTonnage,  } from "../machine/common";
-import { productProfitRate } from "src/lib/constants/price-constant";
-
-
+import { getMachineByTonnage } from "../machine/common";
+import { getProductProfitRate } from "./common";
 
 /**
  * 计算单件产品的材料成本
@@ -14,7 +12,11 @@ import { productProfitRate } from "src/lib/constants/price-constant";
 export function calculateProductMaterialCost(product: Product): number {
   // TODO:
   // 1. 单件产品成本 = 产品净体积 × 产品材料密度 × 产品材料单价
-  if (!product.netVolume || !product.material.density || !product.material.price) {
+  if (
+    !product.netVolume ||
+    !product.material.density ||
+    !product.material.price
+  ) {
     throw new Error("产品净体积、材料密度或材料单价不能为空");
   }
   const producuctWeight = product.netVolume * product.material.density;
@@ -85,7 +87,7 @@ export function calculateProcessingFee(
   }
 
   if (tonnage <= 0 || shots <= 0 || minBatchThreshold <= 0 || batchCount <= 0) {
-    throw new Error('参数不能为负数或0');
+    throw new Error("参数不能为负数或0");
   }
 
   // 基础费率计算（示例：每吨位每模次0.5元）
@@ -123,10 +125,15 @@ export function calculateProductTotalPrice(
 ): number {
   // TODO:
   // 1. 产品总售价 = (总产品材料成本 + 总损耗费用 + 总加工成本) × (1 + 产品利润系数)
-  if (materialCost <= 0 || wastage <= 0 || processingFee <= 0 || profitRate <= 0) {
-    throw new Error('成本不能为负数或0');
+  if (
+    materialCost <= 0 ||
+    wastage <= 0 ||
+    processingFee <= 0 ||
+    profitRate <= 0
+  ) {
+    throw new Error("成本不能为负数或0");
   }
-  return (materialCost + wastage + processingFee) * productProfitRate;
+  return (materialCost + wastage + processingFee) * getProductProfitRate();
 }
 
 /**
@@ -146,7 +153,7 @@ export function calculateRiskAdjustedCost(
   //    - 高风险（61-80分）：基础费用 × (1 + 0.2)
   //    - 极高风险（>80分）：基础费用 × (1 + 0.3)
   if (baseCost <= 0 || riskScore <= 0) {
-    throw new Error('成本跟风险评分不能为负数或0');
+    throw new Error("成本跟风险评分不能为负数或0");
   }
   if (riskScore <= 30) {
     return baseCost;
@@ -173,8 +180,12 @@ export function calculateProductMaterialCostOld(
   productMaterialUnitPrice: number,
 ): number {
   // 伪代码
-  if (!productNetVolume || !productMaterialDensity || !productMaterialUnitPrice) {
-    throw new Error('产品净体积、材料密度或材料单价不能为空');
+  if (
+    !productNetVolume ||
+    !productMaterialDensity ||
+    !productMaterialUnitPrice
+  ) {
+    throw new Error("产品净体积、材料密度或材料单价不能为空");
   }
   const productWeight = productNetVolume * productMaterialDensity;
   return productWeight * productMaterialUnitPrice;
@@ -192,7 +203,7 @@ export function calculateProductTotalCost(
 ): number {
   // 伪代码
   if (productQuantity <= 0 || singleProductCost <= 0) {
-    throw new Error('产品数量或单件产品成本不能为负数或0');
+    throw new Error("产品数量或单件产品成本不能为负数或0");
   }
   return productQuantity * singleProductCost;
 }
@@ -208,7 +219,7 @@ export function calculateProductCost(
   processingCost: number,
 ): number {
   if (materialCost <= 0 || processingCost <= 0) {
-    throw new Error('材料成本或加工成本不能为负数或0');
+    throw new Error("材料成本或加工成本不能为负数或0");
   }
   return materialCost + processingCost;
 }
@@ -228,8 +239,6 @@ export function calculateProcessingCost(
   // 伪代码：加工成本 = 机器费用 + 人工成本
   return 0;
 }
-
-
 
 /**
  * 计算生产加工费用
@@ -269,7 +278,7 @@ export function calculateRiskAdjustedCostOld(
 ): number {
   // 伪代码：最终总费用 = 基础总费用 × (1 + 风险调整系数)
   if (baseCost <= 0 || riskAssessment.score <= 0) {
-    throw new Error('基础总费用或风险评分不能为负数或0');
+    throw new Error("基础总费用或风险评分不能为负数或0");
   }
   //按照之前的规则计算风险分
   if (riskAssessment.score <= 30) {

@@ -5,8 +5,8 @@ import {
   calculateProductPrice,
 } from "../price";
 import { getProductMaterial } from "../../materials/product-materials";
-import { fixedLossRate } from "src/lib/constants/price-constant";
 import type { ProductPriceDimensions } from "../product-schema";
+import { getProductLossRate } from "../common";
 
 // Mock getProductMaterial
 vi.mock("../../materials/product-materials", () => ({
@@ -26,12 +26,12 @@ describe("calculateProductMaterialPrice", () => {
   test("应该正确计算材料价格", () => {
     const volume = 100; // cm³
     const material = "ABS";
-
+    const lossRate = getProductLossRate();
     const result = calculateProductMaterialPrice(volume, material);
 
     // 期望价格 = 体积 * 密度 * 损耗率 * 单价
     // 100 * 1.05 * 1.1 * 25 = 2887.5
-    const expectedPrice = volume * 1.05 * fixedLossRate * 25;
+    const expectedPrice = volume * 1.05 * lossRate * 25;
     expect(result).toBe(expectedPrice);
   });
 

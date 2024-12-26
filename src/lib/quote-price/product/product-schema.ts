@@ -1,7 +1,6 @@
 import { type Point3D } from "@/types/core/geometry";
 import { z } from "zod";
 
-
 export const productDimensionsSchema = z.object({
   length: z.number(),
   width: z.number(),
@@ -12,9 +11,9 @@ export const productDimensionsSchema = z.object({
 export type ProductDimensions = z.infer<typeof productDimensionsSchema>;
 
 export const productPriceDimensionsSchema = z.object({
-  length: z.number(),
+  depth: z.number(),
   width: z.number(),
-  height:z.number(),
+  height: z.number(),
   volume: z.number(),
   productMaterial: z.string(),
   productQuantity: z.number(),
@@ -22,10 +21,12 @@ export const productPriceDimensionsSchema = z.object({
   density: z.number(),
 });
 
-export type ProductPriceDimensions = z.infer<typeof productPriceDimensionsSchema>;
+export type ProductPriceDimensions = z.infer<
+  typeof productPriceDimensionsSchema
+>;
 
 export const moldDimensionsSchema = z.object({
-  length: z.number(),
+  depth: z.number(),
   width: z.number(),
   height: z.number(),
   moldMaterial: z.string().default(""),
@@ -47,7 +48,7 @@ export const processingCostSchema = z.object({
 });
 
 export const productPriceSchema = z.object({
-  length: z.number(),
+  depth: z.number(),
   width: z.number(),
   height: z.number(),
   volume: z.number(),
@@ -66,14 +67,13 @@ export type ProductPrice = z.infer<typeof productPriceSchema>;
 export const groupedProductPriceSchema = z.array(productPriceSchema);
 export type ProductPriceGroup = z.infer<typeof groupedProductPriceSchema>;
 
-export const  Dimensions3DSchema = z.object({
+export const Dimensions3DSchema = z.object({
   width: z.number(),
   length: z.number(),
   height: z.number(),
 });
 
 export type Dimensions3D = z.infer<typeof Dimensions3DSchema>;
-
 
 // 创建与 Point3D 类型对应的 Zod schema
 const Point3DSchema = z.object({
@@ -132,7 +132,7 @@ export const CADDataSchema = z.object({
   momentOfInertia: Point3DSchema.optional(),
   format: z.string().optional(),
   version: z.string().optional(),
-  lastModified: z.date().optional(),  
+  lastModified: z.date().optional(),
 });
 
 export type CADDataNew = z.infer<typeof CADDataSchema>;
@@ -159,15 +159,19 @@ export const productGroupWithScoreSchema = z.object({
   group: productGroupSchema,
   score: z.number(),
   mold: moldDimensionsSchema.optional(),
-  productsWithPrice:  z.array(groupedProductPriceSchema).optional(),
+  productsWithPrice: z.array(groupedProductPriceSchema).optional(),
 });
 
 // 一个分组方案（多个产品组）的 schema
 export const groupedProductsSchema = z.array(productGroupSchema);
 
-export const groupedProductsWithScoreItemSchema = z.array(productGroupWithScoreSchema);
+export const groupedProductsWithScoreItemSchema = z.array(
+  productGroupWithScoreSchema,
+);
 
-export type groupedProductsWithScoreItem = z.infer<typeof groupedProductsWithScoreItemSchema>;
+export type groupedProductsWithScoreItem = z.infer<
+  typeof groupedProductsWithScoreItemSchema
+>;
 
 export const groupedProductsWithScoreSchema = z.object({
   groups: groupedProductsWithScoreItemSchema,
@@ -179,9 +183,9 @@ export const groupedProductsWithScoreSchema = z.object({
 });
 
 // 所有可能的分组方案的 schema
-export const productGroupOutputResultSchema = z.array(groupedProductsWithScoreSchema);
-
-
+export const productGroupOutputResultSchema = z.array(
+  groupedProductsWithScoreSchema,
+);
 
 export type ProductGroupItem = z.infer<typeof productGroupItemSchema>;
 
@@ -189,6 +193,6 @@ export type productGroup = z.infer<typeof productGroupSchema>;
 
 export type groupedProducts = z.infer<typeof groupedProductsSchema>;
 
-export type groupedProductsSchemas = z.infer<typeof productGroupOutputResultSchema>;
-
-
+export type groupedProductsSchemas = z.infer<
+  typeof productGroupOutputResultSchema
+>;

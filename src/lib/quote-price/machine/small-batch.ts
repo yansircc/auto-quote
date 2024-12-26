@@ -1,6 +1,6 @@
+import { getSmallBatchThresholdValue } from "../product/common";
 import { getMachineByTonnage } from "./common";
 import type { MachineConfig } from "./types";
-import { smallBatchThresholdValue } from "src/lib/constants/price-constant";
 
 /**
  * 计算小批量费用
@@ -19,7 +19,7 @@ export function calculateSmallBatchFee(
   // 2. 根据吨位找到对应的费率
   // 3. 计算小批量费用
   const smallBatchThreshold =
-    config.smallBatchThreshold ?? smallBatchThresholdValue;
+    config.smallBatchThreshold ?? getSmallBatchThresholdValue();
 
   // 如果模次数大于等于阈值，不收取小批量费用
   if (shots >= smallBatchThreshold) {

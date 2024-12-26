@@ -561,6 +561,21 @@ const heightSetting = [
 //定义颜色数组
 const colorList = ["402C", "805C", "302C", "405C"];
 
+const constantSettingList = [
+  { constantName: "exchangeRate", constantValue: 7.1 },
+  { constantName: "moldMaterialPerPrice", constantValue: 10 },
+  { constantName: "minSalesWeight", constantValue: 100 },
+  { constantName: "minCalculatedWeight", constantValue: 1000 },
+  { constantName: "maxCalculatedWeight", constantValue: 4000 },
+  { constantName: "moldMaterialCostStepOne", constantValue: 4 },
+  { constantName: "moldMaterialCostStepTwo", constantValue: 3 },
+  { constantName: "smallBatchThresholdValue", constantValue: 1000 },
+  { constantName: "productProfitRate", constantValue: 1.5 },
+  { constantName: "fixedLossRate", constantValue: 1.1 },
+  { constantName: "defaultMoldMaterialDensity", constantValue: 0.00000785 },
+  { constantName: "injectionSafetyFactor", constantValue: 0.8 },
+] as const;
+
 export {
   materialList,
   moldMaterialList,
@@ -583,4 +598,5 @@ export {
   smallBatchThresholdValue,
   moldMaterialPerPrice,
   productProfitRate,
+  constantSettingList,
 };

@@ -1,6 +1,6 @@
-import { injectionSafetyFactor } from "src/lib/constants/price-constant";
 import type { Product } from "../product/types";
 import type { MachineConfig } from "./types";
+import { getProductSafetyFactor } from "../product/common";
 
 /**
  * 计算注胶量
@@ -40,7 +40,7 @@ export function calculateSafeInjectionVolume(
   // TODO:
   // 1. 使用安全系数计算安全注胶量
 
-  const safeVolume = volume / injectionSafetyFactor;
+  const safeVolume = volume / getProductSafetyFactor();
 
   // TODO: 检查安全注胶量是否超过机器容量
   if (safeVolume > config.maxInjectionVolume) {

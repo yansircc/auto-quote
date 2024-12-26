@@ -62,56 +62,42 @@ export class ScoreReporter {
       expect: { min?: number; max?: number };
     },
   ): string {
-    // 计算实际分数变化
-    const actualChange = currentScore.actual - previousScore.actual;
-    const actualPercentage =
-      previousScore.actual === 0
-        ? actualChange > 0
-          ? Infinity
-          : 0
-        : (actualChange / previousScore.actual) * 100;
-
-    // 使用适应度得分来判断改进
+    // 计算适应度变化
     const fitnessChange = currentScore.fitness - previousScore.fitness;
 
-    // 判断分数是否在期望范围内
-    const prevInRange =
-      previousScore.actual >= (previousScore.expect.min ?? 0) &&
-      previousScore.actual <= (previousScore.expect.max ?? 100);
-    const currInRange =
-      currentScore.actual >= (currentScore.expect.min ?? 0) &&
-      currentScore.actual <= (currentScore.expect.max ?? 100);
+    // 使用固定基数100来计算百分比，而不是使用之前的分数作为基数
+    const fitnessChangePercentage = fitnessChange; // 直接使用分数差作为百分比
 
-    // 确定变化方向符号
+    // 确定方向符号（基于适应度变化）
     const directionSymbol =
-      actualChange > 0 ? " ↑" : actualChange < 0 ? " ↓" : " →";
+      fitnessChange > 0 ? " ↑" : fitnessChange < 0 ? " ↓" : " →";
 
-    // 格式化变化文本
-    let changeText: string;
-    if (!Number.isFinite(actualPercentage)) {
-      changeText = actualChange > 0 ? "+∞%" : "0%";
-    } else {
-      const sign = actualPercentage > 0 ? "+" : "";
-      changeText = `${sign}${actualPercentage.toFixed(1)}%`;
-    }
-    changeText += directionSymbol;
+    // 格式化变化文本（使用适应度变化）
+    const changeText = `${fitnessChangePercentage >= 0 ? "+" : ""}${Math.abs(fitnessChangePercentage).toFixed(1)}%`;
 
-    // 根据不同情况选择颜色
-    if (!prevInRange && currInRange) {
-      // 从范围外改进到范围内
-      return chalk.green(changeText);
-    } else if (prevInRange && !currInRange) {
-      // 从范围内恶化到范围外
-      return chalk.red(changeText);
-    } else if (prevInRange && currInRange) {
-      // 都在范围内，使用灰色
-      return chalk.gray(changeText);
-    } else {
-      // 都在范围外，但在向好的方向改进
-      return fitnessChange > 0
-        ? chalk.yellow(changeText)
-        : chalk.red(changeText);
+    // 如果适应度有显著变化
+    if (Math.abs(fitnessChange) > 0.01) {
+      // 检查当前值是否在期望范围内
+      const isInRange =
+        currentScore.actual >= (currentScore.expect.min ?? 0) &&
+        currentScore.actual <= (currentScore.expect.max ?? 100);
+
+      if (fitnessChange > 0) {
+        // 如果适应度提升但仍未达到期望范围，显示橙色
+        return isInRange
+          ? chalk.green(changeText + directionSymbol)
+          : chalk.yellow(changeText + directionSymbol);
+      } else {
+        return chalk.red(changeText + directionSymbol);
+      }
     }
+
+    // 如果适应度相同但实际分数有变化，使用灰色
+    if (Math.abs(fitnessChange) <= 0.01) {
+      return chalk.gray("+0.0% →");
+    }
+
+    return chalk.gray(changeText + directionSymbol);
   }
 
   /**
@@ -158,7 +144,7 @@ export class ScoreReporter {
 
       const coloredChange = this.formatScoreChange(previousScore, bestScore);
 
-      // 获取期望范围，提供默认值
+      // 获取期望范围，提��默认值
       const minScore = previousScore.expect.min ?? 0;
       const maxScore = previousScore.expect.max ?? 100;
 

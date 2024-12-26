@@ -5,12 +5,12 @@ import {
   calculateProcessingFee,
   calculateTotalMoldCost,
 } from "../cost";
-import {
-  defaultMoldMaterialDensity,
-  moldMaterialPerPrice,
-} from "src/lib/constants/price-constant";
 import { describe, it, expect } from "vitest";
 import type { Mold, MoldConfig } from "../types";
+import {
+  getMoldMaterialDensity,
+  getMoldMaterialPerPrice,
+} from "../../product/common";
 
 describe("模具成本计算", () => {
   // 创建一个基础的模具配置对象
@@ -39,8 +39,8 @@ describe("模具成本计算", () => {
     weight: 10, // kg
     material: {
       name: "718H", // 确保这个名字在 moldPriceDifferList 中存在
-      density: defaultMoldMaterialDensity,
-      pricePerKg: moldMaterialPerPrice,
+      density: getMoldMaterialDensity(),
+      pricePerKg: getMoldMaterialPerPrice(),
       id: "1",
     },
     cavityCount: 1,
@@ -51,7 +51,7 @@ describe("模具成本计算", () => {
       const cost = calculateMoldMaterialCost(mockMold);
       // 体积: 100 * 100 * 100 = 1,000,000 mm³ = 1,000 cm³
       // 重量: 1,000 * defaultMoldMaterialDensity
-      // 成本: max(重量, minSalesWeight) * moldMaterialPerPrice
+      // 成本: max(重量, minSalesWeight) *
       expect(cost).toBeGreaterThan(0);
     });
 
@@ -141,4 +141,3 @@ describe("模具成本计算", () => {
     });
   });
 });
-

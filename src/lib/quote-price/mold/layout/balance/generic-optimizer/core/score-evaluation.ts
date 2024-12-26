@@ -10,34 +10,48 @@ export class ScoreEvaluation {
    */
   static calculateFitnessScore(
     actual: number,
-    expect: { min?: number; max?: number; exact?: number },
+    expect: { min?: number; max?: number },
     config: {
-      baseFitness?: number;
-      bonus?: number;
-      penalty?: number;
+      baseFitness?: number; // 基础分数
+      successBase?: number; // 成功情况的基础分数
+      failureBase?: number; // 失败情况的基础分数
+      centerBonus?: number; // 靠近中心的奖励系数
+      distancePenalty?: number; // 距离惩罚系数
     } = {},
   ): number {
-    const { baseFitness = 1, bonus = 0.2, penalty = 0.5 } = config;
-    const expectation = {
-      min: expect.min ?? expect.exact ?? 0,
-      max: expect.max ?? expect.exact ?? 100,
-    };
+    const {
+      successBase = 80, // 成功情况从80分起步
+      failureBase = 70, // 失败情况最高70分
+      centerBonus = 0.2, // 中心奖励系数
+      distancePenalty = 0.3, // 距离惩罚系数
+    } = config;
 
-    // 如果在范围内，给予奖励
-    if (this.isInRange(actual, expectation)) {
-      return baseFitness * (1 + bonus);
+    const min = expect.min ?? 0;
+    const max = expect.max ?? 100;
+    const center = (min + max) / 2;
+    const range = max - min;
+
+    // 在期望范围内
+    if (actual >= min && actual <= max) {
+      // 计算到中心点的距离比例
+      const distanceToCenter = Math.abs(actual - center);
+      const centerDistanceRatio = distanceToCenter / (range / 2);
+
+      // 根据距离中心的远近给予奖励
+      // centerDistanceRatio为0时（在中心）得到最高分数(successBase + 20)
+      // centerDistanceRatio为1时（在边缘）得到基础分数(successBase)
+      return successBase + (1 - centerDistanceRatio) * (centerBonus * 100);
     }
 
-    // 否则根据偏离程度计算惩罚
-    const distance = this.calculateDistance(actual, expectation);
-    const maxDistance = Math.max(
-      Math.abs(expectation.max - expectation.min),
-      Math.abs(actual - expectation.min),
-      Math.abs(actual - expectation.max),
+    // 在期望范围外
+    const distanceToRange = Math.min(
+      Math.abs(actual - min),
+      Math.abs(actual - max),
     );
-    const penaltyRatio = distance / maxDistance;
+    const distanceRatio = distanceToRange / range;
 
-    return baseFitness * (1 - penalty * penaltyRatio);
+    // 计算惩罚分数，但确保不会低于0分
+    return Math.max(0, failureBase - distanceRatio * distancePenalty * 100);
   }
 
   /**

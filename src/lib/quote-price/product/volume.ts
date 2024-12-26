@@ -1,4 +1,4 @@
-import { injectionSafetyFactor } from "src/lib/constants/price-constant";
+import { getProductSafetyFactor } from "./common";
 
 /**
  * 计算产品净体积
@@ -75,5 +75,5 @@ export function calculateInjectionVolume(netVolume: number): number {
   if (netVolume <= 0) {
     throw new Error("净体积不能为负数或0");
   }
-  return netVolume / injectionSafetyFactor;
+  return netVolume / getProductSafetyFactor();
 }

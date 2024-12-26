@@ -6,11 +6,9 @@ import {
   getSmallBatchMachiningFee,
   calculateOptimalTonnage,
 } from "../tonnage";
-import {
-  injectionSafetyFactor,
-  machineList,
-} from "src/lib/constants/price-constant";
+import { machineList } from "src/lib/constants/price-constant";
 import { describe, it, expect } from "vitest";
+import { getProductSafetyFactor } from "../../product/common";
 
 describe("机器吨位计算", () => {
   describe("determineMachineTonnage", () => {
@@ -31,7 +29,7 @@ describe("机器吨位计算", () => {
         (m) =>
           Math.min(moldWidth, moldDepth) <= m.moldWidth &&
           moldHeight <= m.moldHeight &&
-          injectionVolume / injectionSafetyFactor <= m.injectionVolume,
+          injectionVolume / getProductSafetyFactor() <= m.injectionVolume,
       );
 
       expect(tonnage).toBe(parseInt(expectedMachine!.name.replace("T", "")));
