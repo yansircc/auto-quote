@@ -1,6 +1,8 @@
 import {
   operatingExpenseList,
   moldPriceDifferList,
+  borderSpaceRules,
+  heightSetting,
 } from "src/lib/constants/price-constant";
 
 /**
@@ -43,4 +45,55 @@ export function getOperatingExpenseByWeight(weight: number): number {
   }
 
   return expenseItem.price;
+}
+
+/**
+ * 根据模具长宽计算模具高度
+ * @param {number} width 模具宽度
+ * @param {number} height 模具高度
+ * @returns {number} 模具高度
+ */
+export function getHeightByDimensions(width: number, height: number): number {
+  const heightSettingItem = heightSetting.find(
+    (rule) => height <= rule.maxHeight,
+  );
+
+  if (!heightSettingItem) {
+    throw new Error("模具高度超过高度阈值");
+  }
+
+  return heightSettingItem.height;
+}
+
+/**
+ * 根据最高产品高度计算模具高度
+ * @param {number} height 最高产品高度
+ * @returns {number} 模具高度
+ */
+export function getHeightByMaxProductHeight(height: number): number {
+  const heightSettingItem = heightSetting.find(
+    (rule) => height <= rule.maxHeight,
+  );
+
+  if (!heightSettingItem) {
+    throw new Error("产品高度超过高度阈值");
+  }
+
+  return heightSettingItem.height;
+}
+/**
+ * 根据模具宽度计算模具边距
+ * @param {number} width 模具宽度
+ * @returns {number} 模具边距
+ */
+export function getMarginByWidth(width: number): number {
+  const borderSpaceItem = borderSpaceRules.find(
+    (rule) => width <= rule.maxLength,
+  );
+
+  if (!borderSpaceItem) {
+    throw new Error("模具宽度超过边距阈值");
+  }
+
+  return borderSpaceItem.spacing;
 }

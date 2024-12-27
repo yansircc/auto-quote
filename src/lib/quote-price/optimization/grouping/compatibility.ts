@@ -16,9 +16,22 @@ export function checkProductCompatibility(
   // TODO:
   // 1. 检查材料兼容性
   //    - 如果材料不同且未启用 allowDifferentMaterials，返回 false
+  if (
+    product1.material !== product2.material && 
+    !config.forceGrouping.allowDifferentMaterials
+  ) {
+    return false;
+  }
+
   // 2. 检查颜色兼容性
-  //    - 如果颜色不同且未启用 allowDifferentColors，返回 false
-  return false;
+  if (
+    product1.color !== product2.color && 
+    !config.forceGrouping.allowDifferentColors
+  ) {
+    return false;
+  }
+
+  return true;
 }
 
 /**
@@ -36,5 +49,28 @@ export function checkGroupCompatibility(
   // 2. 考虑强制组合选项：
   //    - allowDifferentMaterials
   //    - allowDifferentColors
-  return false;
+
+  if (products.length === 0) {
+    throw new Error('产品列表不能为空');
+  }
+  if (products.length === 1) {
+    return true;
+  }
+  
+
+  for (let i = 0; i < products.length - 1; i++) {
+    for (let j = i + 1; j < products.length; j++) {
+
+      const product1 = products[i];
+      const product2 = products[j];
+      if (!product1 || !product2) {
+        throw new Error('产品列表中存在空产品');
+      }
+      if (!checkProductCompatibility(product1, product2, config)) {
+        return false;
+      }
+    }
+  }
+
+  return true;
 }

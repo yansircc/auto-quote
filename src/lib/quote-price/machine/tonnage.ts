@@ -4,11 +4,9 @@ import {
   calculateInjectionVolume,
   calculateSafeInjectionVolume,
 } from "./injection";
-import {
-  injectionSafetyFactor,
-  machineList,
-} from "src/lib/constants/price-constant";
+import { machineList } from "src/lib/constants/price-constant";
 import { getMachineByTonnage } from "./common";
+import { getProductSafetyFactor } from "../product/common";
 
 /**
  * 根据模具尺寸与注胶量确定需要的机器吨位
@@ -39,7 +37,7 @@ export function determineMachineTonnage(
       (machine) =>
         moldWidthActual <= machine.moldWidth &&
         moldHeight <= machine.moldHeight &&
-        injectionVolume / injectionSafetyFactor <= machine.injectionVolume,
+        injectionVolume / getProductSafetyFactor() <= machine.injectionVolume,
     )
     .sort((a, b) => {
       const aValue = parseInt(a.name.replace("T", ""));

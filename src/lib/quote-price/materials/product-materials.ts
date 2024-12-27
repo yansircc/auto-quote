@@ -1,5 +1,6 @@
 import type { ProductMaterial } from "./types";
 import { getProductMaterialByName } from "./common";
+import { materialList } from "src/lib/constants/price-constant";
 
 /**
  * 获取产品材料信息
