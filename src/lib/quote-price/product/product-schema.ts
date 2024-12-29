@@ -36,6 +36,8 @@ export const moldDimensionsSchema = z.object({
   maxInnerWidth: z.number().optional().default(0),
   verticalMargin: z.number().optional().default(0),
   horizontalMargin: z.number().optional().default(0),
+  scores: z.record(z.string(), z.number()).optional(),
+  weightedAverage: z.number().optional(),
 });
 
 export type MoldDimensions = z.infer<typeof moldDimensionsSchema>;

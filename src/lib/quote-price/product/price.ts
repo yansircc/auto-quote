@@ -130,7 +130,7 @@ export function calculateProductPrice(
   }));
 }
 
-export function calculateProductFinalPrice(
+export function calculateProductFinalPriceData(
   paramsProducts: ProductPrice[],
 ): ProductPrice[] {
   if (!paramsProducts || paramsProducts.length === 0) {

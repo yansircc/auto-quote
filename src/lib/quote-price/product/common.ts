@@ -1,4 +1,6 @@
 import { constantSettingList } from "src/lib/constants/price-constant";
+import { type BaseCuboid } from "../mold/layout/balance/types";
+import { type Product } from "./types";
 
 /**
  * 获取产品的利润参数
@@ -152,4 +154,17 @@ export function getSmallBatchThresholdValue(): number {
     throw new Error("小批量阈值不能为空");
   }
   return smallBatchThresholdValue.constantValue;
+}
+
+/**
+ * 产品信息从product数组转换为mold数组
+ * @param {Product[]} products 产品信息
+ * @returns {Mold[]} mold 模具信息
+ */
+export function productToMold(products: Product[]): BaseCuboid[] {
+  return products.map((product) => ({
+    width: product.dimensions.width,
+    depth: product.dimensions.height,
+    height: product.dimensions.depth,
+  }));
 }

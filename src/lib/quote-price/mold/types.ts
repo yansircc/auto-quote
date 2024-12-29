@@ -38,4 +38,6 @@ export interface Mold {
   dimensions: MoldDimensions;
   weight: number; // 重量 (kg)
   cavityCount: number; // 型腔数量
+  scores: Record<string, number>; // 分数
+  weightedAverage: number; // 加权平均分
 }
