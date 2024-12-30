@@ -1,11 +1,11 @@
 import type { ProductPrice, ProductPriceDimensions } from "./product-schema";
 
 import { type Mold } from "../mold/types";
-import { calculateProductFinalPriceData, calculateProductPrice } from "./price";
-import { determineMachineTonnage } from "../machine/tonnage";
-import { calculateInjectionVolume } from "./volume";
-
-import { calculateProductionProcessingFee } from "./cost";
+import {
+  calculateMaxMachiningCost,
+  calculateProductFinalPriceData,
+  calculateProductPrice,
+} from "./price";
 
 interface PipelineResult {
   minimumArea: number;
@@ -25,37 +25,13 @@ export function calculateProductFinalPrice(
   if (paramsProducts.length === 0) {
     throw new Error("产品数量不能为0");
   }
-  //计算模具的注胶量
-  const injectionVolume = paramsProducts.reduce((sum, product) => {
-    return sum + product.volume * product.density;
-  }, 0);
-
-  console.log("mold:", mold);
-  console.log("injectionVolume:", injectionVolume);
-
-  const safetyFactorVolume = calculateInjectionVolume(injectionVolume);
-  //根据模具的尺寸和注胶量确定机器吨位
-  const machineTonnage = determineMachineTonnage(
-    mold.dimensions.width,
-    mold.dimensions.height,
-    mold.dimensions.depth,
-    safetyFactorVolume,
-  );
 
   //计算产品的加工费用，找出最大的那个
-  const machiningCost = Math.max(
-    ...paramsProducts.map((product) => {
-      return calculateProductionProcessingFee(
-        machineTonnage,
-        product.productQuantity,
-        undefined,
-      );
-    }),
-  );
+  const machiningCost = calculateMaxMachiningCost(mold, paramsProducts);
 
   //用最大的加工成本计算的加工费用
   const initialPrices = calculateProductPrice(paramsProducts, machiningCost);
-  // return [];
+
   return calculateProductFinalPriceData(initialPrices);
 }
 
