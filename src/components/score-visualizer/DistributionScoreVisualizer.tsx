@@ -1,7 +1,7 @@
 import React, { useMemo } from "react";
 import { calculate2DCenter } from "@/lib/utils/coordinate";
 import { calculateDistributionScore } from "@/lib/algorithm/balance/scores/distribution";
-import { COLORS } from "@/lib/constants/colors";
+import { COLORS } from "@/lib/quote-price/core/colors";
 import {
   type BaseVisualizerProps,
   Annotation,
