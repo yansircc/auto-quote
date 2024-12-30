@@ -1,4 +1,3 @@
-import type { Color } from "../materials/types";
 import type { RiskLevel } from "../risk/types";
 
 /**

@@ -14,15 +14,50 @@ import { getHeightByMaxProductHeight, getMarginByWidth } from "../mold/common";
 import { calculateCavityLayout } from "../mold/layout/cavity-layout";
 import { getMoldMaterialDensity, productToMold } from "./common";
 
+interface MoldPrice {
+  moldMaterialCost: number;
+  maintenanceFee: number;
+  processingFee: number;
+  moldProfit: number;
+  totalPrice: number;
+}
+
+/**
+ * 计算模具报价
+ * @param mold 模具信息
+ * @returns 包含各项成本和总报价的 MoldPrice 对象
+ */
+export function calculateMoldPrice(mold: Mold): MoldPrice {
+  // 计算模具材料成本
+  const moldMaterialCost = calculateMoldMaterialCost(mold);
+  // 计算模具维护费用
+  const maintenanceFee = calculateMaintenanceFee(mold.weight, null);
+  // 计算模具加工费用
+  const processingFee = calculateProcessingFee(mold, null);
+  // 计算模具利润
+  const moldProfit = calculateGrossProfit(mold.weight, null);
+  // 计算模具总报价
+  const totalPrice =
+    moldMaterialCost + maintenanceFee + processingFee + moldProfit;
+
+  return {
+    moldMaterialCost,
+    maintenanceFee,
+    processingFee,
+    moldProfit,
+    totalPrice,
+  };
+}
+
 /**
  * 运行模具厂报价流水线
  * @param products 产品信息
- * @param moldConfig 模具配置
+ * @param moldMaterial 模具材料，默认使用P20
  * @returns 包含最小面积、模具价格和产品价格以及评分的结果
  */
 export function runProductPricePipeline(
   products: Product[],
-  moldMaterial: MoldMaterial,
+  moldMaterial: MoldMaterial = getMoldMaterial("P20")!,
 ): MoldDimensions {
   if (!products || products.length === 0) {
     throw new Error("产品列表不能为空");
@@ -42,7 +77,6 @@ export function runProductPricePipeline(
   console.log("layoutResult after calculateMinArea", layoutResult);
 
   //2、计算模具高度
-
   const maxProductHeight = getHeightByMaxProductHeight(
     Math.max(...products.map((product) => product.dimensions.height)),
   );
@@ -90,21 +124,7 @@ export function runProductPricePipeline(
     cavityCount: products.length,
   };
 
-  // 2. 计算模具材料成本
-  const moldMaterialCost = calculateMoldMaterialCost(mold);
-
-  // 计算供应商运维费
-  const maintenanceFee = calculateMaintenanceFee(mold.weight, null);
-
-  //计算模具额外加工费
-  const processingFee = calculateProcessingFee(mold, null);
-
-  //计算模具毛利
-  const moldProfit = calculateGrossProfit(mold.weight, null);
-
-  //计算模具价格
-  const moldPrice =
-    moldMaterialCost + maintenanceFee + processingFee + moldProfit;
+  const { totalPrice: moldPrice } = calculateMoldPrice(mold);
 
   return {
     scores: mold.scores,
