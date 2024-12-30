@@ -1,8 +1,28 @@
+/**
+ * @description 产品分组评估器
+ *
+ * 本文件包含用于评估产品分组风险和成本的函数，主要用于：
+ * 1. 计算产品组合的风险评分
+ * 2. 评估产品组合的成本
+ * 3. 检查产品组合的可行性
+ *
+ * 依赖：
+ * - Product 类型：定义产品的基本属性
+ * - RiskConfig 类型：定义风险配置规则
+ * - CavityConfig 类型：定义穴数配置规则
+ * - GroupingConfig 类型：定义分组配置规则
+ *
+ * 主要函数：
+ * 1. evaluateGroupRisk: 计算产品组合的风险评分
+ * 2. evaluateGroupCost: 评估产品组合的成本
+ * 3. evaluateGroupFeasibility: 检查产品组合的可行性
+ */
+
 import { type RiskConfig, RiskLevel } from "../../risk/types";
 import type { Product } from "../../product/types";
 import type { CavityConfig, GroupingConfig } from "../types";
 import { calculateRiskAssessment } from "../../risk";
-import { checkProductCompatibility } from "./compatibility";
+import { checkGroupCompatibility } from "./compatibility";
 
 /**
  * 评估产品组合的风险
@@ -100,10 +120,9 @@ export function evaluateGroupFeasibility(
   groupingConfig: GroupingConfig,
 ): boolean {
   // TODO:
-  // 1. 检查材料兼容性
-  // 2. 检查颜色兼容性
-  // 3. 检查穴数比例
-  // 4. 检查风险是否可接受
+  // 1. 检查产品组合是否兼容
+  // 2. 检查穴数比例
+  // 3. 检查风险是否可接受
 
   if (!products.length || !cavities.length) {
     throw new Error("产品列表或穴数列表不能为空");
@@ -113,19 +132,9 @@ export function evaluateGroupFeasibility(
     throw new Error("产品数量与穴数数量不匹配");
   }
 
-  // 检查每对产品的兼容性
-  for (let i = 0; i < products.length - 1; i++) {
-    for (let j = i + 1; j < products.length; j++) {
-      const product1 = products[i];
-      const product2 = products[j];
-      if (
-        !product1 ||
-        !product2 ||
-        !checkProductCompatibility(product1, product2, groupingConfig)
-      ) {
-        return false;
-      }
-    }
+  // 检查产品组合是否兼容
+  if (!checkGroupCompatibility(products, groupingConfig)) {
+    return false;
   }
 
   // 检查穴数比例

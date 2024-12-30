@@ -1,5 +1,4 @@
 import type { ProductMaterial } from "./types";
-import { getProductMaterialByName } from "./common";
 import { materialList } from "src/lib/constants/price-constant";
 
 /**
@@ -32,19 +31,12 @@ export function calculateProductMaterialCost(
   material: ProductMaterial,
   volume: number,
 ): number {
-  // TODO:
-  // 1. 考虑材料收缩率计算实际体积
-  // 2. 根据密度计算重量
-  // 3. 根据单价计算成本
   if (volume < 0) {
     throw new Error("产品体积不能为负数");
   }
 
-  // 考虑材料收缩率计算实际体积
-  const actualVolume = volume * (1 + material.shrinkageRate ?? 0);
-
   // 根据密度计算重量（g）
-  const weight = actualVolume * material.density;
+  const weight = volume * material.density;
 
   // 根据单价计算成本（元）
   return weight * material.pricePerKg;
