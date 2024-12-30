@@ -8,18 +8,23 @@ import ProductInfoStep from "@/components/product-info-step/product-info-step";
 import ConfirmStep from "@/components/confirm-step/confirm-step";
 import PriceCalculationStep from "@/components/price-calculation-step/price-calculation-step";
 import type { UploadFile } from "@/types/user-guide/upload";
+import type { ProductInfo } from "@/types/user-guide/product";
 
 interface StepProps {
   currentStep: number;
   isValid?: boolean;
   onValidityChange?: (isValid: boolean) => void;
   uploadedFiles?: UploadFile[];
+  products?: ProductInfo[];
+  moldMaterial?: string;
 }
 
 export default function UserGuidePage() {
   const [currentStep, setCurrentStep] = useState(1);
   const [isStepValid, setIsStepValid] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState<UploadFile[]>([]);
+  const [products, setProducts] = useState<ProductInfo[]>([]);
+  const [moldMaterial, setMoldMaterial] = useState<string>("");
   const totalSteps = 4;
 
   const handleNext = () => {
@@ -44,21 +49,41 @@ export default function UserGuidePage() {
     setUploadedFiles(files);
   };
 
+  const handleProductsChange = (newProducts: ProductInfo[]) => {
+    setProducts(newProducts);
+  };
+
+  const handleMoldMaterialChange = (material: string) => {
+    setMoldMaterial(material);
+  };
+
   const renderStep = () => {
     const stepProps: StepProps = {
       currentStep,
       isValid: isStepValid,
       onValidityChange: handleStepValidityChange,
       uploadedFiles,
+      products,
+      moldMaterial,
     };
 
     switch (currentStep) {
       case 1:
         return <UploadStep {...stepProps} onFilesChange={handleFilesChange} />;
       case 2:
-        return <ProductInfoStep {...stepProps} />;
+        return (
+          <ProductInfoStep
+            {...stepProps}
+            onProductsChange={handleProductsChange}
+          />
+        );
       case 3:
-        return <ConfirmStep {...stepProps} />;
+        return (
+          <ConfirmStep
+            {...stepProps}
+            onMoldMaterialChange={handleMoldMaterialChange}
+          />
+        );
       case 4:
         return <PriceCalculationStep {...stepProps} />;
       default:
@@ -84,7 +109,7 @@ export default function UserGuidePage() {
             <span>上传文件</span>
             <span>填写产品资料</span>
             <span>确认产品资料</span>
-            <span>计算产品价格</span>
+            <span>选择产品方案</span>
           </div>
         </div>
 
