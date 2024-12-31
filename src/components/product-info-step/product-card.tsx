@@ -11,7 +11,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Image from "next/image";
-import type { ProductInfo } from "@/types/user-guide/upload";
+import type { ProductInfo } from "@/types/user-guide/product";
 
 interface ProductCardProps {
   product: ProductInfo;
@@ -40,30 +40,33 @@ export function ProductCard({ product, onChange }: ProductCardProps) {
             </div>
           </div>
 
-          {/* 尺寸输入 */}
+          {/* 尺寸显示 */}
           <div className="grid grid-cols-3 gap-4">
             <div>
               <Label>长度 (mm)</Label>
               <Input
                 type="number"
-                value={product.length ?? ""}
-                onChange={(e) => onChange({ length: Number(e.target.value) })}
+                value={product.length}
+                readOnly
+                className="bg-muted"
               />
             </div>
             <div>
               <Label>宽度 (mm)</Label>
               <Input
                 type="number"
-                value={product.width ?? ""}
-                onChange={(e) => onChange({ width: Number(e.target.value) })}
+                value={product.width}
+                readOnly
+                className="bg-muted"
               />
             </div>
             <div>
               <Label>高度 (mm)</Label>
               <Input
                 type="number"
-                value={product.height ?? ""}
-                onChange={(e) => onChange({ height: Number(e.target.value) })}
+                value={product.height}
+                readOnly
+                className="bg-muted"
               />
             </div>
           </div>

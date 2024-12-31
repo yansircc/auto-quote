@@ -5,35 +5,50 @@ import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { ProductCard } from "./product-card";
 import type { UploadFile } from "@/types/user-guide/upload";
-import type { ProductInfo } from "@/types/user-guide/upload";
+import type { ProductInfo } from "@/types/user-guide/product";
 
 interface ProductInfoStepProps {
   currentStep: number;
   isValid?: boolean;
   onValidityChange?: (isValid: boolean) => void;
   uploadedFiles?: UploadFile[];
+  onProductsChange?: (products: ProductInfo[]) => void;
+}
+
+// 添加生成随机尺寸的辅助函数
+function generateRandomDimensions() {
+  // 生成 50-300 之间的随机整数
+  return {
+    length: Math.floor(Math.random() * (300 - 50 + 1)) + 50,
+    width: Math.floor(Math.random() * (300 - 50 + 1)) + 50,
+    height: Math.floor(Math.random() * (300 - 50 + 1)) + 50,
+  };
 }
 
 export default function ProductInfoStep({
   uploadedFiles,
   onValidityChange,
+  onProductsChange,
 }: ProductInfoStepProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [products, setProducts] = useState<ProductInfo[]>([]);
 
-  // 根据上传的图片初始化产品列表
+  // 根据上传的图片初始化产品列表，包含随机尺寸
   useEffect(() => {
     if (uploadedFiles?.length) {
-      const initialProducts: ProductInfo[] = uploadedFiles.map((file) => ({
-        id: file.id,
-        image: file,
-        quantity: 1,
-        material: "",
-        color: "",
-        length: undefined,
-        width: undefined,
-        height: undefined,
-      }));
+      const initialProducts: ProductInfo[] = uploadedFiles.map((file) => {
+        const dimensions = generateRandomDimensions();
+        return {
+          id: file.id,
+          image: file,
+          quantity: 1,
+          material: "",
+          color: "",
+          length: dimensions.length,
+          width: dimensions.width,
+          height: dimensions.height,
+        };
+      });
       setProducts(initialProducts);
     }
   }, [uploadedFiles]);
@@ -57,12 +72,17 @@ export default function ProductInfoStep({
 
   // 验证所有产品信息是否完整
   useEffect(() => {
-    // const isValid = products.every(
-    //   (product) => product.material && product.color && product.quantity > 0,
-    // );
-    const isValid = true;
+    const isValid = products.every(
+      (product) => product.material && product.color && product.quantity > 0,
+    );
+    // const isValid = true;
     onValidityChange?.(isValid);
   }, [products, onValidityChange]);
+
+  // 当产品信息更新时，通知父组件
+  useEffect(() => {
+    onProductsChange?.(products);
+  }, [products, onProductsChange]);
 
   if (products.length === 0) {
     return (

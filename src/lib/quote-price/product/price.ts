@@ -4,6 +4,10 @@ import {
   type ProductPriceDimensions,
 } from "./product-schema";
 import { getProductLossRate, getProductProfitRate } from "./common";
+import { calculateProductionProcessingFee } from "./cost";
+import { type Mold } from "../mold/types";
+import { determineMachineTonnage } from "../machine/tonnage";
+import { calculateInjectionVolume } from "./volume";
 
 /**
  * 计算单件产品的材料价格（包含损耗）
@@ -149,4 +153,41 @@ export function calculateProductFinalPriceData(
   });
   // console.log("finalProducts:",finalProducts);
   return finalProducts;
+}
+
+/**
+ * 计算最大加工费用
+ * @param {number} machineTonnage 机器吨位
+ * @param {ProductPriceDimensions[]} paramsProducts  产品
+ * @returns {number} 最大加工费用
+ */
+export function calculateMaxMachiningCost(
+  mold: Mold,
+  paramsProducts: ProductPriceDimensions[],
+): number {
+  //计算模具的注胶量
+  const injectionVolume = paramsProducts.reduce((sum, product) => {
+    return sum + product.volume * product.density;
+  }, 0);
+
+  const safetyFactorVolume = calculateInjectionVolume(injectionVolume);
+  //根据模具的尺寸和注胶量确定机器吨位
+  const machineTonnage = determineMachineTonnage(
+    mold.dimensions.width,
+    mold.dimensions.height,
+    mold.dimensions.depth,
+    safetyFactorVolume,
+  );
+
+  const machiningCost = Math.max(
+    ...paramsProducts.map((product) => {
+      return calculateProductionProcessingFee(
+        machineTonnage,
+        product.productQuantity,
+        undefined,
+      );
+    }),
+  );
+
+  return machiningCost;
 }
