@@ -43,7 +43,7 @@ export function MoldInfoCard({
         </div>
         <div>
           <p className="text-sm text-muted-foreground mb-1">模具体积</p>
-          <p className="font-medium">{volume} cm³</p>
+          <p className="font-medium">{volume} mm³</p>
         </div>
         <div className="col-span-2">
           <p className="text-sm text-muted-foreground mb-1">模具尺寸</p>
