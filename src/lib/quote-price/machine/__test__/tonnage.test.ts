@@ -1,220 +1,65 @@
-import {
-  determineMachineTonnage,
-  calculateRequiredTonnage,
-  checkTonnageInRange,
-  getTonnageRate,
-  getSmallBatchMachiningFee,
-  calculateOptimalTonnage,
-} from "../tonnage";
-import { machineList } from "src/lib/constants/price-constant";
-import { describe, it, expect } from "vitest";
-import { getProductSafetyFactor } from "../../product/common";
+import { describe, expect, it } from "vitest";
+import { getCheapestMachine } from "../tonnage";
+import type { Dimensions } from "../../core";
 
-describe("机器吨位计算", () => {
-  describe("determineMachineTonnage", () => {
-    it("计算标准尺寸模具的机器吨位", () => {
-      const moldWidth = 400;
-      const moldHeight = 50;
-      const moldDepth = 50;
-      const injectionVolume = 20;
+describe("吨位计算", () => {
+  const testDimension: Dimensions = { width: 500, height: 300, depth: 400 };
+  const testInjectionWeight = 1000;
 
-      const tonnage = determineMachineTonnage(
-        moldWidth,
-        moldHeight,
-        moldDepth,
-        injectionVolume,
-      );
-
-      const expectedMachine = machineList.find(
-        (m) =>
-          Math.min(moldWidth, moldDepth) <= m.moldWidth &&
-          moldHeight <= m.moldHeight &&
-          injectionVolume / getProductSafetyFactor() <= m.injectionVolume,
-      );
-
-      expect(tonnage).toBe(parseInt(expectedMachine!.name.replace("T", "")));
-    });
-
-    it("处理异常输入", () => {
-      expect(() => determineMachineTonnage(-300, 400, 200, 500)).toThrow(
-        "模具尺寸不能为零跟负数",
-      );
-      expect(() => determineMachineTonnage(300, -400, 200, 500)).toThrow(
-        "模具尺寸不能为零跟负数",
-      );
-      expect(() => determineMachineTonnage(300, 400, -200, 500)).toThrow(
-        "模具尺寸不能为零跟负数",
-      );
-      expect(() => determineMachineTonnage(300, 400, 200, -500)).toThrow(
-        "注胶量不能为零跟负数",
-      );
-    });
+  it("应当返回最便宜的机器", () => {
+    const machine = getCheapestMachine(testDimension, testInjectionWeight);
+    expect(machine).toBeDefined();
+    expect(machine.costPerShots).toBeGreaterThan(0);
   });
 
-  describe("calculateRequiredTonnage", () => {
-    const mockConfig = {
-      efficiency: 1,
-      machineTonnage: 100,
-      tonnageRange: [100, 200] as [number, number],
-      tonnageRates: [1, 2],
-      tonnageThresholds: [100, 200],
-      smallBatchThreshold: 100,
-      smallBatchMachiningFee: 35,
-      safetyFactor: 0.8,
-      maxInjectionVolume: 1000,
-      smallBatchRates: [1, 2],
-    };
+  it("当注胶量无效时应当抛出错误", () => {
+    expect(() => getCheapestMachine(testDimension, 0)).toThrow(
+      "注胶量不能小于等于0",
+    );
+    expect(() => getCheapestMachine(testDimension, -100)).toThrow(
+      "注胶量不能小于等于0",
+    );
+  });
 
-    const mockProducts = [
-      {
-        material: {
-          name: "ABS",
-          density: 1.05,
-          price: 100,
-          shrinkageRate: 0.02,
-          processingTemp: 200,
-        },
-        color: "red",
-        netVolume: 100,
-        id: "1",
-        name: "ABS",
-        dimensions: { length: 100, width: 100, height: 100, depth: 100 },
-        quantity: 1,
-        envelopeVolume: 100,
-      },
-      {
-        material: {
-          name: "ABS",
-          density: 1.05,
-          price: 100,
-          shrinkageRate: 0.02,
-          processingTemp: 200,
-        },
-        color: "red",
-        netVolume: 150,
-        id: "2",
-        name: "ABS",
-        dimensions: { length: 100, width: 100, height: 100, depth: 100 },
-        quantity: 1,
-        envelopeVolume: 100,
-      },
-      {
-        material: {
-          name: "PP",
-          density: 0.92,
-          price: 100,
-          shrinkageRate: 0.02,
-          processingTemp: 200,
-        },
-        color: "blue",
-        netVolume: 120,
-        id: "3",
-        name: "PP",
-        dimensions: { length: 100, width: 100, height: 100, depth: 100 },
-        quantity: 1,
-        envelopeVolume: 100,
-      },
+  it("当模具尺寸无效时应当抛出错误", () => {
+    const invalidDimensions = [
+      { width: 0, height: 300, depth: 400 },
+      { width: 500, height: 0, depth: 400 },
+      { width: 500, height: 300, depth: 0 },
     ];
 
-    // it("计算单个产品的所需吨位", () => {
-    //   const tonnage = calculateRequiredTonnage(mockProducts, [1,1,1], mockConfig);
-    //   console.log("单个产品的所需吨位:", tonnage);
-    //   expect(typeof tonnage).toBe("number");
-    //   expect(tonnage).toBeGreaterThan(0);
-    // });
-
-    it("处理空产品列表", () => {
-      expect(() => calculateRequiredTonnage([], [], undefined)).toThrow();
+    invalidDimensions.forEach((dimension) => {
+      expect(() => getCheapestMachine(dimension, testInjectionWeight)).toThrow(
+        "模具尺寸不能小于等于0",
+      );
     });
   });
 
-  describe("checkTonnageInRange", () => {
-    const mockConfig = {
-      efficiency: 1,
-      machineTonnage: 100,
-      tonnageRange: [100, 200] as [number, number],
-      tonnageRates: [1, 2],
-      tonnageThresholds: [100, 200],
-      smallBatchThreshold: 100,
-      smallBatchMachiningFee: 35,
-      safetyFactor: 0.8,
-      maxInjectionVolume: 1000,
-      smallBatchRates: [1, 2],
+  it("当没有合适的机器时应当抛出错误", () => {
+    const oversizeDimension: Dimensions = {
+      width: 5000,
+      height: 3000,
+      depth: 4000,
     };
+    const oversizeWeight = 1000000;
 
-    it("检查吨位是否在范围内", () => {
-      expect(checkTonnageInRange(150, mockConfig)).toBe(true);
-      expect(checkTonnageInRange(50, mockConfig)).toBe(false);
-      expect(checkTonnageInRange(250, mockConfig)).toBe(false);
-    });
+    expect(() => getCheapestMachine(oversizeDimension, oversizeWeight)).toThrow(
+      "无法找到最小费率的机器",
+    );
   });
 
-  describe("getTonnageRate", () => {
-    it("获取有效吨位的费率", () => {
-      const tonnage = 120;
-      const rate = getTonnageRate(tonnage, undefined);
-      const expectedMachine = machineList.find(
-        (m) => parseInt(m.name.replace("T", "")) >= tonnage,
-      );
-      expect(rate).toBe(expectedMachine?.machiningFee);
-    });
+  it("应当返回费率最低的机器", () => {
+    const machines = [
+      getCheapestMachine({ width: 100, height: 100, depth: 100 }, 500),
+      getCheapestMachine({ width: 200, height: 200, depth: 200 }, 1000),
+      getCheapestMachine({ width: 300, height: 300, depth: 300 }, 1500),
+    ];
 
-    it("处理无效吨位", () => {
-      expect(() => getTonnageRate(2000, undefined)).toThrow(
-        "没有找到对应的机器",
+    // 检查返回的机器费率是否递增
+    for (let i = 1; i < machines.length; i++) {
+      expect(machines[i]?.costPerShots).toBeGreaterThanOrEqual(
+        machines[i - 1]?.costPerShots ?? 0,
       );
-    });
-  });
-
-  describe("getSmallBatchMachiningFee", () => {
-    it("获取有效吨位的小批量加工费", () => {
-      const tonnage = 120;
-      const fee = getSmallBatchMachiningFee(tonnage, undefined);
-      const expectedMachine = machineList.find(
-        (m) => parseInt(m.name.replace("T", "")) >= tonnage,
-      );
-      expect(fee).toBe(expectedMachine?.smallBatchMachiningFee);
-    });
-
-    it("处理无效吨位", () => {
-      expect(() => getSmallBatchMachiningFee(2000, undefined)).toThrow(
-        "没有找到对应的机器",
-      );
-    });
-  });
-
-  describe("calculateOptimalTonnage", () => {
-    const mockConfig = {
-      efficiency: 1,
-      machineTonnage: 100,
-      tonnageRange: [100, 200] as [number, number],
-      tonnageRates: [1, 2],
-      tonnageThresholds: [100, 200],
-      smallBatchThreshold: 100,
-      smallBatchMachiningFee: 35,
-      safetyFactor: 0.8,
-      maxInjectionVolume: 1000,
-      smallBatchRates: [1, 2],
-    };
-
-    it("计算最佳机器吨位", () => {
-      const requiredTonnage = 120;
-      const optimalTonnage = calculateOptimalTonnage(
-        requiredTonnage,
-        mockConfig,
-      );
-      const expectedMachine = machineList.find(
-        (m) => parseInt(m.name.replace("T", "")) >= requiredTonnage,
-      );
-      expect(optimalTonnage).toBe(
-        parseInt(expectedMachine!.name.replace("T", "")),
-      );
-    });
-
-    it("处理超出范围的吨位", () => {
-      expect(() => calculateOptimalTonnage(2000, undefined)).toThrow(
-        "没有找到对应的机器",
-      );
-    });
+    }
   });
 });

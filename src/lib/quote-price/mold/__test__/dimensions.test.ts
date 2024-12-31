@@ -1,133 +1,56 @@
-import { describe, it, expect } from "vitest";
-import {
-  calculateMoldVolume,
-  calculateMoldDimensions,
-  calculateMoldDimensionsByCavity,
-} from "../dimensions";
-import type { Product } from "../../product/types";
-import type { MoldDimensions } from "../types";
+import { describe, expect, it } from "vitest";
+import { getMoldDimensions } from "../dimensions";
+import type { Dimensions } from "../../core";
 
-describe("模具尺寸计算测试", () => {
-  describe("calculateMoldVolume", () => {
-    it("正确计算模具体积", () => {
-      const dimensions: MoldDimensions = {
-        width: 100,
-        height: 50,
-        depth: 30,
-      };
+describe("模具尺寸计算", () => {
+  it("应正确计算包含安全厚度的模具尺寸", () => {
+    const input: Dimensions = { width: 500, depth: 400, height: 100 };
+    const result = getMoldDimensions(input);
 
-      const volume = calculateMoldVolume(dimensions);
-      expect(volume).toBe(150000); // 100 * 50 * 30
-    });
-
-    it("处理空尺寸", () => {
-      // @ts-expect-error 测试空输入
-      const volume = calculateMoldVolume(null);
-      expect(volume).toBe(0);
-    });
-
-    it("处理零尺寸", () => {
-      const dimensions: MoldDimensions = {
-        width: 0,
-        height: 0,
-        depth: 0,
-      };
-
-      const volume = calculateMoldVolume(dimensions);
-      expect(volume).toBe(0);
-    });
+    // 根据 safe-thickness.ts 中的数据：
+    // width: 500 + 95*2 = 690
+    // depth: 400 + 85*2 = 570
+    // height: 100 + 310 = 410
+    expect(result.width).toBe(690);
+    expect(result.depth).toBe(570);
+    expect(result.height).toBe(410);
   });
 
-  describe("calculateMoldDimensions", () => {
-    const baseProduct: Product = {
-      id: "1",
-      name: "测试产品",
-      material: {
-        name: "ABS",
-        density: 0.0012,
-        price: 0.013,
-        shrinkageRate: 0.02,
-        processingTemp: 200,
-      },
-      color: "black",
-      dimensions: {
-        width: 100,
-        height: 100,
-        depth: 50,
-      },
-      quantity: 10000,
-      netVolume: 10000,
-      envelopeVolume: 10000,
-    };
+  it("应正确处理最小尺寸", () => {
+    const input: Dimensions = { width: 100, depth: 100, height: 50 };
+    const result = getMoldDimensions(input);
 
-    it("计算单个产品的模具尺寸", () => {
-      const dimensions = calculateMoldDimensions([baseProduct], [1]);
-
-      expect(dimensions.width).toBeGreaterThan(80);
-      expect(dimensions.height).toBeGreaterThan(80);
-      expect(dimensions).toEqual(
-        expect.objectContaining({
-          width: expect.any(Number),
-          height: expect.any(Number),
-          depth: expect.any(Number),
-        }),
-      );
-    });
-
-    it("处理空产品列表", () => {
-      const dimensions = calculateMoldDimensions([], []);
-      expect(dimensions).toEqual({
-        width: 120,
-        height: 210,
-        depth: 0,
-      });
-    });
-
-    it("计算多个产品的模具尺寸", () => {
-      const products = [
-        baseProduct,
-        {
-          ...baseProduct,
-          id: "2",
-          dimensions: {
-            width: 150,
-            height: 80,
-            depth: 40,
-          },
-        },
-      ];
-
-      const dimensions = calculateMoldDimensions(products, [1, 1]);
-
-      // 确保尺寸大于最大产品尺寸
-      expect(dimensions.width).toBeGreaterThan(70);
-      expect(dimensions.height).toBeGreaterThan(100);
-      expect(dimensions.depth).toBeGreaterThanOrEqual(0);
-    });
+    // 根据 safe-thickness.ts 中的数据：
+    // width: 100 + 60*2 = 220
+    // depth: 100 + 60*2 = 220
+    // height: 50 + 210 = 260
+    expect(result.width).toBe(220);
+    expect(result.depth).toBe(220);
+    expect(result.height).toBe(260);
   });
 
-  describe("calculateMoldDimensionsByCavity", () => {
-    const productDimensions = {
-      width: 100,
-      height: 50,
-      depth: 30,
-    };
+  it("应正确处理最大尺寸", () => {
+    const input: Dimensions = { width: 1000, depth: 1000, height: 210 };
+    const result = getMoldDimensions(input);
 
-    it("处理非法穴数", () => {
-      expect(() =>
-        calculateMoldDimensionsByCavity(-1, productDimensions),
-      ).toThrow("穴数不能为负数或0");
-    });
-    
+    // 根据 safe-thickness.ts 中的数据：
+    // width: 1000 + 145*2 = 1290
+    // depth: 1000 + 145*2 = 1290
+    // height: 210 + 510 = 720
+    expect(result.width).toBe(1290);
+    expect(result.depth).toBe(1290);
+    expect(result.height).toBe(720);
+  });
 
-    it("处理非法产品尺寸", () => {
-      expect(() =>
-        calculateMoldDimensionsByCavity(4, {
-          width: -1,
-          height: 50,
-          depth: 30,
-        }),
-      ).toThrow("产品尺寸不能为负数");
+  it("当输入尺寸为0时应抛出错误", () => {
+    const invalidInputs: Dimensions[] = [
+      { width: 0, depth: 100, height: 100 },
+      { width: 100, depth: 0, height: 100 },
+      { width: 100, depth: 100, height: 0 },
+    ];
+
+    invalidInputs.forEach((input) => {
+      expect(() => getMoldDimensions(input)).toThrow();
     });
   });
 });
