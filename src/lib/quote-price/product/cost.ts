@@ -1,22 +1,27 @@
 import { getSingleProductShots, getProductsTotalShots } from "./shots";
 import { getProductMaterial, getProductGrossProfit } from "../core";
-import type {
-  MachineConfig,
-  DetailedProductProps,
-  ForceOptions,
-} from "../core";
+import type { MachineConfig, ForceOptions } from "../core";
 import { getTotalMachineProcessingFee } from "../machine";
+
+interface ProductCostProps {
+  materialName: string;
+  shots: number;
+  color: string;
+  quantity: number;
+  weight: number;
+  cavityIndex: number;
+}
 
 /**
  * 计算产品的总价格
- * @param {DetailedProductProps[]} products 产品列表
+ * @param {ProductCostProps[]} products 产品列表
  * @param {MachineConfig} machineConfig 机器配置
  * @param {number[]} cavities 模具的穴数
  * @param {ForceOptions} forceOptions 强制选项，可选
  * @returns {number} 产品的总价格
  */
 export function calculateProductCosts(
-  products: DetailedProductProps[],
+  products: ProductCostProps[],
   machineConfig: MachineConfig,
   cavities: number[],
   forceOptions?: ForceOptions,

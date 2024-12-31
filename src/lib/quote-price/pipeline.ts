@@ -1,23 +1,35 @@
 import { calculateMinArea, getMoldDimensions, getMoldTotalPrice } from "./mold";
 import { getCheapestMachine } from "./machine";
 import { getProductMaterial, getMoldMaterial } from "./core";
-import type {
-  ProductPropsForPipeline,
-  ForceOptions,
-  MoldWithCavities,
-} from "./core";
+import type { ForceOptions, Dimensions } from "./core";
 import { calculateProductCosts } from "./product/cost";
+
+interface ProductProps {
+  materialName: string;
+  quantity: number;
+  weight: number;
+  cavityIndex: number;
+  shots: number;
+  color: string;
+  dimensions: Dimensions;
+  netVolume: number;
+}
+
+interface MoldProps {
+  materialName: string;
+  cavities: Record<string, number>;
+}
 
 /**
  * 计算模具的最终价格
- * @param {Product[]} products 产品
- * @param {Mold} mold 模具
+ * @param {ProductProps[]} products 产品
+ * @param {MoldProps} mold 模具
  * @param {ForceOptions} forceOptions 强制选项，可选
  * @returns {number} 模具的最终价格
  */
 export function runPipeline(
-  products: ProductPropsForPipeline[],
-  mold: MoldWithCavities,
+  products: ProductProps[],
+  mold: MoldProps,
   forceOptions?: ForceOptions,
 ): number {
   // 计算产品组成的最小xy平面的二维面积

@@ -1,4 +1,4 @@
-import type { SimplifiedProductProps, ForceOptions } from "../core";
+import type { ForceOptions } from "../core";
 
 /**
  * 根据产品的数量和模具的穴数计算模次
@@ -26,14 +26,20 @@ export function getSingleProductShots(
   return Math.ceil(quantity / cavities);
 }
 
+interface ProductShotsProps {
+  materialName: string;
+  shots: number;
+  color: string;
+}
+
 /**
  * 计算一组产品的总模次
- * @param {ProductProperties[]} products 产品属性
+ * @param {ProductShotsProps[]} products 产品属性
  * @param {ForceOptions} forceOptions 强制选项，可选
  * @returns {number} 总模次
  */
 export function getProductsTotalShots(
-  products: SimplifiedProductProps[],
+  products: ProductShotsProps[],
   forceOptions?: ForceOptions,
 ): number {
   // 如果产品列表为空，返回0
