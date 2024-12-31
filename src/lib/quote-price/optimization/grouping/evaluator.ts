@@ -19,7 +19,7 @@
  */
 
 import { type RiskConfig, RiskLevel } from "../../risk/types";
-import type { Product } from "../../product/types";
+import type { DetailedProductProps } from "../../core";
 import type { CavityConfig, GroupingConfig } from "../types";
 import { calculateRiskAssessment } from "../../risk";
 import { checkGroupCompatibility } from "./compatibility";
@@ -33,7 +33,7 @@ import { checkGroupCompatibility } from "./compatibility";
  * @returns {{ score: number; level: RiskLevel }} 风险评分和等级
  */
 export function evaluateGroupRisk(
-  products: Product[],
+  products: DetailedProductProps[],
   cavities: number[],
   riskConfig: RiskConfig,
 ): { score: number; level: RiskLevel } {
@@ -68,7 +68,7 @@ export function evaluateGroupRisk(
  * @returns {number} 成本
  */
 export function evaluateGroupCost(
-  products: Product[],
+  products: DetailedProductProps[],
   cavities: number[],
   risk: { score: number; level: RiskLevel },
 ): number {
@@ -86,10 +86,7 @@ export function evaluateGroupCost(
 
   // 计算基础成本
   const baseCost = products.reduce((total, product, index) => {
-    return (
-      total +
-      product?.material?.price * product?.netVolume * (cavities[index] ?? 0)
-    );
+    return total + product?.shots * (cavities[index] ?? 0);
   }, 0);
 
   // 根据风险等级调整成本
@@ -114,7 +111,7 @@ export function evaluateGroupCost(
  * @returns {boolean} 是否可行
  */
 export function evaluateGroupFeasibility(
-  products: Product[],
+  products: DetailedProductProps[],
   cavities: number[],
   cavityConfig: CavityConfig,
   groupingConfig: GroupingConfig,

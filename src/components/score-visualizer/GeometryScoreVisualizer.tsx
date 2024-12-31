@@ -1,6 +1,6 @@
 import React, { useMemo } from "react";
 import { calculate2DCenter, type LayoutItem } from "@/lib/utils/coordinate";
-import { COLORS } from "@/lib/constants/colors";
+import { COLORS } from "@/lib/quote-price/core/colors";
 import type { Rectangle } from "@/types/core/geometry";
 import type { Product } from "@/types/domain/product";
 import {
