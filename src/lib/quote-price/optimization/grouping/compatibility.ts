@@ -19,7 +19,7 @@
  * - 时间复杂度优化：checkGroupCompatibility 从 O(n²) 降低到 O(n)
  */
 
-import type { Product } from "../../product/types";
+import type { SimplifiedProductProps } from "../../core";
 import type { GroupingConfig } from "../types";
 
 /**
@@ -29,16 +29,16 @@ import type { GroupingConfig } from "../types";
  * @param {GroupingConfig} config 分组配置
  * @returns {boolean} 是否可以组合
  */
-function checkProductCompatibility(
-  product1: Product,
-  product2: Product,
+export function checkProductCompatibility(
+  product1: SimplifiedProductProps,
+  product2: SimplifiedProductProps,
   config: GroupingConfig,
 ): boolean {
   // TODO:
   // 1. 检查材料兼容性
   //    - 如果材料不同且未启用 allowDifferentMaterials，返回 false
   if (
-    product1.material !== product2.material &&
+    product1.materialName !== product2.materialName &&
     !config.forceGrouping.allowDifferentMaterials
   ) {
     return false;
@@ -62,7 +62,7 @@ function checkProductCompatibility(
  * @returns {boolean} 是否可以组合
  */
 export function checkGroupCompatibility(
-  products: Product[],
+  products: SimplifiedProductProps[],
   config: GroupingConfig,
 ): boolean {
   if (products.length === 0) throw new Error("产品列表不能为空");
