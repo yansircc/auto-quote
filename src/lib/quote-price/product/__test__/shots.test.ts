@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { getSingleProductShots, getProductsTotalShots } from "../shots";
-import type { SimplifiedProductProps, ForceOptions } from "../../core";
+import type { ForceOptions } from "../../core";
+import type { ProductShotsProps } from "../shots";
 
 describe("模次计算", () => {
   describe("单个产品模次计算", () => {
@@ -19,7 +20,7 @@ describe("模次计算", () => {
   });
 
   describe("多个产品模次计算", () => {
-    const testProducts: SimplifiedProductProps[] = [
+    const testProducts: ProductShotsProps[] = [
       { shots: 150, materialName: "ABS", color: "Red" },
       { shots: 100, materialName: "ABS", color: "Blue" },
       { shots: 200, materialName: "PC", color: "Red" },
@@ -39,7 +40,7 @@ describe("模次计算", () => {
     });
 
     it("当颜色和材料都兼容时应返回最大模次", () => {
-      const compatibleProducts: SimplifiedProductProps[] = [
+      const compatibleProducts: ProductShotsProps[] = [
         { shots: 100, materialName: "ABS", color: "Red" },
         { shots: 150, materialName: "ABS", color: "Red" },
       ];

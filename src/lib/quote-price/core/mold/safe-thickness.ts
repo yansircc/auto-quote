@@ -45,7 +45,7 @@ const safeBottomThicknessList = [
  */
 export function getSafeEdgeThickness(width: number): number {
   if (width <= 0) {
-    throw new Error("模具宽度不能小于等于0");
+    throw new Error(`模具宽度 ${width} 不能小于等于0`);
   }
 
   // 过滤出所有适用的厚度，然后取最小值
@@ -54,7 +54,9 @@ export function getSafeEdgeThickness(width: number): number {
     .map((item) => item.thickness);
 
   if (applicableThicknesses.length === 0) {
-    throw new Error("模具宽度超出安全厚度范围");
+    throw new Error(
+      `模具宽度 ${width} 超出安全厚度最大值 ${safeEdgeThicknessList[safeEdgeThicknessList.length - 1]!.maxLength}`,
+    );
   }
 
   return Math.min(...applicableThicknesses);
@@ -67,7 +69,7 @@ export function getSafeEdgeThickness(width: number): number {
  */
 export function getSafeBottomThickness(height: number): number {
   if (height <= 0) {
-    throw new Error("模具高度不能小于等于0");
+    throw new Error(`模具高度 ${height} 不能小于等于0`);
   }
 
   const applicableThicknesses = safeBottomThicknessList
@@ -75,7 +77,9 @@ export function getSafeBottomThickness(height: number): number {
     .map((item) => item.thickness);
 
   if (applicableThicknesses.length === 0) {
-    throw new Error("模具高度超出安全厚度范围");
+    throw new Error(
+      `模具高度 ${height} 超出安全厚度最大值 ${safeBottomThicknessList[safeBottomThicknessList.length - 1]!.maxHeight}`,
+    );
   }
 
   return Math.min(...applicableThicknesses);

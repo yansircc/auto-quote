@@ -26,7 +26,7 @@ export function getSingleProductShots(
   return Math.ceil(quantity / cavities);
 }
 
-interface ProductShotsProps {
+export interface ProductShotsProps {
   materialName: string;
   shots: number;
   color: string;
