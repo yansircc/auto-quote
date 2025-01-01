@@ -1,10 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { ProductInfo } from "@/types/user-guide/product";
 import type { ProductScheme } from "@/types/user-guide/scheme";
-import { ProductSummaryCard } from "../confirm-step/product-summary-card";
-import { Card } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -13,6 +11,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { SchemeCard } from "./scheme-card";
+import { MoldInfoCard } from "./mold-info-card";
+import { ProductDetailsCard } from "./product-details-card";
+import { ContactInfoCard } from "./contact-info-card";
 
 interface PriceCalculationStepProps {
   currentStep: number;
@@ -46,17 +47,63 @@ export default function PriceCalculationStep({
   moldMaterial,
   onValidityChange,
 }: PriceCalculationStepProps) {
-  const [schemes] = useState<ProductScheme[]>(generateSchemes);
-  // 默认选择第一个方案
+  const [schemes] = useState<ProductScheme[]>(generateSchemes());
   const [selectedScheme, setSelectedScheme] = useState<string>(
     schemes[0]?.id.toString() ?? "",
   );
+  const [contactInfo, setContactInfo] = useState({
+    name: "",
+    phone: "",
+    email: "",
+  });
+  const [errors, setErrors] = useState<{
+    name?: string;
+    phone?: string;
+    email?: string;
+  }>({});
+
   const currentScheme = schemes.find((s) => s.id.toString() === selectedScheme);
 
-  // 设置步骤为有效，当选择了方案时
+  // 验证联系信息
+  const validateContactInfo = useCallback(() => {
+    const newErrors: typeof errors = {};
+    let isValid = true;
+
+    // 验证姓名
+    if (!contactInfo.name.trim()) {
+      newErrors.name = "请输入姓名";
+      isValid = false;
+    }
+
+    // 验证手机号
+    const phoneRegex = /^1[3-9]\d{9}$/;
+    if (!contactInfo.phone.trim()) {
+      newErrors.phone = "请输入手机号码";
+      isValid = false;
+    } else if (!phoneRegex.test(contactInfo.phone)) {
+      newErrors.phone = "请输入正确的手机号码";
+      isValid = false;
+    }
+
+    // 验证邮箱
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!contactInfo.email.trim()) {
+      newErrors.email = "请输入电子邮箱";
+      isValid = false;
+    } else if (!emailRegex.test(contactInfo.email)) {
+      newErrors.email = "请输入正确的电子邮箱格式";
+      isValid = false;
+    }
+
+    setErrors(newErrors);
+    return isValid;
+  }, [contactInfo]);
+
+  // 更新验证状态
   useEffect(() => {
-    onValidityChange?.(Boolean(selectedScheme));
-  }, [selectedScheme, onValidityChange]);
+    const isValid = validateContactInfo() && Boolean(selectedScheme);
+    onValidityChange?.(isValid);
+  }, [selectedScheme, contactInfo, onValidityChange, validateContactInfo]);
 
   if (!products?.length) {
     return (
@@ -68,6 +115,7 @@ export default function PriceCalculationStep({
 
   return (
     <div className="space-y-6">
+      {/* 方案选择 */}
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">选择产品方案</h2>
         <div className="w-[300px]">
@@ -79,8 +127,7 @@ export default function PriceCalculationStep({
               {schemes.map((scheme) => (
                 <SelectItem key={scheme.id} value={scheme.id.toString()}>
                   方案{scheme.id} - 价格-${scheme.totalPrice.toLocaleString()},
-                  评分-
-                  {scheme.score}
+                  评分-{scheme.score}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -91,35 +138,37 @@ export default function PriceCalculationStep({
       {/* 选中的方案详情 */}
       {currentScheme && <SchemeCard scheme={currentScheme} />}
 
-      {/* 模具材料信息 */}
-      <Card className="p-6">
-        <div className="mb-4">
-          <h3 className="text-lg font-semibold mb-2">模具材料</h3>
-          <p className="text-muted-foreground">
-            选择的模具材料：
-            <span className="text-foreground ml-2">
-              {moldMaterial === "aluminum"
-                ? "铝材"
-                : moldMaterial === "steel"
-                  ? "钢材"
-                  : moldMaterial === "copper"
-                    ? "铜材"
-                    : "未选择"}
-            </span>
-          </p>
-        </div>
-      </Card>
+      {/* 模具信息卡片 */}
+      {currentScheme && (
+        <MoldInfoCard
+          material={currentScheme.moldMaterial}
+          weight={currentScheme.weight}
+          price={currentScheme.moldPrice}
+          dimensions={currentScheme.dimensions}
+        />
+      )}
 
-      {/* 产品列表 */}
+      {/* 产品详细信息 */}
       <div className="grid gap-6">
-        {products.map((product, index) => (
-          <ProductSummaryCard
+        {products?.map((product) => (
+          <ProductDetailsCard
             key={product.id}
             product={product}
-            index={index}
+            costs={{
+              materialCost: 100,
+              processingFee: 50,
+              totalCost: 150,
+            }}
           />
         ))}
       </div>
+
+      {/* 联系信息 */}
+      <ContactInfoCard
+        contactInfo={contactInfo}
+        onChange={(info) => setContactInfo((prev) => ({ ...prev, ...info }))}
+        errors={errors}
+      />
     </div>
   );
 }

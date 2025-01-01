@@ -19,7 +19,11 @@
  * - 时间复杂度优化：checkGroupCompatibility 从 O(n²) 降低到 O(n)
  */
 
+<<<<<<< HEAD
+import type { Product } from "../../product/types";
+=======
 import type { SimplifiedProductProps } from "../../core";
+>>>>>>> upstream/main
 import type { GroupingConfig } from "../types";
 
 /**
@@ -29,16 +33,26 @@ import type { GroupingConfig } from "../types";
  * @param {GroupingConfig} config 分组配置
  * @returns {boolean} 是否可以组合
  */
+<<<<<<< HEAD
+function checkProductCompatibility(
+  product1: Product,
+  product2: Product,
+=======
 export function checkProductCompatibility(
   product1: SimplifiedProductProps,
   product2: SimplifiedProductProps,
+>>>>>>> upstream/main
   config: GroupingConfig,
 ): boolean {
   // TODO:
   // 1. 检查材料兼容性
   //    - 如果材料不同且未启用 allowDifferentMaterials，返回 false
   if (
+<<<<<<< HEAD
+    product1.material !== product2.material &&
+=======
     product1.materialName !== product2.materialName &&
+>>>>>>> upstream/main
     !config.forceGrouping.allowDifferentMaterials
   ) {
     return false;
