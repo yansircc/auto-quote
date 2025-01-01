@@ -1,4 +1,5 @@
 import { runAllScorers } from "../runner";
+import { getTopAlignedCuboidsLayout } from "../scorer/shared";
 import type { BaseCuboid } from "../types";
 
 const mockCuboids: BaseCuboid[] = [
@@ -24,7 +25,12 @@ const mockCuboids: BaseCuboid[] = [
   },
 ];
 
-const { weightedAverage, ...scores } = runAllScorers(mockCuboids, true); // 第二个参数表示静默模式
+const optimizedCuboidsLayout = getTopAlignedCuboidsLayout(mockCuboids);
+
+const { weightedAverage, ...scores } = runAllScorers(
+  optimizedCuboidsLayout,
+  true,
+); // 第二个参数表示静默模式
 
 // 输出加权平均分
 console.log("加权平均分:", weightedAverage);

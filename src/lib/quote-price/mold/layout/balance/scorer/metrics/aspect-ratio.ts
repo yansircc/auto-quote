@@ -7,51 +7,29 @@
  *    - 越小越均匀
  */
 
-import { calculateMinArea } from "@/lib/quote-price/mold/layout/min-area";
 import {
   getAspectRatioScore,
   ASPECT_RATIO_BEST_PARAMS,
   PARAM_PREFIX,
 } from "../../optimizer";
-import type { BaseCuboid } from "../../types";
-import { createNormalizer } from "../shared";
-
-/**
- * 获取最小维度
- *
- * @param cuboids - 一组立方体
- * @returns {BaseCuboid} 最小维度
- */
-function getMinDimension(cuboids: BaseCuboid[]): BaseCuboid {
-  const rectangles = cuboids.map((cuboid) => ({
-    width: cuboid.width,
-    height: cuboid.depth,
-  }));
-
-  const maxHeight = Math.max(...cuboids.map((cuboid) => cuboid.height));
-  const { width, height: depth } = calculateMinArea(rectangles);
-
-  return {
-    width,
-    depth,
-    height: maxHeight,
-  };
-}
+import { createNormalizer, getBoundingBox } from "../shared";
+import type { CuboidLayout } from "../shared";
 
 /**
  * 采用最小面积函数，计算一组立方体的整体长宽比
  *
- * @param cuboids - 一组立方体
+ * @param {CuboidLayout[]} layout - 立方体布局
  * @returns {AspectRatioInput} 整体长宽比
  */
-function getAspectRatioMetrics(cuboids: BaseCuboid[]) {
-  const { width, depth, height } = getMinDimension(cuboids);
+function getAspectRatioMetrics(layout: CuboidLayout[]) {
+  // 计算包围盒
+  const boundingBox = getBoundingBox(layout);
 
-  // 先把所有维度放入数组，然后排序
+  // 计算长宽比，先把所有维度放入数组，然后排序
   const dimensions = [
-    { value: width, type: "width" },
-    { value: depth, type: "depth" },
-    { value: height, type: "height" },
+    { value: boundingBox.dimensions.width, type: "width" },
+    { value: boundingBox.dimensions.depth, type: "depth" },
+    { value: boundingBox.dimensions.height, type: "height" },
   ].sort((a, b) => b.value - a.value);
 
   // 现在我们可以清楚地知道每个维度的原始含义
@@ -94,15 +72,15 @@ const aspectRatioNormalizer = {
 /**
  * 计算长宽比得分
  *
- * @param cuboids - 一组立方体
+ * @param {CuboidLayout[]} optimizedCuboidsLayout - 优化后的立方体布局
  * @param bestParams - 最佳参数
  * @returns 长宽比得分
  */
 function aspectRatioScorer(
-  cuboids: BaseCuboid[],
+  optimizedCuboidsLayout: CuboidLayout[],
   bestParams = ASPECT_RATIO_BEST_PARAMS,
 ) {
-  const aspectRatio = getAspectRatioMetrics(cuboids);
+  const aspectRatio = getAspectRatioMetrics(optimizedCuboidsLayout);
   const normalizedMetrics = {
     longestToShortest: aspectRatioNormalizer.longestToShortest(
       aspectRatio.longestToShortest,

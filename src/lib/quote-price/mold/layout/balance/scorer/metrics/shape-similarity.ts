@@ -15,12 +15,8 @@
  *    - 越小越好
  */
 
-import {
-  createNormalizer,
-  getTopAlignedCuboidsLayout,
-  PARAM_PREFIX,
-  type BaseCuboid,
-} from "../shared";
+import { createNormalizer, PARAM_PREFIX } from "../shared";
+import type { CuboidLayout } from "../shared";
 import {
   getShapeSimilarityScore,
   SHAPE_SIMILARITY_BEST_PARAMS,
@@ -29,12 +25,10 @@ import {
 /**
  * 维度差异
  *
- * @param cuboids - 一组立方体
+ * @param {CuboidLayout[]} layout - 立方体布局
  * @returns {number} 维度差异
  */
-function getDimensionDiff(cuboids: BaseCuboid[]): number {
-  const layout = getTopAlignedCuboidsLayout(cuboids);
-
+function getDimensionDiff(layout: CuboidLayout[]): number {
   // 1. 计算每个立方体的维度比例
   const dimensionRatios = layout.map((cuboid) => {
     const { width, height, depth } = cuboid.dimensions;
@@ -57,12 +51,10 @@ function getDimensionDiff(cuboids: BaseCuboid[]): number {
 /**
  * 极端指数
  *
- * @param cuboids - 一组立方体
+ * @param {CuboidLayout[]} layout - 立方体布局
  * @returns {number} 极端指数
  */
-function getExtremeIndex(cuboids: BaseCuboid[]): number {
-  const layout = getTopAlignedCuboidsLayout(cuboids);
-
+function getExtremeIndex(layout: CuboidLayout[]): number {
   // 1. 计算每个立方体的极端程度
   const extremeScores = layout.map((cuboid) => {
     const { width, height, depth } = cuboid.dimensions;
@@ -93,12 +85,10 @@ function getExtremeIndex(cuboids: BaseCuboid[]): number {
 /**
  * 交换比率
  *
- * @param cuboids - 一组立方体
+ * @param {CuboidLayout[]} layout - 立方体布局
  * @returns {number} 交换比率
  */
-function getSwapRatio(cuboids: BaseCuboid[]): number {
-  const layout = getTopAlignedCuboidsLayout(cuboids);
-
+function getSwapRatio(layout: CuboidLayout[]): number {
   // 1. 计算主导方向
   const getDominantAxis = (dimensions: {
     width: number;
@@ -157,17 +147,17 @@ const shapeSimilarityNormalizer = {
 /**
  * 计算形状相似度得分
  *
- * @param cuboids - 一组立方体
+ * @param {CuboidLayout[]} optimizedCuboidsLayout - 立方体布局
  * @param bestParams - 最佳参数
  * @returns {number} 形状相似度得分
  */
 function scorer(
-  cuboids: BaseCuboid[],
+  optimizedCuboidsLayout: CuboidLayout[],
   bestParams = SHAPE_SIMILARITY_BEST_PARAMS,
 ): number {
-  const dimensionDiff = getDimensionDiff(cuboids);
-  const extremeIndex = getExtremeIndex(cuboids);
-  const swapRatio = getSwapRatio(cuboids);
+  const dimensionDiff = getDimensionDiff(optimizedCuboidsLayout);
+  const extremeIndex = getExtremeIndex(optimizedCuboidsLayout);
+  const swapRatio = getSwapRatio(optimizedCuboidsLayout);
   const normalizedMetrics = {
     dimensionDiff: shapeSimilarityNormalizer.dimensionDiff(
       dimensionDiff,

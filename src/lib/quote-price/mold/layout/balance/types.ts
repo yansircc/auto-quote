@@ -27,3 +27,12 @@ export interface Cuboid extends BaseCuboid {
   position: Point3D;
   weight?: number; // 可选的重量
 }
+
+/**
+ * 3D布局结果，使用笛卡尔坐标系
+ */
+export interface CuboidLayout {
+  dimensions: BaseCuboid;
+  position: Point3D;
+  index: number; // 保留原始索引
+}
