@@ -184,6 +184,9 @@ export function searchBestCavityCount(
         partitionSolutions,
         subGroupSolutions,
         TOP_K_PER_PARTITION,
+        products,
+        mold,
+        forceOptions,
       );
     }
 
@@ -201,6 +204,9 @@ export function searchBestCavityCount(
       globalSolutions,
       partSols,
       TOP_K_GLOBAL,
+      products,
+      mold,
+      forceOptions,
     );
   }
 
@@ -247,12 +253,13 @@ function mergeTwoGroupsWithPrune(
   A: { productCavityMap: ProductCavityMap[]; price: number }[],
   B: { productCavityMap: ProductCavityMap[]; price: number }[],
   k: number,
+  products: ProductProps[],
+  mold: MoldProps,
+  forceOptions: ForceOptions,
 ): { productCavityMap: ProductCavityMap[]; price: number }[] {
   const merged: { productCavityMap: ProductCavityMap[]; price: number }[] = [];
   for (const a of A) {
     for (const b of B) {
-      const combinedPrice = a.price + b.price;
-
       // 创建一个 Map 来去重，以 productId 为 key
       const combinedMap = new Map<number, ProductCavityMap>();
 
@@ -267,8 +274,33 @@ function mergeTwoGroupsWithPrune(
       });
 
       // 将 Map 转换回数组
+      const combinedProductCavityMap = Array.from(combinedMap.values());
+
+      // 构建完整的产品信息，包含cavity count
+      const updatedProducts = products.map((p) => {
+        const cavityMap = combinedProductCavityMap.find(
+          (cm) => cm.productId === p.id,
+        );
+        return {
+          ...p,
+          cavityCount: cavityMap?.cavityCount ?? 1,
+        };
+      });
+
+      // // Debug logging
+      // if (combinedProductCavityMap.length === products.length) {
+      //   console.log("Merge - Updated products:", JSON.stringify(updatedProducts, null, 2));
+      // }
+
+      // 计算合并后的完整价格
+      const combinedPrice = calculateSolutionPrice(
+        updatedProducts,
+        mold,
+        forceOptions,
+      );
+
       merged.push({
-        productCavityMap: Array.from(combinedMap.values()),
+        productCavityMap: combinedProductCavityMap,
         price: combinedPrice,
       });
     }

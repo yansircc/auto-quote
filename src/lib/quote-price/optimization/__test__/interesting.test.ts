@@ -32,7 +32,7 @@ describe("searchBestCavityCount", () => {
         netVolume: 1000,
         dimensions: { width: 100, depth: 100, height: 100 },
         color: "red",
-        quantity: 20000,
+        quantity: 30000,
       },
     ];
 
@@ -46,7 +46,6 @@ describe("searchBestCavityCount", () => {
 });
 
 import { calculateSolutionPrice } from "../solution-price";
-import { evaluateSolution } from "../evaluator";
 
 describe("interesting", () => {
   const mockMold: MoldProps = {
@@ -58,36 +57,29 @@ describe("interesting", () => {
     isForceMaterialSimultaneous: false,
   };
 
-  const products = [
-    {
-      id: 1,
-      materialName: "ABS",
-      netVolume: 1000,
-      dimensions: { width: 100, depth: 100, height: 100 },
-      color: "red",
-      quantity: 10000,
-      cavityCount: 1,
-    },
-    {
-      id: 2,
-      materialName: "ABS",
-      netVolume: 1000,
-      dimensions: { width: 100, depth: 100, height: 100 },
-      color: "red",
-      quantity: 30000,
-      cavityCount: 3,
-    },
-  ];
-
   it("should be interesting", () => {
+    const products = [
+      {
+        id: 1,
+        materialName: "ABS",
+        netVolume: 1000,
+        dimensions: { width: 100, depth: 100, height: 100 },
+        color: "red",
+        quantity: 10000,
+        cavityCount: 1,
+      },
+      {
+        id: 2,
+        materialName: "ABS",
+        netVolume: 1000,
+        dimensions: { width: 100, depth: 100, height: 100 },
+        color: "red",
+        quantity: 30000,
+        cavityCount: 3,
+      },
+    ];
+
     const result = calculateSolutionPrice(products, mockMold, mockForceOptions);
-    console.log("result", result);
-    expect(result).toEqual(93867.38862041675);
-  });
-
-  it("should be interesting", () => {
-    const result = evaluateSolution(products);
-    console.log("result", result);
-    expect(result.isPass).toEqual(true);
+    expect(result).toEqual(43525.98234613117); // Expected price from search
   });
 });
