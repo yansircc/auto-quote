@@ -58,9 +58,12 @@ export function ContactInfoCard({
               onChange={(e) => onChange({ name: e.target.value })}
               className={cn(errors?.name && "border-destructive")}
             />
+<<<<<<< HEAD
             <p className="text-sm text-muted-foreground">
               请输入2-20个字符的真实姓名
             </p>
+=======
+>>>>>>> upstream/main
             {errors?.name && (
               <p className="text-sm text-destructive">{errors.name}</p>
             )}
@@ -80,9 +83,12 @@ export function ContactInfoCard({
               maxLength={11}
               className={cn(errors?.phone && "border-destructive")}
             />
+<<<<<<< HEAD
             <p className="text-sm text-muted-foreground">
               请输入11位中国大陆手机号
             </p>
+=======
+>>>>>>> upstream/main
             {errors?.phone && (
               <p className="text-sm text-destructive">{errors.phone}</p>
             )}
@@ -101,9 +107,12 @@ export function ContactInfoCard({
               onChange={(e) => onChange({ email: e.target.value })}
               className={cn(errors?.email && "border-destructive")}
             />
+<<<<<<< HEAD
             <p className="text-sm text-muted-foreground">
               格式：example@domain.com
             </p>
+=======
+>>>>>>> upstream/main
             {errors?.email && (
               <p className="text-sm text-destructive">{errors.email}</p>
             )}

@@ -136,6 +136,7 @@ export default function ProductInfoStep({
         onChange={handleProductChange}
       />
 
+<<<<<<< HEAD
       {products.length > 1 && (
         <>
           <Button
@@ -144,26 +145,76 @@ export default function ProductInfoStep({
             className="absolute left-4 top-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-full 
             bg-sky-500 backdrop-blur hover:bg-background/90 border-2 border-border 
             shadow-lg hover:shadow-xl transition-all"
+=======
+      <div className="relative">
+        {/* 修改滑动按钮样式，增加明显的背景色 */}
+        {currentIndex > 0 && (
+          <Button
+            variant="outline"
+            size="icon"
+            className="absolute left-4 top-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-full bg-blue-500 shadow-lg border-2 border-blue-600 hover:bg-blue-600 hover:border-blue-700 transition-colors"
+>>>>>>> upstream/main
             onClick={handlePrevious}
             disabled={currentIndex === 0}
           >
+<<<<<<< HEAD
             <ChevronLeft className="w-8 h-8" />
+=======
+            <ChevronLeft className="w-8 h-8 text-white" />
+>>>>>>> upstream/main
           </Button>
           <Button
             variant="outline"
             size="icon"
+<<<<<<< HEAD
             className="absolute right-4 top-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-full 
             bg-sky-500 backdrop-blur hover:bg-background/90 border-2 border-border 
             shadow-lg hover:shadow-xl transition-all"
+=======
+            className="absolute right-4 top-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-full bg-blue-500 shadow-lg border-2 border-blue-600 hover:bg-blue-600 hover:border-blue-700 transition-colors"
+>>>>>>> upstream/main
             onClick={handleNext}
             disabled={currentIndex === products.length - 1}
           >
+<<<<<<< HEAD
             <ChevronRight className="w-8 h-8" />
+=======
+            <ChevronRight className="w-8 h-8 text-white" />
+>>>>>>> upstream/main
           </Button>
         </>
       )}
 
+<<<<<<< HEAD
       <div className="flex justify-center gap-2 mt-4">
+=======
+        {/* 产品卡片容器 - 添加背景色和圆角 */}
+        <div className="overflow-hidden rounded-lg bg-muted/30">
+          <div
+            className="flex transition-transform duration-300 ease-in-out"
+            style={{
+              transform: `translateX(-${currentIndex * 100}%)`,
+            }}
+          >
+            {products.map((product, index) => (
+              <div
+                key={product.id}
+                className="w-full flex-shrink-0 p-4"
+                style={{ minWidth: "100%" }}
+              >
+                <ProductCard
+                  product={product}
+                  onChange={(data) => handleProductChange(product.id, data)}
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* 分页指示器 */}
+      <div className="flex justify-center gap-2">
+>>>>>>> upstream/main
         {products.map((_, index) => (
           <button
             key={index}

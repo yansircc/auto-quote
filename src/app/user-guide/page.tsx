@@ -31,6 +31,7 @@ export default function UserGuidePage() {
     email: "",
   });
   const totalSteps = 4;
+<<<<<<< HEAD
 
   const handleFilesChange = useCallback((files: UploadFile[]) => {
     setUploadedFiles(files);
@@ -70,6 +71,9 @@ export default function UserGuidePage() {
     setMoldMaterial(material);
   }, []);
 
+=======
+  // const { toast } = useToast();
+>>>>>>> upstream/main
   const handleNext = () => {
     if (!isStepValid) return;
 
@@ -83,6 +87,7 @@ export default function UserGuidePage() {
 
   const handlePrev = () => {
     if (currentStep > 1) {
+<<<<<<< HEAD
       const prevStep = currentStep - 1;
       setCurrentStep(prevStep);
 
@@ -100,6 +105,10 @@ export default function UserGuidePage() {
       } else {
         setIsStepValid(true);
       }
+=======
+      setCurrentStep((prev) => prev - 1);
+      setIsStepValid(true);
+>>>>>>> upstream/main
     }
   };
 
