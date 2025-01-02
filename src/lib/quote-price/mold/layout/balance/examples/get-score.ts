@@ -4,21 +4,25 @@ import type { BaseCuboid } from "../types";
 
 const mockCuboids: BaseCuboid[] = [
   {
+    id: 0,
     width: 120,
     depth: 130,
     height: 160,
   },
   {
+    id: 1,
     width: 120,
     depth: 130,
     height: 200,
   },
   {
+    id: 2,
     width: 120,
     depth: 130,
     height: 100,
   },
   {
+    id: 3,
     width: 120,
     depth: 160,
     height: 100,

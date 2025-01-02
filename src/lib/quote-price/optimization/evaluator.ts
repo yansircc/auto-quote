@@ -6,6 +6,7 @@ import type { Evaluator } from "./utils";
 import type { Dimensions } from "../core";
 
 export interface ProductProps {
+  id: number;
   materialName: string;
   dimensions: Dimensions;
   quantity: number;
@@ -28,10 +29,10 @@ export function expandCuboidsByCavity(products: ProductProps[]): BaseCuboid[] {
     const cuboids: BaseCuboid[] = [];
     for (let i = 0; i < product.cavityCount; i++) {
       cuboids.push({
+        id: product.id,
         width: product.dimensions.width,
         depth: product.dimensions.depth,
         height: product.dimensions.height,
-        index: i,
       });
     }
     return cuboids;

@@ -10,6 +10,7 @@ import type { ProductProps } from "../evaluator";
 // 测试数据
 const mockProducts: ProductProps[] = [
   {
+    id: 0,
     materialName: "wood",
     quantity: 1,
     color: "brown",
@@ -17,6 +18,7 @@ const mockProducts: ProductProps[] = [
     cavityCount: 2, // 穴数为 2
   },
   {
+    id: 1,
     materialName: "metal",
     quantity: 1,
     color: "silver",

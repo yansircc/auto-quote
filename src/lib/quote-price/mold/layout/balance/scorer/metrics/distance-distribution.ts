@@ -79,7 +79,7 @@ function getDistributionMetrics(layout: CuboidLayout[]): {
     return { cv: 0, range: 0 };
   }
 
-  // 计算变异系数 (CV)
+  // 计算平均值和变异系数 (CV)
   const mean = distances.reduce((sum, d) => sum + d, 0) / distances.length;
   const variance =
     distances.reduce((sum, d) => sum + Math.pow(d - mean, 2), 0) /
@@ -87,10 +87,15 @@ function getDistributionMetrics(layout: CuboidLayout[]): {
   const standardDeviation = Math.sqrt(variance);
   const cv = standardDeviation / mean;
 
-  // 计算极差比
-  const max = Math.max(...distances);
-  const min = Math.min(...distances);
-  const range = min > 0 ? (max - min) / min : 1; // 避免除以零
+  // 使用迭代方式计算最大最小值，避免栈溢出
+  let max = distances[0]!;
+  let min = distances[0]!;
+  for (let i = 1; i < distances.length; i++) {
+    if (distances[i]! > max) max = distances[i]!;
+    if (distances[i]! < min) min = distances[i]!;
+  }
+
+  const range = min > 0 ? (max - min) / min : 1;
 
   return { cv, range };
 }

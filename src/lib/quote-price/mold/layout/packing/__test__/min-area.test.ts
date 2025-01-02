@@ -2,13 +2,14 @@ import { describe, it, expect } from "vitest";
 import { calculateMinArea } from "../min-area";
 
 interface Rectangle {
+  id: number;
   width: number;
   height: number;
 }
 
 describe("calculateMinArea", () => {
   it("应该正确处理单个矩形", () => {
-    const rectangles: Rectangle[] = [{ width: 100, height: 50 }];
+    const rectangles: Rectangle[] = [{ id: 0, width: 100, height: 50 }];
     const result = calculateMinArea(rectangles);
 
     expect(result.layout[0]).toEqual({
@@ -22,8 +23,8 @@ describe("calculateMinArea", () => {
 
   it("应该正确处理多个矩形", () => {
     const rectangles: Rectangle[] = [
-      { width: 100, height: 50 },
-      { width: 60, height: 80 },
+      { id: 0, width: 100, height: 50 },
+      { id: 1, width: 60, height: 80 },
     ];
     const result = calculateMinArea(rectangles);
 
@@ -32,21 +33,21 @@ describe("calculateMinArea", () => {
 
   it("应该处理旋转选项", () => {
     const rectangles: Rectangle[] = [
-      { width: 100, height: 50 },
-      { width: 60, height: 80 },
+      { id: 0, width: 100, height: 50 },
+      { id: 1, width: 60, height: 80 },
     ];
     const result = calculateMinArea(rectangles, { allowRotation: true });
 
     const rotated = result.layout.some(
-      (rect) => rect.width !== rectangles[rect.index!]!.width,
+      (rect) => rect.width !== rectangles[rect.id]!.width,
     );
     expect(rotated).toBe(true);
   });
 
   it("应该保持原始宽高比", () => {
     const rectangles: Rectangle[] = [
-      { width: 50, height: 100 },
-      { width: 60, height: 80 },
+      { id: 0, width: 50, height: 100 },
+      { id: 1, width: 60, height: 80 },
     ];
     const result = calculateMinArea(rectangles);
 
@@ -56,11 +57,12 @@ describe("calculateMinArea", () => {
 
   it("应该处理间距选项", () => {
     const rectangles: Rectangle[] = [
-      { width: 50, height: 50 },
-      { width: 60, height: 60 },
+      { id: 0, width: 50, height: 50 },
+      { id: 1, width: 60, height: 60 },
     ];
     const spacing = {
       getPackingSize: (rect: Rectangle) => ({
+        id: rect.id,
         width: rect.width + 10,
         height: rect.height + 10,
       }),
@@ -83,9 +85,9 @@ describe("calculateMinArea", () => {
 
   it("应该正确处理相同尺寸的矩形", () => {
     const rectangles: Rectangle[] = [
-      { width: 50, height: 50 },
-      { width: 50, height: 50 },
-      { width: 50, height: 50 },
+      { id: 0, width: 50, height: 50 },
+      { id: 1, width: 50, height: 50 },
+      { id: 2, width: 50, height: 50 },
     ];
     const result = calculateMinArea(rectangles);
 
@@ -96,21 +98,21 @@ describe("calculateMinArea", () => {
 
   it("应该正确处理不允许旋转的情况", () => {
     const rectangles: Rectangle[] = [
-      { width: 100, height: 50 },
-      { width: 60, height: 80 },
+      { id: 0, width: 100, height: 50 },
+      { id: 1, width: 60, height: 80 },
     ];
     const result = calculateMinArea(rectangles, { allowRotation: false });
 
     const rotated = result.layout.some(
-      (rect) => rect.width !== rectangles[rect.index!]!.width,
+      (rect) => rect.width !== rectangles[rect.id]!.width,
     );
     expect(rotated).toBe(false);
   });
 
   it("应该正确处理最大迭代次数", () => {
     const rectangles: Rectangle[] = [
-      { width: 100, height: 50 },
-      { width: 60, height: 80 },
+      { id: 0, width: 100, height: 50 },
+      { id: 1, width: 60, height: 80 },
     ];
     const result = calculateMinArea(rectangles, { maxIterations: 1 });
 
@@ -119,8 +121,8 @@ describe("calculateMinArea", () => {
 
   it("应该正确处理极端尺寸的矩形", () => {
     const rectangles: Rectangle[] = [
-      { width: 1, height: 1000 },
-      { width: 1000, height: 1 },
+      { id: 0, width: 1, height: 1000 },
+      { id: 1, width: 1000, height: 1 },
     ];
     const result = calculateMinArea(rectangles);
 
@@ -131,14 +133,14 @@ describe("calculateMinArea", () => {
 
   it("应该保持矩形索引正确", () => {
     const rectangles: Rectangle[] = [
-      { width: 50, height: 100 },
-      { width: 60, height: 80 },
-      { width: 70, height: 90 },
+      { id: 0, width: 50, height: 100 },
+      { id: 1, width: 60, height: 80 },
+      { id: 2, width: 70, height: 90 },
     ];
     const result = calculateMinArea(rectangles);
 
     result.layout.forEach((rect, i) => {
-      expect(rect.index).toBe(i);
+      expect(rect.id).toBe(i);
     });
   });
 });

@@ -15,6 +15,7 @@ export interface Point3D {
  * Height (高) → Z 轴
  */
 export interface BaseCuboid {
+  id: number;
   width: number; // x 方向的长度
   depth: number; // y 方向的长度
   height: number; // z 方向的长度
@@ -32,7 +33,11 @@ export interface Cuboid extends BaseCuboid {
  * 3D布局结果，使用笛卡尔坐标系
  */
 export interface CuboidLayout {
-  dimensions: BaseCuboid;
+  id: number;
+  dimensions: {
+    width: number;
+    depth: number;
+    height: number;
+  };
   position: Point3D;
-  index: number; // 保留原始索引
 }

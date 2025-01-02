@@ -4,9 +4,9 @@ import type { PotpackBox } from "potpack";
  * 矩形定义
  */
 interface Rectangle {
+  id: number;
   width: number;
   height: number;
-  index?: number;
 }
 
 /**
@@ -54,7 +54,7 @@ interface LayoutOptions {
  * 打包用的矩形
  */
 interface Box extends PotpackBox {
-  originalIndex: number;
+  id: number;
   originalRect: Rectangle;
   isRotated: boolean;
 }
@@ -67,6 +67,7 @@ interface BaseCuboid extends Rectangle {
  * 3D布局结果，使用笛卡尔坐标系
  */
 interface CuboidLayout {
+  id: number;
   dimensions: {
     width: number; // x
     depth: number; // y
@@ -77,7 +78,6 @@ interface CuboidLayout {
     y: number;
     z: number;
   };
-  index: number; // 保留原始索引
 }
 
 export type {

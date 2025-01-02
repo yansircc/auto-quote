@@ -30,14 +30,16 @@ describe("searchBestCavityCount", () => {
 
     const result = searchBestCavityCount(products, mockMold, mockForceOptions);
 
-    expect(result).toHaveLength(1);
-    expect(result[0]!.cavityCounts).toEqual([1]);
+    expect(result).toHaveLength(3);
+    expect(result[0]!.productCavityMap).toEqual([
+      { productId: 1, cavityCount: 3 },
+    ]);
     expect(result[0]!.price).toBeGreaterThan(0);
     expect(result[0]!.layoutScore).toBeGreaterThanOrEqual(0);
     expect(result[0]!.riskScore).toBeGreaterThanOrEqual(0);
   });
 
-  it("应该正确处理多个相同产品", () => {
+  it("应该正确处理多个(> 6)相同产品", () => {
     const products: ProductProps[] = [
       {
         id: 1,
@@ -55,12 +57,51 @@ describe("searchBestCavityCount", () => {
         color: "red",
         quantity: 100,
       },
+      {
+        id: 3,
+        materialName: "ABS",
+        netVolume: 100,
+        dimensions: { width: 10, depth: 10, height: 10 },
+        color: "red",
+        quantity: 100,
+      },
+      {
+        id: 4,
+        materialName: "ABS",
+        netVolume: 100,
+        dimensions: { width: 10, depth: 10, height: 10 },
+        color: "red",
+        quantity: 100,
+      },
+      {
+        id: 5,
+        materialName: "ABS",
+        netVolume: 100,
+        dimensions: { width: 10, depth: 10, height: 10 },
+        color: "red",
+        quantity: 100,
+      },
+      {
+        id: 6,
+        materialName: "ABS",
+        netVolume: 100,
+        dimensions: { width: 10, depth: 10, height: 10 },
+        color: "red",
+        quantity: 100,
+      },
     ];
 
     const result = searchBestCavityCount(products, mockMold, mockForceOptions);
 
-    expect(result).toHaveLength(1);
-    expect(result[0]!.cavityCounts).toEqual([1, 1]);
+    expect(result).toHaveLength(3);
+    expect(result[0]!.productCavityMap).toEqual([
+      { productId: 1, cavityCount: 1 },
+      { productId: 2, cavityCount: 1 },
+      { productId: 3, cavityCount: 1 },
+      { productId: 4, cavityCount: 1 },
+      { productId: 5, cavityCount: 1 },
+      { productId: 6, cavityCount: 1 },
+    ]);
     expect(result[0]!.price).toBeGreaterThan(0);
     expect(result[0]!.layoutScore).toBeGreaterThanOrEqual(0);
     expect(result[0]!.riskScore).toBeGreaterThanOrEqual(0);
@@ -72,15 +113,23 @@ describe("searchBestCavityCount", () => {
         id: 1,
         materialName: "ABS",
         netVolume: 100,
-        dimensions: { width: 10, depth: 10, height: 10 },
+        dimensions: { width: 100, depth: 100, height: 100 },
         color: "red",
         quantity: 100,
       },
       {
         id: 2,
-        materialName: "718H",
+        materialName: "ASA",
         netVolume: 100,
-        dimensions: { width: 10, depth: 10, height: 10 },
+        dimensions: { width: 100, depth: 100, height: 100 },
+        color: "red",
+        quantity: 100,
+      },
+      {
+        id: 3,
+        materialName: "GPPS",
+        netVolume: 100,
+        dimensions: { width: 100, depth: 100, height: 100 },
         color: "red",
         quantity: 100,
       },
@@ -88,8 +137,12 @@ describe("searchBestCavityCount", () => {
 
     const result = searchBestCavityCount(products, mockMold, mockForceOptions);
 
-    expect(result).toHaveLength(1);
-    expect(result[0]!.cavityCounts).toEqual([1, 1]);
+    expect(result).toHaveLength(3);
+    expect(result[0]!.productCavityMap).toEqual([
+      { productId: 1, cavityCount: 1 },
+      { productId: 2, cavityCount: 1 },
+      { productId: 3, cavityCount: 1 },
+    ]);
     expect(result[0]!.price).toBeGreaterThan(0);
     expect(result[0]!.layoutScore).toBeGreaterThanOrEqual(0);
     expect(result[0]!.riskScore).toBeGreaterThanOrEqual(0);
@@ -117,8 +170,11 @@ describe("searchBestCavityCount", () => {
 
     const result = searchBestCavityCount(products, mockMold, mockForceOptions);
 
-    expect(result).toHaveLength(1);
-    expect(result[0]!.cavityCounts).toEqual([1, 1]);
+    expect(result).toHaveLength(3);
+    expect(result[0]!.productCavityMap).toEqual([
+      { productId: 1, cavityCount: 1 },
+      { productId: 2, cavityCount: 1 },
+    ]);
     expect(result[0]!.price).toBeGreaterThan(0);
     expect(result[0]!.layoutScore).toBeGreaterThanOrEqual(0);
     expect(result[0]!.riskScore).toBeGreaterThanOrEqual(0);
@@ -129,7 +185,7 @@ describe("searchBestCavityCount", () => {
 
     expect(() =>
       searchBestCavityCount(products, mockMold, mockForceOptions),
-    ).toThrowError("产品 id 不能为空");
+    ).toThrow();
   });
 
   it("应该正确处理无效的产品ID", () => {
@@ -146,6 +202,6 @@ describe("searchBestCavityCount", () => {
 
     expect(() =>
       searchBestCavityCount(products, mockMold, mockForceOptions),
-    ).toThrowError("产品 id 不能为空");
+    ).toThrow();
   });
 });

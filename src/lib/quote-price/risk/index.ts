@@ -15,7 +15,7 @@ interface CuboidLayout {
     y: number;
     z: number;
   };
-  index: number; // 保留原始索引
+  id: number;
 }
 
 /**

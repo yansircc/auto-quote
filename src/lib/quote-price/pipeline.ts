@@ -10,6 +10,7 @@ import type { ForceOptions, Dimensions } from "./core";
 import { calculateProductCosts } from "./product/cost";
 
 interface ProductProps {
+  id: number;
   materialName: string;
   quantity: number;
   color: string;
@@ -37,9 +38,11 @@ export function calculateSolutionPrice(
   // 计算产品组成的最小xy平面的二维面积
   const optimizedLayout = getTopAlignedCuboidsLayout(
     products.map((product) => ({
+      id: product.id,
       width: product.dimensions.width,
       depth: product.dimensions.depth,
       height: product.dimensions.height,
+      count: product.cavityCount ?? 1, // 考虑穴数
     })),
   );
 
@@ -58,10 +61,13 @@ export function calculateSolutionPrice(
     getMoldMaterial(mold.materialName),
   );
 
-  // 计算注胶总质量
+  // 计算注胶总质量时考虑穴数
   const totalInjectionWeight = products.reduce((sum, product) => {
     return (
-      sum + product.netVolume * getProductMaterial(product.materialName).density
+      sum +
+      product.netVolume *
+        getProductMaterial(product.materialName).density *
+        (product.cavityCount ?? 1) // 考虑穴数
     );
   }, 0);
 

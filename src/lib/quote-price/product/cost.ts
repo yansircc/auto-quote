@@ -1,4 +1,4 @@
-import { getSingleProductShots, getProductsTotalShots } from "./shots";
+import { getProductsTotalShots } from "./shots";
 import { getProductMaterial, getProductGrossProfit } from "../core";
 import type { MachineConfig, ForceOptions } from "../core";
 import { getTotalMachineProcessingFee } from "../machine";
@@ -38,17 +38,8 @@ export function calculateProductCosts(
     { materialCost: 0, wasteCost: 0 },
   );
 
-  // 计算产品各自的模次
-  const productProperties = products.map((product) => {
-    return {
-      shots: getSingleProductShots(product.quantity, product.cavityCount),
-      materialName: product.materialName,
-      color: product.color,
-    };
-  });
-
   // 计算需要的总模次
-  const totalShots = getProductsTotalShots(productProperties, forceOptions);
+  const totalShots = getProductsTotalShots(products, forceOptions);
 
   // 计算产品的总加工费
   const totalMachineProcessingFee = getTotalMachineProcessingFee(

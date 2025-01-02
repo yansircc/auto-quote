@@ -32,9 +32,9 @@ const DEFAULT_SPACING: SpacingCalculator = {
  */
 function sortRectangles(
   rectangles: Rectangle[],
-): { rect: Rectangle; originalIndex: number }[] {
+): { rect: Rectangle; id: number }[] {
   return rectangles
-    .map((rect, i) => ({ rect, originalIndex: i }))
+    .map((rect) => ({ rect, id: rect.id }))
     .sort((a, b) => {
       const areaA = a.rect.width * a.rect.height;
       const areaB = b.rect.width * b.rect.height;
@@ -111,23 +111,21 @@ function smartPacking(
     }
 
     // 准备打包的矩形（包含间距）
-    const boxes: Box[] = sortedRectangles.map(
-      ({ rect, originalIndex }): Box => {
-        const isRotated = Boolean(currentRotations[originalIndex]);
-        const width = isRotated ? rect.height : rect.width;
-        const height = isRotated ? rect.width : rect.height;
+    const boxes: Box[] = sortedRectangles.map(({ rect, id }): Box => {
+      const isRotated = Boolean(currentRotations[id]);
+      const width = isRotated ? rect.height : rect.width;
+      const height = isRotated ? rect.width : rect.height;
 
-        const spacedSize = spacing.getPackingSize({ width, height });
+      const spacedSize = spacing.getPackingSize({ width, height, id });
 
-        return {
-          w: spacedSize.width,
-          h: spacedSize.height,
-          originalIndex,
-          originalRect: rect,
-          isRotated,
-        };
-      },
-    );
+      return {
+        w: spacedSize.width,
+        h: spacedSize.height,
+        id,
+        originalRect: rect,
+        isRotated,
+      };
+    });
 
     const packResult = potpack(boxes);
     const area = packResult.w * packResult.h;
@@ -157,7 +155,7 @@ function smartPacking(
         const y = packResult.h - (actualPos.y + height);
 
         return {
-          index: box.originalIndex,
+          id: box.id,
           width,
           height,
           x,
@@ -165,8 +163,8 @@ function smartPacking(
         } satisfies PlacedRectangle;
       });
 
-      // 按原始索引排序
-      layout.sort((a, b) => a.index! - b.index!);
+      // 按 id 排序
+      layout.sort((a, b) => a.id - b.id);
 
       bestResult = {
         width: packResult.w,

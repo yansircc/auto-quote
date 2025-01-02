@@ -1,20 +1,33 @@
 import { calculateMinArea } from "./min-area";
 import type { BaseCuboid, CuboidLayout } from "../types";
 
+interface CuboidProps extends BaseCuboid {
+  count?: number;
+}
+
 export const DEFAULT_SPACING = 30;
 
 /**
  * 获取笛卡尔坐标系的3D布局结果，注意，所有立方体都顶端对齐，所有的顶都在 z = 0 那条线上
  *
- * @param cuboids - 一组立方体
+ * @param {CuboidProps[]} cuboids - 一组立方体
  * @returns {CuboidLayout[]} 3D布局结果，返回的是顶端对齐的布局
  */
 export function getTopAlignedCuboidsLayout(
-  cuboids: BaseCuboid[],
+  cuboids: CuboidProps[],
 ): CuboidLayout[] {
+  // 将 count 考虑进去，生成实际的立方体列表
+  const expandedCuboids = cuboids.flatMap((cuboid) => {
+    const count = cuboid.count ?? 1; // 默认 count 为 1
+    return Array.from({ length: count }, () => ({
+      ...cuboid,
+    }));
+  });
+
   // 获取2D布局（xy平面）
   const xyLayout = calculateMinArea(
-    cuboids.map((cuboid) => ({
+    expandedCuboids.map((cuboid) => ({
+      id: cuboid.id,
       width: cuboid.width,
       height: cuboid.depth, // 注意这里用 depth 作为 2D 布局的 height
     })),
@@ -48,10 +61,10 @@ export function getTopAlignedCuboidsLayout(
 
   // 转换为3D布局，使用笛卡尔坐标系，z=0为顶面
   return xyLayout.map((rect): CuboidLayout => {
-    const originalCuboid = cuboids[rect.index!];
+    const originalCuboid = cuboids.find((cuboid) => cuboid.id === rect.id);
 
     if (!originalCuboid) {
-      throw new Error("Original cuboid not found");
+      throw new Error(`原始id为 ${rect.id} 的立方体未找到`);
     }
 
     // 确保 width >= depth
@@ -59,6 +72,7 @@ export function getTopAlignedCuboidsLayout(
     const depth = Math.min(rect.width, rect.height);
 
     return {
+      id: rect.id,
       dimensions: {
         width, // 确保 width >= depth
         depth, // 2D layout 中的 height 对应 3D 的 depth
@@ -69,7 +83,6 @@ export function getTopAlignedCuboidsLayout(
         y: rect.y - minY, // 调整y坐标，去除底部间距
         z: -originalCuboid.height, // 顶面在 z=0，所以底面在 -height
       },
-      index: rect.index!,
     };
   });
 }
@@ -111,6 +124,6 @@ export function getBoundingBox(layouts: CuboidLayout[]): CuboidLayout {
       y: minY,
       z: minZ,
     },
-    index: 0, // 随便给个值, 此处的 index 是无效的
+    id: 0, // 随便给个值, 此处的 id 是无效的
   };
 }
