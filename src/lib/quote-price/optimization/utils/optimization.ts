@@ -20,7 +20,7 @@ export function bruteForceSearchAll(
         results.push({ x: [...current], val });
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
       } catch (error) {
-        console.warn("计算目标函数时发生错误，跳过本轮，继续计算");
+        // 忽略错误信息
       }
       return;
     }
@@ -135,7 +135,7 @@ export function searchBestInDimensionDiscrete(
       }
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
-      console.warn("计算目标函数时发生错误，跳过本轮，继续计算");
+      // 忽略错误信息
     }
   }
 

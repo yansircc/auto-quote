@@ -1,24 +1,26 @@
 import { describe, expect, it } from "vitest";
-import { runPipeline } from "../pipeline";
-import type { ForceOptions } from "../core";
+import { calculateSolutionPrice } from "../solution-price";
+import type { ForceOptions } from "../../core";
 
 describe("报价主流程测试", () => {
   const testProducts = [
     {
+      id: 1,
       materialName: "ABS",
       quantity: 100,
       color: "red",
       dimensions: { width: 100, depth: 100, height: 50 },
       netVolume: 83.33,
-      cavityIndex: 0,
+      cavityCount: 1,
     },
     {
+      id: 2,
       materialName: "PC",
       quantity: 200,
       color: "blue",
       dimensions: { width: 150, depth: 150, height: 75 },
       netVolume: 166.67,
-      cavityIndex: 1,
+      cavityCount: 1,
     },
   ];
 
@@ -33,18 +35,22 @@ describe("报价主流程测试", () => {
   };
 
   it("应该正确计算正常流程的总价", () => {
-    const totalPrice = runPipeline(testProducts, testMold);
+    const totalPrice = calculateSolutionPrice(testProducts, testMold);
     expect(totalPrice).toBeGreaterThan(0);
   });
 
   it("应该处理强制选项", () => {
-    const totalPrice = runPipeline(testProducts, testMold, testForceOptions);
+    const totalPrice = calculateSolutionPrice(
+      testProducts,
+      testMold,
+      testForceOptions,
+    );
     expect(totalPrice).toBeGreaterThan(0);
   });
 
   it("应该处理单个产品的情况", () => {
     const singleProduct = [testProducts[0]!];
-    const totalPrice = runPipeline(singleProduct, testMold);
+    const totalPrice = calculateSolutionPrice(singleProduct, testMold);
     expect(totalPrice).toBeGreaterThan(0);
   });
 
@@ -58,8 +64,8 @@ describe("报价主流程测试", () => {
       dimensions: { width: 1000, depth: 300, height: 210 }, // 深度设为300是为了防止重量溢出
     };
 
-    const smallPrice = runPipeline([smallProduct], testMold);
-    const largePrice = runPipeline([largeProduct], testMold);
+    const smallPrice = calculateSolutionPrice([smallProduct], testMold);
+    const largePrice = calculateSolutionPrice([largeProduct], testMold);
 
     expect(smallPrice).toBeGreaterThan(0);
     expect(largePrice).toBeGreaterThan(0);
@@ -73,18 +79,18 @@ describe("报价主流程测试", () => {
       materialName: material,
     }));
 
-    const totalPrice = runPipeline(products, testMold);
+    const totalPrice = calculateSolutionPrice(products, testMold);
     expect(totalPrice).toBeGreaterThan(0);
   });
 
   it("应该抛出错误当产品数量为负数", () => {
     const invalidProduct = { ...testProducts[0]!, quantity: -1 };
-    expect(() => runPipeline([invalidProduct], testMold)).toThrow();
+    expect(() => calculateSolutionPrice([invalidProduct], testMold)).toThrow();
   });
 
   it("应该处理零数量的产品", () => {
     const zeroQuantityProduct = { ...testProducts[0]!, quantity: 0 };
-    const totalPrice = runPipeline([zeroQuantityProduct], testMold);
+    const totalPrice = calculateSolutionPrice([zeroQuantityProduct], testMold);
     expect(totalPrice).toBeGreaterThanOrEqual(0);
   });
 });

@@ -43,7 +43,7 @@ export function expandCuboidsByCavity(products: ProductProps[]): BaseCuboid[] {
  * 创建布局评分评估器
  */
 export function createLayoutScorerEvaluator(
-  threshold = 60,
+  threshold = 40,
 ): Evaluator<CuboidLayout[]> {
   return {
     name: "layoutScore",

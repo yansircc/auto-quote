@@ -1,8 +1,6 @@
-// searchBestCavityCount.ts
-
 import { bruteForceSearchAll, coordinateDescentMulti } from "./utils";
 import { evaluateSolution } from "./evaluator";
-import { calculateSolutionPrice } from "../pipeline";
+import { calculateSolutionPrice } from "./solution-price";
 import { generateGrouping } from "./group-generator";
 import { getAllMaxCavityCount } from "./max-cavity";
 import type { ForceOptions } from "../core";
@@ -54,11 +52,13 @@ export function searchBestCavityCount(
   mold: MoldProps,
   forceOptions: ForceOptions,
 ): Solution[] {
-  console.log("开始搜索最佳穴数组合，产品数量:", products.length);
-
   // 添加对空产品列表的校验
   if (products.length === 0) {
     throw new Error("产品列表不能为空");
+  }
+
+  if (products.length > 7) {
+    throw new Error("产品数量不能超过7");
   }
 
   // 1) 生成满足兼容性要求的分组
@@ -110,9 +110,12 @@ export function searchBestCavityCount(
 
       // 计算 maxCavity
       const maxCavityMap = getAllMaxCavityCount(fullProducts);
-      // 转成 [ [1..maxCavity], ... ]
+      // 转成 [ [1..maxCavity], ... ]，并使用动态最大穴数
       const cavityRanges = fullProducts.map((p) => {
-        const maxCav = maxCavityMap[p.id] ?? 1;
+        const maxCav = Math.min(
+          maxCavityMap[p.id] ?? 1,
+          getDynamicMaxCavityCount(fullProducts.length),
+        );
         return Array.from({ length: maxCav }, (_, i) => i + 1);
       });
 
@@ -201,8 +204,6 @@ export function searchBestCavityCount(
     );
   }
 
-  console.log("最终组合数量:", globalSolutions.length);
-
   // 4) 最后对 globalSolutions 中每个方案做 evaluateSolution
   const evaluated: Solution[] = globalSolutions.map((sol) => {
     // 构造 updatedProducts
@@ -233,9 +234,9 @@ export function searchBestCavityCount(
     .filter((v) => v.isPass)
     .sort((a, b) => a.price - b.price);
 
-  const top3 = valid.slice(0, 3);
-  // console.log("top3", top3);
-  return top3;
+  const best = valid.slice(0, 1);
+  console.log("best", best);
+  return best;
 }
 
 /**
@@ -278,4 +279,31 @@ function mergeTwoGroupsWithPrune(
 
   // 只保留前 k 条
   return merged.slice(0, k);
+}
+
+/**
+ * 根据产品数量动态计算最大穴数
+ * @param productCount 产品数量
+ * @returns 最大穴数
+ */
+function getDynamicMaxCavityCount(productCount: number): number {
+  // 当产品数量为1时，最大穴数为50
+  // 当产品数量为7时，最大穴数为10
+  // 中间值线性递减
+  const minCount = 10;
+  const maxCount = 50;
+  const minProductCount = 7;
+  const maxProductCount = 1;
+
+  // 计算斜率
+  const slope = (minCount - maxCount) / (minProductCount - maxProductCount);
+
+  // 计算截距
+  const intercept = maxCount - slope * maxProductCount;
+
+  // 计算动态值并向下取整
+  const dynamicValue = slope * productCount + intercept;
+
+  // 确保返回值在[minCount, maxCount]范围内
+  return Math.max(minCount, Math.min(maxCount, Math.floor(dynamicValue)));
 }

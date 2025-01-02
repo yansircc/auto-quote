@@ -3,11 +3,11 @@ import {
   getMoldTotalPrice,
   getTopAlignedCuboidsLayout,
   getBoundingBox,
-} from "./mold";
-import { getCheapestMachine } from "./machine";
-import { getProductMaterial, getMoldMaterial } from "./core";
-import type { ForceOptions, Dimensions } from "./core";
-import { calculateProductCosts } from "./product/cost";
+} from "../mold";
+import { getCheapestMachine } from "../machine";
+import { getProductMaterial, getMoldMaterial } from "../core";
+import type { ForceOptions, Dimensions } from "../core";
+import { calculateProductCosts } from "../product/cost";
 
 interface ProductProps {
   id: number;
