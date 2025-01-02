@@ -1,12 +1,16 @@
-import { type UploadFile } from "./upload";
+import type { UploadFile } from "./upload";
 
 export interface ProductInfo {
   id: string;
-  material?: string;
-  color?: string;
+  fileId: string;
+  fileName: string;
   quantity: number;
-  length?: number;
-  width?: number;
-  height?: number;
-  image: UploadFile;
+  material: string;
+  color: string;
+  surface: string;
+  notes: string;
+  image?: UploadFile;
+  depth: number;
+  width: number;
+  height: number;
 }

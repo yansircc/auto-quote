@@ -21,6 +21,16 @@ interface PriceCalculationStepProps {
   onValidityChange?: (isValid: boolean) => void;
   products?: ProductInfo[];
   moldMaterial?: string;
+  contactInfo: {
+    name: string;
+    phone: string;
+    email: string;
+  };
+  onContactInfoChange: (info: {
+    name: string;
+    phone: string;
+    email: string;
+  }) => void;
 }
 
 // 模拟生成方案数据
@@ -46,16 +56,21 @@ export default function PriceCalculationStep({
   products,
   moldMaterial,
   onValidityChange,
+  contactInfo,
+  onContactInfoChange,
 }: PriceCalculationStepProps) {
   const [schemes] = useState<ProductScheme[]>(generateSchemes());
   const [selectedScheme, setSelectedScheme] = useState<string>(
     schemes[0]?.id.toString() ?? "",
   );
+<<<<<<< HEAD
+=======
   const [contactInfo, setContactInfo] = useState({
     name: "",
     phone: "",
     email: "",
   });
+>>>>>>> upstream/main
   const [errors, setErrors] = useState<{
     name?: string;
     phone?: string;
@@ -141,7 +156,11 @@ export default function PriceCalculationStep({
       {/* 模具信息卡片 */}
       {currentScheme && (
         <MoldInfoCard
+<<<<<<< HEAD
+          material={moldMaterial ?? "未选择"}
+=======
           material={currentScheme.moldMaterial}
+>>>>>>> upstream/main
           weight={currentScheme.weight}
           price={currentScheme.moldPrice}
           dimensions={currentScheme.dimensions}
@@ -166,7 +185,11 @@ export default function PriceCalculationStep({
       {/* 联系信息 */}
       <ContactInfoCard
         contactInfo={contactInfo}
+<<<<<<< HEAD
+        onChange={(info) => onContactInfoChange({ ...contactInfo, ...info })}
+=======
         onChange={(info) => setContactInfo((prev) => ({ ...prev, ...info }))}
+>>>>>>> upstream/main
         errors={errors}
       />
     </div>

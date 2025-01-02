@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import type { UploadFile } from "@/types/user-guide/upload";
 import Image from "next/image";
+import { useCallback } from "react";
 
 interface FileListProps {
   files: UploadFile[];
@@ -12,7 +13,7 @@ interface FileListProps {
 }
 
 export function FileList({ files, onRemove }: FileListProps) {
-  const getFileIcon = (file: UploadFile) => {
+  const getFileIcon = useCallback((file: UploadFile) => {
     if (file.type === "image") {
       return (
         <div className="w-8 h-8 relative rounded overflow-hidden">
@@ -38,7 +39,7 @@ export function FileList({ files, onRemove }: FileListProps) {
       default:
         return "📄";
     }
-  };
+  }, []);
 
   return (
     <div className="space-y-2">
@@ -62,7 +63,10 @@ export function FileList({ files, onRemove }: FileListProps) {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => onRemove(file.id)}
+            onClick={(e) => {
+              e.preventDefault();
+              onRemove(file.id);
+            }}
             className="ml-2"
           >
             <X className="h-4 w-4" />

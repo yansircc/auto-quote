@@ -19,19 +19,25 @@ interface ConfirmStepProps {
   onValidityChange?: (isValid: boolean) => void;
   products?: ProductInfo[];
   onMoldMaterialChange?: (material: string) => void;
+  moldMaterial?: string;
 }
 
 export default function ConfirmStep({
   products,
   onValidityChange,
   onMoldMaterialChange,
+  moldMaterial = "",
 }: ConfirmStepProps) {
-  const [moldMaterial, setMoldMaterial] = useState<string>("");
+  const [selectedMaterial, setSelectedMaterial] = useState(moldMaterial);
 
   useEffect(() => {
-    onValidityChange?.(Boolean(moldMaterial));
-    onMoldMaterialChange?.(moldMaterial);
-  }, [moldMaterial, onValidityChange, onMoldMaterialChange]);
+    setSelectedMaterial(moldMaterial);
+  }, [moldMaterial]);
+
+  useEffect(() => {
+    onValidityChange?.(Boolean(selectedMaterial));
+    onMoldMaterialChange?.(selectedMaterial);
+  }, [selectedMaterial, onValidityChange, onMoldMaterialChange]);
 
   if (!products?.length) {
     return (
@@ -60,7 +66,7 @@ export default function ConfirmStep({
       <Card className="p-6">
         <div className="max-w-md">
           <Label className="mb-2 block">选择模具材料</Label>
-          <Select value={moldMaterial} onValueChange={setMoldMaterial}>
+          <Select value={selectedMaterial} onValueChange={setSelectedMaterial}>
             <SelectTrigger>
               <SelectValue placeholder="请选择模具材料" />
             </SelectTrigger>

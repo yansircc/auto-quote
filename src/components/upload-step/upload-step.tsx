@@ -12,6 +12,7 @@ interface UploadStepProps {
   isValid?: boolean;
   onValidityChange?: (isValid: boolean) => void;
   onFilesChange?: (files: UploadFile[]) => void;
+  uploadedFiles?: UploadFile[];
 }
 
 // 支持的文件类型
@@ -28,13 +29,40 @@ const SUPPORTED_FORMATS = {
 
 const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
 
+// 添加一个生成唯一ID的函数
+function generateUUID(): string {
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
+    const r = (Math.random() * 16) | 0;
+    const v = c === "x" ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+}
+
 export default function UploadStep({
   currentStep,
   onValidityChange,
   onFilesChange,
+  uploadedFiles = [],
 }: UploadStepProps) {
-  const [files, setFiles] = useState<UploadFile[]>([]);
+  const [files, setFiles] = useState<UploadFile[]>(uploadedFiles);
   const [error, setError] = useState<string>("");
+  const [fileToRemove, setFileToRemove] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (uploadedFiles) {
+      setFiles(uploadedFiles);
+    }
+  }, [uploadedFiles]);
+
+  // 处理文件删除的 effect
+  useEffect(() => {
+    if (fileToRemove) {
+      const updatedFiles = files.filter((file) => file.id !== fileToRemove);
+      setFiles(updatedFiles);
+      onFilesChange?.(updatedFiles);
+      setFileToRemove(null);
+    }
+  }, [fileToRemove, files, onFilesChange]);
 
   const handleFilesAdded = useCallback(
     (newFiles: File[]) => {
@@ -55,7 +83,7 @@ export default function UploadStep({
       }
 
       const uploadFiles: UploadFile[] = newFiles.map((file) => ({
-        id: crypto.randomUUID(),
+        id: generateUUID(),
         file,
         status: "pending",
         progress: 0,
@@ -70,16 +98,9 @@ export default function UploadStep({
     [files, onFilesChange],
   );
 
-  const handleFileRemove = useCallback(
-    (fileId: string) => {
-      setFiles((prevFiles) => {
-        const updatedFiles = prevFiles.filter((file) => file.id !== fileId);
-        onFilesChange?.(updatedFiles);
-        return updatedFiles;
-      });
-    },
-    [onFilesChange],
-  );
+  const handleFileRemove = useCallback((fileId: string) => {
+    setFileToRemove(fileId);
+  }, []);
 
   // 监听文件列表变化，更新验证状态
   useEffect(() => {
