@@ -11,8 +11,9 @@
  *    - 越小越好
  */
 
-import { createNormalizer, getBoundingBox, PARAM_PREFIX } from "../shared";
-import type { CuboidLayout } from "../shared";
+import { createNormalizer, PARAM_PREFIX } from "../shared";
+import { getBoundingBox } from "../../../packing";
+import type { CuboidLayout } from "../../../types";
 import {
   getSpaceUtilizationScore,
   SPACE_UTILIZATION_BEST_PARAMS,

@@ -13,8 +13,9 @@
  *    - 考虑模具开合方向的对称性
  */
 
-import { createNormalizer, getBoundingBox, PARAM_PREFIX } from "../shared";
-import type { CuboidLayout } from "../shared";
+import { createNormalizer, PARAM_PREFIX } from "../shared";
+import { getBoundingBox } from "../../../packing";
+import type { CuboidLayout } from "../../../types";
 import {
   getSymmetryScore,
   SYMMETRY_BEST_PARAMS,

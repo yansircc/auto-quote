@@ -1,5 +1,5 @@
 import { runAllScorers } from "../runner";
-import { getTopAlignedCuboidsLayout } from "../scorer/shared";
+import { getTopAlignedCuboidsLayout } from "../../packing";
 import type { BaseCuboid } from "../types";
 
 const mockCuboids: BaseCuboid[] = [

@@ -15,8 +15,9 @@
  *     最终保留的实际体积与位置，而不是原始未挖空时的立方体。
  */
 
-import { getBoundingBox, createNormalizer } from "../shared";
-import type { CuboidLayout } from "../shared";
+import { createNormalizer } from "../shared";
+import { getBoundingBox } from "../../../packing";
+import type { CuboidLayout } from "../../../types";
 import {
   getPositionDistributionScore,
   POSITION_DISTRIBUTION_BEST_PARAMS,

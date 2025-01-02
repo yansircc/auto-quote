@@ -14,7 +14,7 @@
  */
 
 import { createNormalizer } from "../shared";
-import type { CuboidLayout } from "../shared";
+import type { CuboidLayout } from "../../../types";
 import {
   getDistributionUniformityScore,
   DISTRIBUTION_UNIFORMITY_BEST_PARAMS,

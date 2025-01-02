@@ -1,4 +1,4 @@
-import type { ForceOptions } from "../../core";
+import type { ForceOptions } from "../core";
 
 interface ProductProps {
   materialName: string;

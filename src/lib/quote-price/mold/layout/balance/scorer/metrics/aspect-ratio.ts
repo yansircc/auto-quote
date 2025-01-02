@@ -12,8 +12,9 @@ import {
   ASPECT_RATIO_BEST_PARAMS,
   PARAM_PREFIX,
 } from "../../optimizer";
-import { createNormalizer, getBoundingBox } from "../shared";
-import type { CuboidLayout } from "../shared";
+import { createNormalizer } from "../shared";
+import { getBoundingBox } from "../../../packing";
+import type { CuboidLayout } from "../../../types";
 
 /**
  * 采用最小面积函数，计算一组立方体的整体长宽比

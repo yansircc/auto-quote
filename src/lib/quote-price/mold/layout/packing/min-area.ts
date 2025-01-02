@@ -6,7 +6,7 @@ import type {
   LayoutResult,
   LayoutOptions,
   SpacingCalculator,
-} from "./types";
+} from "../types";
 
 /**
  * 默认的布局选项
@@ -30,12 +30,16 @@ const DEFAULT_SPACING: SpacingCalculator = {
  * @param rectangles - 矩形列表
  * @returns {Rectangle[]} 排序后的矩形列表
  */
-function sortRectangles(rectangles: Rectangle[]): Rectangle[] {
-  return [...rectangles].sort((a, b) => {
-    const areaA = a.width * a.height;
-    const areaB = b.width * b.height;
-    return areaB - areaA;
-  });
+function sortRectangles(
+  rectangles: Rectangle[],
+): { rect: Rectangle; originalIndex: number }[] {
+  return rectangles
+    .map((rect, i) => ({ rect, originalIndex: i }))
+    .sort((a, b) => {
+      const areaA = a.rect.width * a.rect.height;
+      const areaB = b.rect.width * b.rect.height;
+      return areaB - areaA;
+    });
 }
 
 /**
@@ -88,32 +92,42 @@ function smartPacking(
 
   // 尝试不同的旋转组合
   for (let i = 0; i < maxIterations; i++) {
-    const currentRotations =
-      i === 0
-        ? getOptimalRotations(sortedRectangles)
-        : i === 1
-          ? createRotationArray(rectangles.length, false)
-          : rectangles.map(() => Math.random() < 0.5);
+    let currentRotations: boolean[];
 
-    // 跳过不允许旋转时的旋转组合
-    if (!allowRotation && i > 0) break;
+    if (!allowRotation) {
+      // 一旦禁用旋转，不管是第几轮，都直接 false
+      currentRotations = createRotationArray(rectangles.length, false);
+    } else {
+      // 允许旋转，才去根据 i 是否=0 来选择不同策略
+      if (i === 0) {
+        currentRotations = getOptimalRotations(
+          sortedRectangles.map((item) => item.rect),
+        );
+      } else if (i === 1) {
+        currentRotations = createRotationArray(rectangles.length, false);
+      } else {
+        currentRotations = rectangles.map(() => Math.random() < 0.5);
+      }
+    }
 
     // 准备打包的矩形（包含间距）
-    const boxes: Box[] = sortedRectangles.map((rect, i): Box => {
-      const isRotated = Boolean(currentRotations[i]);
-      const width = isRotated ? rect.height : rect.width;
-      const height = isRotated ? rect.width : rect.height;
+    const boxes: Box[] = sortedRectangles.map(
+      ({ rect, originalIndex }): Box => {
+        const isRotated = Boolean(currentRotations[originalIndex]);
+        const width = isRotated ? rect.height : rect.width;
+        const height = isRotated ? rect.width : rect.height;
 
-      const spacedSize = spacing.getPackingSize({ width, height });
+        const spacedSize = spacing.getPackingSize({ width, height });
 
-      return {
-        w: spacedSize.width,
-        h: spacedSize.height,
-        originalIndex: i,
-        originalRect: rect,
-        isRotated,
-      };
-    });
+        return {
+          w: spacedSize.width,
+          h: spacedSize.height,
+          originalIndex,
+          originalRect: rect,
+          isRotated,
+        };
+      },
+    );
 
     const packResult = potpack(boxes);
     const area = packResult.w * packResult.h;
@@ -131,7 +145,6 @@ function smartPacking(
       bestFill = fill;
 
       const layout: PlacedRectangle[] = boxes.map((box) => {
-        // 直接处理旋转后的实际尺寸
         const width = box.isRotated
           ? box.originalRect.height
           : box.originalRect.width;
@@ -140,18 +153,20 @@ function smartPacking(
           : box.originalRect.height;
         const actualPos = spacing.getActualPosition(box.x ?? 0, box.y ?? 0);
 
-        // 计算左下角坐标（Y轴翻转）
         const x = actualPos.x;
-        const y = packResult.h - (actualPos.y + height); // 关键修改：翻转Y轴
+        const y = packResult.h - (actualPos.y + height);
 
         return {
           index: box.originalIndex,
-          width, // 这里的 width 和 height 已经是旋转后的实际尺寸
+          width,
           height,
-          x, // 左下角 x 坐标
-          y, // 左下角 y 坐标（笛卡尔坐标系）
+          x,
+          y,
         } satisfies PlacedRectangle;
       });
+
+      // 按原始索引排序
+      layout.sort((a, b) => a.index! - b.index!);
 
       bestResult = {
         width: packResult.w,

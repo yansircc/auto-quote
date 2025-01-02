@@ -10,7 +10,7 @@ import {
   spacingUniformityScorer,
   symmetryScorer,
 } from "../scorer";
-import { getTopAlignedCuboidsLayout } from "../scorer/shared";
+import { getTopAlignedCuboidsLayout } from "../../packing";
 
 /**
  * 评分器配置

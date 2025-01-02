@@ -12,7 +12,7 @@
  */
 
 import { createNormalizer } from "../shared";
-import type { CuboidLayout } from "../shared";
+import type { CuboidLayout } from "../../../types";
 import {
   getMomentumScore,
   MOMENTUM_BEST_PARAMS,

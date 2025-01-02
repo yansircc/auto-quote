@@ -7,28 +7,24 @@ describe("报价主流程测试", () => {
     {
       materialName: "ABS",
       quantity: 100,
-      weight: 0.1,
-      cavityIndex: 0,
-      shots: 100,
       color: "red",
       dimensions: { width: 100, depth: 100, height: 50 },
       netVolume: 83.33,
+      cavityIndex: 0,
     },
     {
       materialName: "PC",
       quantity: 200,
-      weight: 0.2,
-      cavityIndex: 1,
-      shots: 100,
       color: "blue",
       dimensions: { width: 150, depth: 150, height: 75 },
       netVolume: 166.67,
+      cavityIndex: 1,
     },
   ];
 
   const testMold = {
     materialName: "P20",
-    cavities: { "1": 1, "2": 2 },
+    cavities: { "0": 1, "1": 2 },
   };
 
   const testForceOptions: ForceOptions = {

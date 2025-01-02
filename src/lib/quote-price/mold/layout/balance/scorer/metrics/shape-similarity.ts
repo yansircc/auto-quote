@@ -16,7 +16,7 @@
  */
 
 import { createNormalizer, PARAM_PREFIX } from "../shared";
-import type { CuboidLayout } from "../shared";
+import type { CuboidLayout } from "../../../types";
 import {
   getShapeSimilarityScore,
   SHAPE_SIMILARITY_BEST_PARAMS,

@@ -1,4 +1,9 @@
-import { calculateMinArea, getMoldDimensions, getMoldTotalPrice } from "./mold";
+import {
+  getMoldDimensions,
+  getMoldTotalPrice,
+  getTopAlignedCuboidsLayout,
+  getBoundingBox,
+} from "./mold";
 import { getCheapestMachine } from "./machine";
 import { getProductMaterial, getMoldMaterial } from "./core";
 import type { ForceOptions, Dimensions } from "./core";
@@ -7,17 +12,14 @@ import { calculateProductCosts } from "./product/cost";
 interface ProductProps {
   materialName: string;
   quantity: number;
-  weight: number;
-  cavityIndex: number;
-  shots: number;
   color: string;
-  dimensions: Dimensions;
-  netVolume: number;
+  dimensions: Dimensions; // 外包围尺寸
+  netVolume: number; // 净体积
+  cavityCount: number;
 }
 
 interface MoldProps {
   materialName: string;
-  cavities: Record<string, number>;
 }
 
 /**
@@ -27,28 +29,27 @@ interface MoldProps {
  * @param {ForceOptions} forceOptions 强制选项，可选
  * @returns {number} 模具的最终价格
  */
-export function runPipeline(
+export function calculateSolutionPrice(
   products: ProductProps[],
   mold: MoldProps,
   forceOptions?: ForceOptions,
 ): number {
   // 计算产品组成的最小xy平面的二维面积
-  const minArea = calculateMinArea(
+  const optimizedLayout = getTopAlignedCuboidsLayout(
     products.map((product) => ({
       width: product.dimensions.width,
-      height: product.dimensions.depth,
+      depth: product.dimensions.depth,
+      height: product.dimensions.height,
     })),
   );
 
-  const maxHeight = products.reduce((max, product) => {
-    return Math.max(max, product.dimensions.height);
-  }, 0);
+  const boundingBox = getBoundingBox(optimizedLayout);
 
   // 计算实际的模具尺寸
   const moldDimensions = getMoldDimensions({
-    width: minArea.width,
-    depth: minArea.height, // 注意这里，模具的深度对应的是最小面积的高度
-    height: maxHeight,
+    width: boundingBox.dimensions.width,
+    depth: boundingBox.dimensions.depth,
+    height: boundingBox.dimensions.height,
   });
 
   // 计算模具总价，包含材料成本、采购成本、额外加工费、毛利
@@ -70,19 +71,10 @@ export function runPipeline(
     totalInjectionWeight,
   );
 
-  // 组装产品属性
-  const cavities = Object.values(mold.cavities);
-  const productProps = products.map((product) => ({
-    ...product,
-    weight:
-      product.netVolume * getProductMaterial(product.materialName).density,
-  }));
-
   // 计算产品的总价格（包含材料成本、损耗成本、加工费、毛利）
   const productCosts = calculateProductCosts(
-    productProps,
+    products,
     machineConfig,
-    cavities,
     forceOptions,
   );
 

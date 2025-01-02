@@ -12,7 +12,7 @@
  */
 
 import { createNormalizer } from "../shared";
-import type { CuboidLayout } from "../shared";
+import type { CuboidLayout } from "../../../types";
 import {
   getDistanceDistributionScore,
   DISTANCE_DISTRIBUTION_BEST_PARAMS,

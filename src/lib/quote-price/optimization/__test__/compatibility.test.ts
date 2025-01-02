@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { checkGroupCompatibility } from "../compatibility";
-import type { ForceOptions } from "../../../core";
+import type { ForceOptions } from "../../core";
 
 describe("产品组合兼容性检查", () => {
   it("应该返回 true 当所有产品颜色和材料都相同", () => {
