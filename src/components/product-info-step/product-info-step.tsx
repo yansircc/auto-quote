@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { ProductCard } from "./product-card";
@@ -13,144 +13,157 @@ interface ProductInfoStepProps {
   onValidityChange?: (isValid: boolean) => void;
   uploadedFiles?: UploadFile[];
   onProductsChange?: (products: ProductInfo[]) => void;
-}
-
-// 添加生成随机尺寸的辅助函数
-function generateRandomDimensions() {
-  // 生成 50-300 之间的随机整数
-  return {
-    length: Math.floor(Math.random() * (300 - 50 + 1)) + 50,
-    width: Math.floor(Math.random() * (300 - 50 + 1)) + 50,
-    height: Math.floor(Math.random() * (300 - 50 + 1)) + 50,
-  };
+  products?: ProductInfo[];
 }
 
 export default function ProductInfoStep({
-  uploadedFiles,
+  currentStep,
   onValidityChange,
+  uploadedFiles = [],
   onProductsChange,
+  products: initialProducts = [],
 }: ProductInfoStepProps) {
+  const [products, setProducts] = useState<ProductInfo[]>(initialProducts);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [products, setProducts] = useState<ProductInfo[]>([]);
+  const [isValidating, setIsValidating] = useState(false);
+  const [pendingProducts, setPendingProducts] = useState<ProductInfo[] | null>(
+    null,
+  );
 
-  // 根据上传的图片初始化产品列表，包含随机尺寸
   useEffect(() => {
-    if (uploadedFiles?.length) {
-      const initialProducts: ProductInfo[] = uploadedFiles.map((file) => {
-        const dimensions = generateRandomDimensions();
+    if (uploadedFiles.length > 0 && products.length === 0) {
+      const newProducts: ProductInfo[] = uploadedFiles.map((file) => {
+        const randomDimension = () =>
+          Math.floor(Math.random() * (200 - 20 + 1)) + 20;
+
         return {
           id: file.id,
-          image: file,
+          fileId: file.id,
+          fileName: file.file.name,
           quantity: 1,
           material: "",
           color: "",
-          length: dimensions.length,
-          width: dimensions.width,
-          height: dimensions.height,
+          surface: "",
+          notes: "",
+          image: file.type === "image" ? file : undefined,
+          depth: randomDimension(),
+          width: randomDimension(),
+          height: randomDimension(),
         };
       });
-      setProducts(initialProducts);
+
+      setProducts(newProducts);
+      onProductsChange?.(newProducts);
     }
-  }, [uploadedFiles]);
+  }, [uploadedFiles, products.length, onProductsChange]);
 
-  const handlePrevious = () => {
-    setCurrentIndex((prev) => Math.max(0, prev - 1));
-  };
-
-  const handleNext = () => {
-    setCurrentIndex((prev) => Math.min(products.length - 1, prev + 1));
-  };
-
-  const handleProductChange = (
-    productId: string,
-    data: Partial<ProductInfo>,
-  ) => {
-    setProducts((prev) =>
-      prev.map((p) => (p.id === productId ? { ...p, ...data } : p)),
-    );
-  };
-
-  // 验证所有产品信息是否完整
   useEffect(() => {
-    const isValid = products.every(
-      (product) => product.material && product.color && product.quantity > 0,
-    );
-    // const isValid = true;
-    onValidityChange?.(isValid);
-  }, [products, onValidityChange]);
+    if (initialProducts.length > 0) {
+      setProducts(initialProducts);
+      if (currentIndex >= initialProducts.length) {
+        setCurrentIndex(initialProducts.length - 1);
+      }
+    }
+  }, [initialProducts, currentIndex]);
 
-  // 当产品信息更新时，通知父组件
   useEffect(() => {
-    onProductsChange?.(products);
-  }, [products, onProductsChange]);
+    if (pendingProducts) {
+      onProductsChange?.(pendingProducts);
+      setPendingProducts(null);
+    }
+  }, [pendingProducts, onProductsChange]);
 
-  if (products.length === 0) {
-    return (
-      <div className="text-center p-6">
-        <p className="text-muted-foreground">请先上传产品图片</p>
-      </div>
-    );
+  const handleProductChange = useCallback(
+    (data: Partial<ProductInfo>) => {
+      setProducts((prevProducts) => {
+        const newProducts = [...prevProducts];
+        const currentProduct = newProducts[currentIndex];
+
+        if (!currentProduct) {
+          return prevProducts;
+        }
+
+        newProducts[currentIndex] = {
+          ...currentProduct,
+          ...data,
+        };
+
+        setPendingProducts(newProducts);
+        return newProducts;
+      });
+
+      setIsValidating(true);
+    },
+    [currentIndex],
+  );
+
+  const handleNext = useCallback(() => {
+    if (currentIndex < products.length - 1) {
+      setCurrentIndex((prev) => prev + 1);
+    }
+  }, [currentIndex, products.length]);
+
+  const handlePrevious = useCallback(() => {
+    if (currentIndex > 0) {
+      setCurrentIndex((prev) => prev - 1);
+    }
+  }, [currentIndex]);
+
+  useEffect(() => {
+    if (isValidating) {
+      const isValid = products.every(
+        (product) => product.quantity > 0 && product.material && product.color,
+      );
+      onValidityChange?.(isValid);
+      setIsValidating(false);
+    }
+  }, [products, onValidityChange, isValidating]);
+
+  if (!uploadedFiles.length || !products.length) {
+    return null;
+  }
+
+  const currentProduct = products[currentIndex];
+  if (!currentProduct) {
+    return null;
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold">填写产品资料</h2>
-        <p className="text-sm text-muted-foreground">
-          {currentIndex + 1} / {products.length}
-        </p>
-      </div>
+    <div className="relative">
+      <ProductCard
+        key={`product-${currentIndex}`}
+        product={currentProduct}
+        onChange={handleProductChange}
+      />
 
-      <div className="relative">
-        {/* 修改滑动按钮样式，增加明显的背景色 */}
-        {currentIndex > 0 && (
+      {products.length > 1 && (
+        <>
           <Button
             variant="outline"
             size="icon"
-            className="absolute left-4 top-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-full bg-blue-500 shadow-lg border-2 border-blue-600 hover:bg-blue-600 hover:border-blue-700 transition-colors"
+            className="absolute left-4 top-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-full 
+            bg-sky-500 backdrop-blur hover:bg-background/90 border-2 border-border 
+            shadow-lg hover:shadow-xl transition-all"
             onClick={handlePrevious}
+            disabled={currentIndex === 0}
           >
-            <ChevronLeft className="w-8 h-8 text-white" />
+            <ChevronLeft className="w-8 h-8" />
           </Button>
-        )}
-
-        {currentIndex < products.length - 1 && (
           <Button
             variant="outline"
             size="icon"
-            className="absolute right-4 top-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-full bg-blue-500 shadow-lg border-2 border-blue-600 hover:bg-blue-600 hover:border-blue-700 transition-colors"
+            className="absolute right-4 top-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-full 
+            bg-sky-500 backdrop-blur hover:bg-background/90 border-2 border-border 
+            shadow-lg hover:shadow-xl transition-all"
             onClick={handleNext}
+            disabled={currentIndex === products.length - 1}
           >
-            <ChevronRight className="w-8 h-8 text-white" />
+            <ChevronRight className="w-8 h-8" />
           </Button>
-        )}
+        </>
+      )}
 
-        {/* 产品卡片容器 - 添加背景色和圆角 */}
-        <div className="overflow-hidden rounded-lg bg-muted/30">
-          <div
-            className="flex transition-transform duration-300 ease-in-out"
-            style={{
-              transform: `translateX(-${currentIndex * 100}%)`,
-            }}
-          >
-            {products.map((product, index) => (
-              <div
-                key={product.id}
-                className="w-full flex-shrink-0 p-4"
-                style={{ minWidth: "100%" }}
-              >
-                <ProductCard
-                  product={product}
-                  onChange={(data) => handleProductChange(product.id, data)}
-                />
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* 分页指示器 */}
-      <div className="flex justify-center gap-2">
+      <div className="flex justify-center gap-2 mt-4">
         {products.map((_, index) => (
           <button
             key={index}

@@ -10,8 +10,11 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { Minus, Plus } from "lucide-react";
 import Image from "next/image";
 import type { ProductInfo } from "@/types/user-guide/product";
+import { useState } from "react";
 
 interface ProductCardProps {
   product: ProductInfo;
@@ -19,23 +22,60 @@ interface ProductCardProps {
 }
 
 export function ProductCard({ product, onChange }: ProductCardProps) {
+  const [quantityInput, setQuantityInput] = useState(
+    product.quantity.toString(),
+  );
+
+  const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    if (value === "" || /^\d+$/.test(value)) {
+      setQuantityInput(value);
+    }
+  };
+
+  const handleQuantityBlur = () => {
+    const newQuantity = parseInt(quantityInput, 10);
+    if (!isNaN(newQuantity) && newQuantity > 0) {
+      onChange({ quantity: newQuantity });
+    } else {
+      onChange({ quantity: 1 });
+      setQuantityInput("1");
+    }
+  };
+
+  const handleQuantityDecrease = () => {
+    if (product.quantity > 1) {
+      const newQuantity = product.quantity - 1;
+      onChange({ quantity: newQuantity });
+      setQuantityInput(newQuantity.toString());
+    }
+  };
+
+  const handleQuantityIncrease = () => {
+    const newQuantity = product.quantity + 1;
+    onChange({ quantity: newQuantity });
+    setQuantityInput(newQuantity.toString());
+  };
+
   return (
     <Card className="p-6">
       <div className="flex w-full">
-        {/* 左侧：图片和尺寸信息 (50%) */}
+        {/* 左侧：图片和尺寸信息 */}
         <div className="w-1/2 pr-4">
           {/* 图片容器 */}
           <div className="mb-6">
             <div className="max-w-[240px] mx-auto">
               <div className="aspect-square relative rounded-lg overflow-hidden bg-muted">
-                <Image
-                  src={URL.createObjectURL(product.image.file)}
-                  alt={`Product ${product.id}`}
-                  fill
-                  sizes="(max-width: 240px) 100vw, 240px"
-                  className="object-contain"
-                  priority
-                />
+                {product.image && (
+                  <Image
+                    src={URL.createObjectURL(product.image.file)}
+                    alt={product.fileName}
+                    fill
+                    sizes="(max-width: 240px) 100vw, 240px"
+                    className="object-contain"
+                    priority
+                  />
+                )}
               </div>
             </div>
           </div>
@@ -43,10 +83,10 @@ export function ProductCard({ product, onChange }: ProductCardProps) {
           {/* 尺寸显示 */}
           <div className="grid grid-cols-3 gap-4">
             <div>
-              <Label>长度 (mm)</Label>
+              <Label>深度 (mm)</Label>
               <Input
                 type="number"
-                value={product.length}
+                value={product.depth}
                 readOnly
                 className="bg-muted"
               />
@@ -72,8 +112,9 @@ export function ProductCard({ product, onChange }: ProductCardProps) {
           </div>
         </div>
 
-        {/* 右侧：材料、颜色和数量 (50%) */}
+        {/* 右侧：材料、颜色和数量 */}
         <div className="w-1/2 pl-4 space-y-6">
+          {/* 材料选择 */}
           <div>
             <Label>材料</Label>
             <Select
@@ -91,31 +132,48 @@ export function ProductCard({ product, onChange }: ProductCardProps) {
             </Select>
           </div>
 
+          {/* 颜色输入 */}
           <div>
             <Label>颜色</Label>
-            <Select
+            <Input
+              type="text"
+              placeholder="请输入颜色"
               value={product.color}
-              onValueChange={(value) => onChange({ color: value })}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="选择颜色" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="white">白色</SelectItem>
-                <SelectItem value="black">黑色</SelectItem>
-                <SelectItem value="gray">灰色</SelectItem>
-              </SelectContent>
-            </Select>
+              onChange={(e) => onChange({ color: e.target.value })}
+            />
           </div>
 
+          {/* 数量控制 */}
           <div>
             <Label>数量</Label>
-            <Input
-              type="number"
-              min="1"
-              value={product.quantity}
-              onChange={(e) => onChange({ quantity: Number(e.target.value) })}
-            />
+            <div className="flex items-center space-x-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                onClick={handleQuantityDecrease}
+                disabled={product.quantity <= 1}
+              >
+                <Minus className="h-4 w-4" />
+              </Button>
+              <Input
+                type="text"
+                inputMode="numeric"
+                pattern="\d*"
+                value={quantityInput}
+                onChange={handleQuantityChange}
+                onBlur={handleQuantityBlur}
+                className="text-center"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                onClick={handleQuantityIncrease}
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         </div>
       </div>

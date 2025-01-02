@@ -19,12 +19,14 @@ export function ProductSummaryCard({
         {/* 左侧：图片 */}
         <div className="w-[120px]">
           <div className="aspect-square relative rounded-lg overflow-hidden bg-muted">
-            <Image
-              src={URL.createObjectURL(product.image.file)}
-              alt={`Product ${index + 1}`}
-              fill
-              className="object-contain"
-            />
+            {product.image && (
+              <Image
+                src={URL.createObjectURL(product.image.file)}
+                alt={`Product ${index + 1}`}
+                fill
+                className="object-contain"
+              />
+            )}
           </div>
         </div>
 
@@ -47,7 +49,7 @@ export function ProductSummaryCard({
             <div>
               <p className="text-sm text-muted-foreground">尺寸 (mm)</p>
               <p>
-                {product.length} × {product.width} × {product.height}
+                {product.depth} × {product.width} × {product.height}
               </p>
             </div>
           </div>

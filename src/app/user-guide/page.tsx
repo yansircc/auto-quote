@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import UploadStep from "@/components/upload-step/upload-step";
@@ -11,13 +11,11 @@ import type { UploadFile } from "@/types/user-guide/upload";
 import type { ProductInfo } from "@/types/user-guide/product";
 import { toast } from "sonner";
 
-interface StepProps {
-  currentStep: number;
-  isValid?: boolean;
-  onValidityChange?: (isValid: boolean) => void;
-  uploadedFiles?: UploadFile[];
-  products?: ProductInfo[];
-  moldMaterial?: string;
+// 添加联系信息接口
+interface ContactInfo {
+  name: string;
+  phone: string;
+  email: string;
 }
 
 export default function UserGuidePage() {
@@ -26,8 +24,52 @@ export default function UserGuidePage() {
   const [uploadedFiles, setUploadedFiles] = useState<UploadFile[]>([]);
   const [products, setProducts] = useState<ProductInfo[]>([]);
   const [moldMaterial, setMoldMaterial] = useState<string>("");
+  // 添加联系信息状态
+  const [contactInfo, setContactInfo] = useState<ContactInfo>({
+    name: "",
+    phone: "",
+    email: "",
+  });
   const totalSteps = 4;
-  // const { toast } = useToast();
+
+  const handleFilesChange = useCallback((files: UploadFile[]) => {
+    setUploadedFiles(files);
+    setProducts([]);
+  }, []);
+
+  useEffect(() => {
+    if (uploadedFiles.length > 0) {
+      const newProducts: ProductInfo[] = uploadedFiles.map((file) => {
+        const randomDimension = () =>
+          Math.floor(Math.random() * (200 - 20 + 1)) + 20;
+
+        return {
+          id: file.id,
+          fileId: file.id,
+          fileName: file.file.name,
+          quantity: 1,
+          material: "",
+          color: "",
+          surface: "",
+          notes: "",
+          image: file.type === "image" ? file : undefined,
+          depth: randomDimension(),
+          width: randomDimension(),
+          height: randomDimension(),
+        };
+      });
+      setProducts(newProducts);
+    }
+  }, [uploadedFiles]);
+
+  const handleProductsChange = useCallback((newProducts: ProductInfo[]) => {
+    setProducts(newProducts);
+  }, []);
+
+  const handleMoldMaterialChange = useCallback((material: string) => {
+    setMoldMaterial(material);
+  }, []);
+
   const handleNext = () => {
     if (!isStepValid) return;
 
@@ -41,32 +83,31 @@ export default function UserGuidePage() {
 
   const handlePrev = () => {
     if (currentStep > 1) {
-      setCurrentStep((prev) => prev - 1);
-      setIsStepValid(true);
+      const prevStep = currentStep - 1;
+      setCurrentStep(prevStep);
+
+      if (prevStep === 1) {
+        setIsStepValid(uploadedFiles.length > 0);
+      } else if (prevStep === 2) {
+        setIsStepValid(
+          products.every(
+            (product) =>
+              product.quantity > 0 && product.material && product.color,
+          ),
+        );
+      } else if (prevStep === 3) {
+        setIsStepValid(Boolean(moldMaterial));
+      } else {
+        setIsStepValid(true);
+      }
     }
   };
 
-  const handleStepValidityChange = (isValid: boolean) => {
-    setIsStepValid(isValid);
-  };
-
-  const handleFilesChange = (files: UploadFile[]) => {
-    setUploadedFiles(files);
-  };
-
-  const handleProductsChange = (newProducts: ProductInfo[]) => {
-    setProducts(newProducts);
-  };
-
-  const handleMoldMaterialChange = (material: string) => {
-    setMoldMaterial(material);
-  };
-
   const renderStep = () => {
-    const stepProps: StepProps = {
+    const stepProps = {
       currentStep,
       isValid: isStepValid,
-      onValidityChange: handleStepValidityChange,
+      onValidityChange: setIsStepValid,
       uploadedFiles,
       products,
       moldMaterial,
@@ -90,7 +131,13 @@ export default function UserGuidePage() {
           />
         );
       case 4:
-        return <PriceCalculationStep {...stepProps} />;
+        return (
+          <PriceCalculationStep
+            {...stepProps}
+            contactInfo={contactInfo}
+            onContactInfoChange={setContactInfo}
+          />
+        );
       default:
         return null;
     }

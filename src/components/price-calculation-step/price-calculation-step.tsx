@@ -21,6 +21,16 @@ interface PriceCalculationStepProps {
   onValidityChange?: (isValid: boolean) => void;
   products?: ProductInfo[];
   moldMaterial?: string;
+  contactInfo: {
+    name: string;
+    phone: string;
+    email: string;
+  };
+  onContactInfoChange: (info: {
+    name: string;
+    phone: string;
+    email: string;
+  }) => void;
 }
 
 // 模拟生成方案数据
@@ -46,16 +56,13 @@ export default function PriceCalculationStep({
   products,
   moldMaterial,
   onValidityChange,
+  contactInfo,
+  onContactInfoChange,
 }: PriceCalculationStepProps) {
   const [schemes] = useState<ProductScheme[]>(generateSchemes());
   const [selectedScheme, setSelectedScheme] = useState<string>(
     schemes[0]?.id.toString() ?? "",
   );
-  const [contactInfo, setContactInfo] = useState({
-    name: "",
-    phone: "",
-    email: "",
-  });
   const [errors, setErrors] = useState<{
     name?: string;
     phone?: string;
@@ -141,7 +148,7 @@ export default function PriceCalculationStep({
       {/* 模具信息卡片 */}
       {currentScheme && (
         <MoldInfoCard
-          material={currentScheme.moldMaterial}
+          material={moldMaterial ?? "未选择"}
           weight={currentScheme.weight}
           price={currentScheme.moldPrice}
           dimensions={currentScheme.dimensions}
@@ -166,7 +173,7 @@ export default function PriceCalculationStep({
       {/* 联系信息 */}
       <ContactInfoCard
         contactInfo={contactInfo}
-        onChange={(info) => setContactInfo((prev) => ({ ...prev, ...info }))}
+        onChange={(info) => onContactInfoChange({ ...contactInfo, ...info })}
         errors={errors}
       />
     </div>
