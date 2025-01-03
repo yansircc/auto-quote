@@ -25,13 +25,14 @@ export default function ProductInfoStep({
 }: ProductInfoStepProps) {
   const [products, setProducts] = useState<ProductInfo[]>(initialProducts);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [isValidating, setIsValidating] = useState(false);
-  const [pendingProducts, setPendingProducts] = useState<ProductInfo[] | null>(
-    null,
-  );
 
   useEffect(() => {
-    if (uploadedFiles.length > 0 && products.length === 0) {
+    if (initialProducts.length > 0) {
+      setProducts(initialProducts);
+      if (currentIndex >= initialProducts.length) {
+        setCurrentIndex(initialProducts.length - 1);
+      }
+    } else if (uploadedFiles.length > 0) {
       const newProducts: ProductInfo[] = uploadedFiles.map((file) => {
         const randomDimension = () =>
           Math.floor(Math.random() * (200 - 20 + 1)) + 20;
@@ -55,23 +56,7 @@ export default function ProductInfoStep({
       setProducts(newProducts);
       onProductsChange?.(newProducts);
     }
-  }, [uploadedFiles, products.length, onProductsChange]);
-
-  useEffect(() => {
-    if (initialProducts.length > 0) {
-      setProducts(initialProducts);
-      if (currentIndex >= initialProducts.length) {
-        setCurrentIndex(initialProducts.length - 1);
-      }
-    }
-  }, [initialProducts, currentIndex]);
-
-  useEffect(() => {
-    if (pendingProducts) {
-      onProductsChange?.(pendingProducts);
-      setPendingProducts(null);
-    }
-  }, [pendingProducts, onProductsChange]);
+  }, [uploadedFiles, initialProducts, currentIndex, onProductsChange]);
 
   const handleProductChange = useCallback(
     (data: Partial<ProductInfo>) => {
@@ -88,13 +73,19 @@ export default function ProductInfoStep({
           ...data,
         };
 
-        setPendingProducts(newProducts);
+        requestAnimationFrame(() => {
+          const isValid = newProducts.every(
+            (product) =>
+              product.quantity > 0 && product.material && product.color,
+          );
+          onValidityChange?.(isValid);
+          onProductsChange?.(newProducts);
+        });
+
         return newProducts;
       });
-
-      setIsValidating(true);
     },
-    [currentIndex],
+    [currentIndex, onValidityChange, onProductsChange],
   );
 
   const handleNext = useCallback(() => {
@@ -110,69 +101,84 @@ export default function ProductInfoStep({
   }, [currentIndex]);
 
   useEffect(() => {
-    if (isValidating) {
-      const isValid = products.every(
-        (product) => product.quantity > 0 && product.material && product.color,
-      );
-      onValidityChange?.(isValid);
-      setIsValidating(false);
-    }
-  }, [products, onValidityChange, isValidating]);
+    const isValid = products.every(
+      (product) => product.quantity > 0 && product.material && product.color,
+    );
+    onValidityChange?.(isValid);
+  }, [products, onValidityChange]);
 
-  if (!uploadedFiles.length || !products.length) {
-    return null;
+  if (!products.length) {
+    return (
+      <div className="text-center p-6">
+        <p className="text-muted-foreground">没有产品信息</p>
+      </div>
+    );
   }
 
   const currentProduct = products[currentIndex];
   if (!currentProduct) {
-    return null;
+    return (
+      <div className="text-center p-6">
+        <p className="text-muted-foreground">无法加载产品信息</p>
+      </div>
+    );
   }
 
   return (
-    <div className="relative">
-      <ProductCard
-        key={`product-${currentIndex}`}
-        product={currentProduct}
-        onChange={handleProductChange}
-      />
+    <div className="space-y-8">
+      <div className="text-center space-y-3">
+        <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
+          填写产品资料
+        </h2>
+        <p className="text-gray-600">
+          请为每个产品填写相关信息，确保信息准确完整
+        </p>
+      </div>
 
-      {products.length > 1 && (
-        <>
-          <Button
-            variant="outline"
-            size="icon"
-            className="absolute left-4 top-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-full 
-            bg-sky-500 backdrop-blur hover:bg-background/90 border-2 border-border 
-            shadow-lg hover:shadow-xl transition-all"
-            onClick={handlePrevious}
-            disabled={currentIndex === 0}
-          >
-            <ChevronLeft className="w-8 h-8" />
-          </Button>
-          <Button
-            variant="outline"
-            size="icon"
-            className="absolute right-4 top-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-full 
-            bg-sky-500 backdrop-blur hover:bg-background/90 border-2 border-border 
-            shadow-lg hover:shadow-xl transition-all"
-            onClick={handleNext}
-            disabled={currentIndex === products.length - 1}
-          >
-            <ChevronRight className="w-8 h-8" />
-          </Button>
-        </>
-      )}
+      <div className="relative">
+        <ProductCard
+          key={`product-${currentIndex}`}
+          product={currentProduct}
+          onChange={handleProductChange}
+        />
 
-      <div className="flex justify-center gap-2 mt-4">
-        {products.map((_, index) => (
-          <button
-            key={index}
-            className={`w-2 h-2 rounded-full transition-colors ${
-              index === currentIndex ? "bg-primary" : "bg-gray-200"
-            }`}
-            onClick={() => setCurrentIndex(index)}
-          />
-        ))}
+        {products.length > 1 && (
+          <>
+            <Button
+              variant="outline"
+              size="icon"
+              className="absolute left-4 top-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-full bg-gradient-to-r from-blue-500 to-blue-600 shadow-lg border-0 hover:from-blue-600 hover:to-blue-700 transition-all duration-300"
+              onClick={handlePrevious}
+              disabled={currentIndex === 0}
+            >
+              <ChevronLeft className="w-8 h-8 text-white" />
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              className="absolute right-4 top-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-full bg-gradient-to-r from-blue-500 to-blue-600 shadow-lg border-0 hover:from-blue-600 hover:to-blue-700 transition-all duration-300"
+              onClick={handleNext}
+              disabled={currentIndex === products.length - 1}
+            >
+              <ChevronRight className="w-8 h-8 text-white" />
+            </Button>
+          </>
+        )}
+
+        {/* 分页指示器 */}
+        <div className="flex justify-center gap-3 mt-6">
+          {products.map((_, index) => (
+            <button
+              key={index}
+              className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
+                index === currentIndex
+                  ? "bg-blue-600 w-6"
+                  : "bg-gray-200 hover:bg-gray-300"
+              }`}
+              onClick={() => setCurrentIndex(index)}
+            />
+          ))}
+        </div>
       </div>
     </div>
   );

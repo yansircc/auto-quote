@@ -34,7 +34,6 @@ export default function UserGuidePage() {
 
   const handleFilesChange = useCallback((files: UploadFile[]) => {
     setUploadedFiles(files);
-    setProducts([]);
   }, []);
 
   useEffect(() => {
@@ -70,6 +69,13 @@ export default function UserGuidePage() {
     setMoldMaterial(material);
   }, []);
 
+  const handleContactInfoChange = useCallback((info: Partial<ContactInfo>) => {
+    setContactInfo((prev) => ({
+      ...prev,
+      ...info,
+    }));
+  }, []);
+
   const handleNext = () => {
     if (!isStepValid) return;
 
@@ -86,56 +92,98 @@ export default function UserGuidePage() {
       const prevStep = currentStep - 1;
       setCurrentStep(prevStep);
 
-      if (prevStep === 1) {
-        setIsStepValid(uploadedFiles.length > 0);
-      } else if (prevStep === 2) {
-        setIsStepValid(
-          products.every(
+      // 更新验证状态
+      switch (prevStep) {
+        case 1:
+          // 上传文件步骤
+          setIsStepValid(uploadedFiles.length > 0);
+          break;
+        case 2:
+          // 产品信息步骤 - 检查所有必填字段
+          const isProductsValid = products.every(
             (product) =>
               product.quantity > 0 && product.material && product.color,
-          ),
-        );
-      } else if (prevStep === 3) {
-        setIsStepValid(Boolean(moldMaterial));
-      } else {
-        setIsStepValid(true);
+          );
+          setIsStepValid(isProductsValid);
+          break;
+        case 3:
+          // 确认步骤
+          setIsStepValid(Boolean(moldMaterial));
+          break;
+        default:
+          setIsStepValid(true);
       }
     }
   };
 
-  const renderStep = () => {
-    const stepProps = {
-      currentStep,
-      isValid: isStepValid,
-      onValidityChange: setIsStepValid,
-      uploadedFiles,
-      products,
-      moldMaterial,
-    };
-
+  // 添加一个新的 useEffect 来处理步骤切换时的验证状态
+  useEffect(() => {
+    // 当步骤改变时，重新验证当前步骤
     switch (currentStep) {
       case 1:
-        return <UploadStep {...stepProps} onFilesChange={handleFilesChange} />;
+        setIsStepValid(uploadedFiles.length > 0);
+        break;
+      case 2:
+        const isProductsValid = products.every(
+          (product) =>
+            product.quantity > 0 && product.material && product.color,
+        );
+        setIsStepValid(isProductsValid);
+        break;
+      case 3:
+        setIsStepValid(Boolean(moldMaterial));
+        break;
+      case 4:
+        // 价格计算步骤的初始验证状态
+        setIsStepValid(false);
+        break;
+    }
+  }, [currentStep, uploadedFiles, products, moldMaterial]);
+
+  const renderStep = () => {
+    switch (currentStep) {
+      case 1:
+        return (
+          <UploadStep
+            currentStep={currentStep}
+            isValid={isStepValid}
+            onValidityChange={setIsStepValid}
+            onFilesChange={handleFilesChange}
+            initialFiles={uploadedFiles}
+          />
+        );
       case 2:
         return (
           <ProductInfoStep
-            {...stepProps}
+            currentStep={currentStep}
+            isValid={isStepValid}
+            onValidityChange={setIsStepValid}
             onProductsChange={handleProductsChange}
+            uploadedFiles={uploadedFiles}
+            products={products}
           />
         );
       case 3:
         return (
           <ConfirmStep
-            {...stepProps}
+            currentStep={currentStep}
+            isValid={isStepValid}
+            onValidityChange={setIsStepValid}
             onMoldMaterialChange={handleMoldMaterialChange}
+            moldMaterial={moldMaterial}
+            products={products}
           />
         );
       case 4:
         return (
           <PriceCalculationStep
-            {...stepProps}
+            currentStep={currentStep}
+            isValid={isStepValid}
+            onValidityChange={setIsStepValid}
+            products={products}
+            moldMaterial={moldMaterial}
             contactInfo={contactInfo}
-            onContactInfoChange={setContactInfo}
+            onContactInfoChange={handleContactInfoChange}
           />
         );
       default:
@@ -144,38 +192,69 @@ export default function UserGuidePage() {
   };
 
   return (
-    <div className="container mx-auto py-8">
-      <Card className="p-6">
-        <div className="mb-8">
+    <div className="container mx-auto px-4 py-12 max-w-5xl">
+      <div className="text-center mb-12">
+        <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent mb-3">
+          模具生产定制向导
+        </h1>
+        <p className="text-gray-600 text-lg">
+          请按照步骤填写信息，我们将为您提供最优方案
+        </p>
+      </div>
+
+      <Card className="p-8 shadow-lg border-0 bg-gradient-to-b from-white to-gray-50/50">
+        <div className="mb-10">
           <div className="flex justify-between mb-4">
             {Array.from({ length: totalSteps }).map((_, index) => (
               <div
                 key={index + 1}
-                className={`flex-1 h-2 mx-1 rounded ${
-                  index + 1 <= currentStep ? "bg-primary" : "bg-gray-200"
+                className={`flex-1 h-2 mx-1 rounded-full transition-all duration-300 ${
+                  index + 1 <= currentStep
+                    ? "bg-gradient-to-r from-blue-500 to-blue-600 shadow-sm"
+                    : "bg-gray-100"
                 }`}
               />
             ))}
           </div>
-          <div className="flex justify-between px-1">
-            <span>上传文件</span>
-            <span>填写产品资料</span>
-            <span>确认产品资料</span>
-            <span>选择产品方案</span>
+          <div className="flex justify-between text-center">
+            {[
+              "上传产品文件",
+              "填写产品资料",
+              "确认产品资料",
+              "选择产品方案",
+            ].map((step, index) => (
+              <div
+                key={index}
+                className={`flex-1 transition-colors duration-300 ${
+                  index + 1 <= currentStep
+                    ? "text-blue-600 font-medium"
+                    : "text-gray-500"
+                }`}
+              >
+                {step}
+              </div>
+            ))}
           </div>
         </div>
 
-        <div className="min-h-[400px]">{renderStep()}</div>
+        <div className="min-h-[400px] bg-white rounded-lg">{renderStep()}</div>
 
-        <div className="flex justify-between mt-6">
+        <div className="flex justify-between mt-8">
           <Button
             variant="outline"
             onClick={handlePrev}
             disabled={currentStep === 1}
+            className="border-blue-200 hover:bg-blue-50 hover:text-blue-600 transition-colors"
           >
             上一步
           </Button>
-          <Button onClick={handleNext} disabled={!isStepValid}>
+          <Button
+            onClick={handleNext}
+            disabled={!isStepValid}
+            className={`bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white transition-all duration-300 ${
+              !isStepValid ? "opacity-50" : "shadow-md hover:shadow-lg"
+            }`}
+          >
             {currentStep === totalSteps ? "完成" : "下一步"}
           </Button>
         </div>

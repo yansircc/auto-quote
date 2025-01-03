@@ -11,8 +11,8 @@ interface UploadStepProps {
   currentStep: number;
   isValid?: boolean;
   onValidityChange?: (isValid: boolean) => void;
-  onFilesChange?: (files: UploadFile[]) => void;
-  uploadedFiles?: UploadFile[];
+  onFilesChange: (files: UploadFile[]) => void;
+  initialFiles?: UploadFile[];
 }
 
 // 支持的文件类型
@@ -42,17 +42,17 @@ export default function UploadStep({
   currentStep,
   onValidityChange,
   onFilesChange,
-  uploadedFiles = [],
+  initialFiles = [],
 }: UploadStepProps) {
-  const [files, setFiles] = useState<UploadFile[]>(uploadedFiles);
+  const [files, setFiles] = useState<UploadFile[]>(initialFiles);
   const [error, setError] = useState<string>("");
   const [fileToRemove, setFileToRemove] = useState<string | null>(null);
 
   useEffect(() => {
-    if (uploadedFiles) {
-      setFiles(uploadedFiles);
+    if (initialFiles.length > 0) {
+      onValidityChange?.(true);
     }
-  }, [uploadedFiles]);
+  }, [initialFiles, onValidityChange]);
 
   // 处理文件删除的 effect
   useEffect(() => {
@@ -116,12 +116,17 @@ export default function UploadStep({
   const imageFiles = files.filter((file) => file.type === "image");
 
   return (
-    <div className="space-y-6">
-      <div className="space-y-2">
-        <h2 className="text-2xl font-bold">上传产品文件</h2>
-        <p className="text-muted-foreground">
+    <div className="space-y-8">
+      <div className="text-center space-y-3">
+        <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
+          上传产品文件
+        </h2>
+        <p className="text-gray-600">
           支持上传 STL、STEP、IGS 格式的3D文件和 JPG、PNG、WebP
           格式的图片文件，最大支持100MB
+        </p>
+        <p className="text-sm text-red-500 font-medium">
+          * 至少需要上传一个文件才能继续下一步
         </p>
       </div>
 
@@ -139,23 +144,32 @@ export default function UploadStep({
         </Alert>
       )}
 
+      {files.length === 0 && (
+        <Alert className="bg-amber-50 text-amber-700 border-amber-200">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>请上传至少一个文件以继续</AlertDescription>
+        </Alert>
+      )}
+
       {files.length > 0 && (
         <div className="space-y-6">
-          <div className="text-sm text-muted-foreground">
+          <div className="text-sm text-blue-600 font-medium">
             已上传 {files.length} 个文件，共{" "}
             {(totalSize / 1024 / 1024).toFixed(2)} MB
           </div>
 
           {modelFiles.length > 0 && (
-            <div className="space-y-2">
-              <h3 className="text-sm font-medium">3D模型文件</h3>
+            <div className="space-y-3">
+              <h3 className="text-sm font-semibold text-gray-700">
+                3D模型文件
+              </h3>
               <FileList files={modelFiles} onRemove={handleFileRemove} />
             </div>
           )}
 
           {imageFiles.length > 0 && (
-            <div className="space-y-2">
-              <h3 className="text-sm font-medium">图片文件</h3>
+            <div className="space-y-3">
+              <h3 className="text-sm font-semibold text-gray-700">图片文件</h3>
               <FileList files={imageFiles} onRemove={handleFileRemove} />
             </div>
           )}
