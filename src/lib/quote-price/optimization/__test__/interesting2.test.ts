@@ -1,12 +1,10 @@
 import { describe, it, expect } from "vitest";
-import {
-  searchBestCavityCount,
-  type ProductProps,
-  type MoldProps,
-} from "../search-cavity";
+import { type MoldProps } from "../search-cavity";
 import type { ForceOptions } from "@/lib/quote-price/core";
 
-describe("searchBestCavityCount", () => {
+import { calculateSolutionPrice } from "../solution-price";
+
+describe("interesting", () => {
   const mockMold: MoldProps = {
     materialName: "P20",
   };
@@ -16,8 +14,8 @@ describe("searchBestCavityCount", () => {
     isForceMaterialSimultaneous: false,
   };
 
-  // it("应该正确处理数量成比例的产品", () => {
-  //   const products: ProductProps[] = [
+  // it("简单2个产品，成比例", () => {
+  //   const products = [
   //     {
   //       id: 1,
   //       materialName: "ABS",
@@ -25,6 +23,7 @@ describe("searchBestCavityCount", () => {
   //       dimensions: { width: 100, depth: 100, height: 100 },
   //       color: "red",
   //       quantity: 10000,
+  //       cavityCount: 1,
   //     },
   //     {
   //       id: 2,
@@ -33,19 +32,16 @@ describe("searchBestCavityCount", () => {
   //       dimensions: { width: 100, depth: 100, height: 100 },
   //       color: "red",
   //       quantity: 30000,
+  //       cavityCount: 3,
   //     },
   //   ];
 
-  //   const result = searchBestCavityCount(products, mockMold, mockForceOptions);
-
-  //   expect(result[0]!.productCavityMap).toEqual([
-  //     { productId: 1, cavityCount: 1 },
-  //     { productId: 2, cavityCount: 3 },
-  //   ]);
+  //   const result = calculateSolutionPrice(products, mockMold, mockForceOptions);
+  //   expect(result).toEqual(58560.23249999999); // Expected price from search
   // });
 
-  it("应该正确处理复杂情况", () => {
-    const products: ProductProps[] = [
+  it("复杂情况", () => {
+    const products = [
       {
         id: 1,
         materialName: "TPU",
@@ -53,6 +49,7 @@ describe("searchBestCavityCount", () => {
         dimensions: { width: 100, depth: 100, height: 100 },
         color: "red",
         quantity: 20000,
+        cavityCount: 3,
       },
       {
         id: 2,
@@ -61,14 +58,11 @@ describe("searchBestCavityCount", () => {
         dimensions: { width: 100, depth: 100, height: 100 },
         color: "red",
         quantity: 55000,
+        cavityCount: 5,
       },
     ];
 
-    const result = searchBestCavityCount(products, mockMold, mockForceOptions);
-
-    expect(result[0]!.productCavityMap).toEqual([
-      { productId: 1, cavityCount: 1 },
-      { productId: 2, cavityCount: 3 },
-    ]);
+    const result = calculateSolutionPrice(products, mockMold, mockForceOptions);
+    expect(result).toEqual(58560.23249999999); // Expected price from search
   });
 });

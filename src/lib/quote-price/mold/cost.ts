@@ -20,22 +20,27 @@ export function getMoldTotalPrice(
 
   // 计算重量
   const weight = volume * material.density;
+  // console.log("模具重量", weight);
 
   // 计算材料价格
   const materialCost = weight * material.pricePerKg;
+  // console.log("材料价格", materialCost);
 
   // 参考价，通常是材料价格，以后可能有变动
   const referencePrice = materialCost;
 
   // 2. 计算采购成本
-  const purchaseCost =
-    weight * getPurchaseCostMultiple(weight) * referencePrice;
+  const purchaseCost = referencePrice * getPurchaseCostMultiple(weight);
+  // console.log("采购成本倍率", getPurchaseCostMultiple(weight));
+  // console.log("采购成本", purchaseCost);
 
   // 3. 计算毛利
   const grossProfit = getMoldGrossProfit(weight);
+  // console.log("毛利", grossProfit);
 
   // 4. 计算额外加工费
   const processingFee = getExtraProcessFee(material.name);
+  // console.log("额外加工费", processingFee);
 
   // 5. 计算最终价格
   return materialCost + purchaseCost + processingFee + grossProfit;
