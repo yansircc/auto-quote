@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import type { ProductInfo } from "@/types/user-guide/product";
+import type { Product } from "@/lib/quote-price/product/types";
 import type { ProductScheme } from "@/types/user-guide/scheme";
 import {
   Select,
@@ -19,7 +19,7 @@ interface PriceCalculationStepProps {
   currentStep: number;
   isValid?: boolean;
   onValidityChange?: (isValid: boolean) => void;
-  products?: ProductInfo[];
+  products?: Product[];
   moldMaterial?: string;
   contactInfo: {
     name: string;

@@ -2,10 +2,10 @@
 
 import { Card } from "@/components/ui/card";
 import Image from "next/image";
-import type { ProductInfo } from "@/types/user-guide/product";
+import type { Product } from "@/lib/quote-price/product/types";
 
 interface ProductSummaryCardProps {
-  product: ProductInfo;
+  product: Product;
   index: number;
 }
 
@@ -13,6 +13,9 @@ export function ProductSummaryCard({
   product,
   index,
 }: ProductSummaryCardProps) {
+  // 计算重量 (g) = 体积 (mm³) * 密度 (g/mm³)
+  const weight = product.netVolume * product.material.density;
+
   return (
     <Card className="p-6 border border-gray-100 shadow-md hover:shadow-lg transition-all duration-300">
       <div className="flex gap-6">
@@ -38,7 +41,7 @@ export function ProductSummaryCard({
           <div className="grid grid-cols-2 gap-6">
             <div className="space-y-1.5">
               <p className="text-sm font-medium text-gray-500">材料</p>
-              <p className="text-gray-700">{product.material}</p>
+              <p className="text-gray-700">{product.material.name}</p>
             </div>
             <div className="space-y-1.5">
               <p className="text-sm font-medium text-gray-500">颜色</p>
@@ -51,8 +54,19 @@ export function ProductSummaryCard({
             <div className="space-y-1.5">
               <p className="text-sm font-medium text-gray-500">尺寸 (mm)</p>
               <p className="text-gray-700">
-                {product.width} × {product.height} × {product.depth}
+                {product.dimensions.width} × {product.dimensions.height} ×{" "}
+                {product.dimensions.depth}
               </p>
+            </div>
+            <div className="space-y-1.5">
+              <p className="text-sm font-medium text-gray-500">体积 (mm³)</p>
+              <p className="text-gray-700">
+                {product.netVolume.toLocaleString()}
+              </p>
+            </div>
+            <div className="space-y-1.5">
+              <p className="text-sm font-medium text-gray-500">重量 (g)</p>
+              <p className="text-gray-700">{weight.toFixed(2)}</p>
             </div>
           </div>
         </div>

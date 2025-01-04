@@ -9,7 +9,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import type { ProductInfo } from "@/types/user-guide/product";
+import type { Product } from "@/lib/quote-price/product/types";
 import { useEffect, useState } from "react";
 import { ProductSummaryCard } from "./product-summary-card";
 import { moldMaterialList } from "@/lib/quote-price/core/mold/materials";
@@ -19,7 +19,7 @@ interface ConfirmStepProps {
   currentStep: number;
   isValid?: boolean;
   onValidityChange?: (isValid: boolean) => void;
-  products?: ProductInfo[];
+  products?: Product[];
   onMoldMaterialChange?: (material: string) => void;
   moldMaterial?: string;
 }

@@ -13,14 +13,14 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Minus, Plus } from "lucide-react";
 import Image from "next/image";
-import type { ProductInfo } from "@/types/user-guide/product";
+import type { Product } from "@/lib/quote-price/product/types";
 import { useState, useCallback } from "react";
 import { materialList } from "@/lib/quote-price/core/product/materials";
 import { cn } from "@/lib/utils";
 
 interface ProductCardProps {
-  product: ProductInfo;
-  onChange: (data: Partial<ProductInfo>) => void;
+  product: Product;
+  onChange: (data: Partial<Product>) => void;
 }
 
 export function ProductCard({ product, onChange }: ProductCardProps) {
@@ -51,26 +51,31 @@ export function ProductCard({ product, onChange }: ProductCardProps) {
   const handleQuantityDecrease = useCallback(() => {
     if (product.quantity > 1) {
       const newQuantity = product.quantity - 1;
-      setTimeout(() => {
-        onChange({ quantity: newQuantity });
-      }, 0);
+      onChange({ quantity: newQuantity });
       setQuantityInput(newQuantity.toString());
     }
   }, [product.quantity, onChange]);
 
   const handleQuantityIncrease = useCallback(() => {
     const newQuantity = product.quantity + 1;
-    setTimeout(() => {
-      onChange({ quantity: newQuantity });
-    }, 0);
+    onChange({ quantity: newQuantity });
     setQuantityInput(newQuantity.toString());
   }, [product.quantity, onChange]);
 
   const handleMaterialChange = useCallback(
     (value: string) => {
-      setTimeout(() => {
-        onChange({ material: value });
-      }, 0);
+      const selectedMaterial = materialList.find((m) => m.name === value);
+      if (selectedMaterial) {
+        onChange({
+          material: {
+            name: selectedMaterial.name,
+            density: selectedMaterial.density,
+            price: selectedMaterial.pricePerKg,
+            shrinkageRate: selectedMaterial.lossRate,
+            processingTemp: 0,
+          },
+        });
+      }
     },
     [onChange],
   );
@@ -95,7 +100,7 @@ export function ProductCard({ product, onChange }: ProductCardProps) {
                 {product.image && (
                   <Image
                     src={URL.createObjectURL(product.image.file)}
-                    alt={product.fileName}
+                    alt={product.name}
                     fill
                     sizes="(max-width: 240px) 100vw, 240px"
                     className="object-contain p-2"
@@ -112,7 +117,7 @@ export function ProductCard({ product, onChange }: ProductCardProps) {
               <Label className="text-gray-600 mb-1.5">宽度 (mm)</Label>
               <Input
                 type="number"
-                value={product.width}
+                value={product.dimensions.width}
                 readOnly
                 className="bg-gray-50 border-gray-200 font-medium text-gray-700"
               />
@@ -121,7 +126,7 @@ export function ProductCard({ product, onChange }: ProductCardProps) {
               <Label className="text-gray-600 mb-1.5">高度 (mm)</Label>
               <Input
                 type="number"
-                value={product.height}
+                value={product.dimensions.height}
                 readOnly
                 className="bg-gray-50 border-gray-200 font-medium text-gray-700"
               />
@@ -130,7 +135,7 @@ export function ProductCard({ product, onChange }: ProductCardProps) {
               <Label className="text-gray-600 mb-1.5">深度 (mm)</Label>
               <Input
                 type="number"
-                value={product.depth}
+                value={product.dimensions.depth}
                 readOnly
                 className="bg-gray-50 border-gray-200 font-medium text-gray-700"
               />
@@ -147,13 +152,13 @@ export function ProductCard({ product, onChange }: ProductCardProps) {
               <span className="text-red-500 ml-1">*</span>
             </Label>
             <Select
-              value={product.material}
+              value={product.material.name}
               onValueChange={handleMaterialChange}
             >
               <SelectTrigger
                 className={cn(
                   "border-gray-200 hover:border-blue-400 transition-colors",
-                  !product.material && "border-red-200 text-red-500",
+                  !product.material.name && "border-red-200 text-red-500",
                 )}
               >
                 <SelectValue placeholder="请选择材料" />
@@ -175,7 +180,7 @@ export function ProductCard({ product, onChange }: ProductCardProps) {
                 ))}
               </SelectContent>
             </Select>
-            {!product.material && (
+            {!product.material.name && (
               <p className="text-sm text-red-500 mt-1.5">请选择材料</p>
             )}
           </div>

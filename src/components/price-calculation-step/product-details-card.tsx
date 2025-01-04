@@ -2,7 +2,7 @@
 
 import { Card } from "@/components/ui/card";
 import Image from "next/image";
-import type { ProductInfo } from "@/types/user-guide/product";
+import type { Product } from "@/lib/quote-price/product/types";
 
 interface ProductCosts {
   materialCost: number;
@@ -11,7 +11,7 @@ interface ProductCosts {
 }
 
 interface ProductDetailsCardProps {
-  product: ProductInfo;
+  product: Product;
   costs: ProductCosts;
 }
 
@@ -19,10 +19,8 @@ export function ProductDetailsCard({
   product,
   costs,
 }: ProductDetailsCardProps) {
-  // 计算体积 (立方毫米)
-  const volume = product.width * product.height * product.depth;
-  // 计算重量 (克)，假设密度为 1.25g/cm³
-  const weight = Number(((volume / 1000) * 1.25).toFixed(2));
+  // 计算重量 (g) = 体积 (mm³) * 密度 (g/mm³)
+  const weight = product.netVolume * product.material.density;
 
   return (
     <Card className="p-6 border border-gray-100 shadow-md hover:shadow-lg transition-all duration-300">
@@ -32,7 +30,7 @@ export function ProductDetailsCard({
           {product.image && (
             <Image
               src={URL.createObjectURL(product.image.file)}
-              alt={product.fileName}
+              alt={product.name}
               fill
               className="object-contain p-2"
             />
@@ -42,14 +40,14 @@ export function ProductDetailsCard({
         {/* 产品信息 */}
         <div className="flex-1">
           <h3 className="text-lg font-semibold text-gray-800 mb-4">
-            {product.fileName}
+            {product.name}
           </h3>
 
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             <div>
               <p className="text-sm text-gray-500">材料</p>
               <p className="font-medium text-gray-700 capitalize">
-                {product.material || "未指定"}
+                {product.material.name || "未指定"}
               </p>
             </div>
             <div>
@@ -61,18 +59,19 @@ export function ProductDetailsCard({
             <div>
               <p className="text-sm text-gray-500">尺寸 (mm)</p>
               <p className="font-medium text-gray-700">
-                {product.depth} × {product.width} × {product.height}
+                {product.dimensions.depth} × {product.dimensions.width} ×{" "}
+                {product.dimensions.height}
               </p>
             </div>
             <div>
               <p className="text-sm text-gray-500">体积 (mm³)</p>
               <p className="font-medium text-gray-700">
-                {volume.toLocaleString()}
+                {product.netVolume.toLocaleString()}
               </p>
             </div>
             <div>
               <p className="text-sm text-gray-500">重量 (g)</p>
-              <p className="font-medium text-gray-700">{weight}</p>
+              <p className="font-medium text-gray-700">{weight.toFixed(2)}</p>
             </div>
             <div>
               <p className="text-sm text-gray-500">数量</p>

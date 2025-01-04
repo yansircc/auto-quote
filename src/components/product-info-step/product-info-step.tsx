@@ -5,15 +5,18 @@ import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { ProductCard } from "./product-card";
 import type { UploadFile } from "@/types/user-guide/upload";
-import type { ProductInfo } from "@/types/user-guide/product";
+import type {
+  Product,
+  ProductDimensions,
+} from "@/lib/quote-price/product/types";
 
 interface ProductInfoStepProps {
   currentStep: number;
   isValid?: boolean;
   onValidityChange?: (isValid: boolean) => void;
   uploadedFiles?: UploadFile[];
-  onProductsChange?: (products: ProductInfo[]) => void;
-  products?: ProductInfo[];
+  onProductsChange?: (products: Product[]) => void;
+  products?: Product[];
 }
 
 export default function ProductInfoStep({
@@ -23,7 +26,7 @@ export default function ProductInfoStep({
   onProductsChange,
   products: initialProducts = [],
 }: ProductInfoStepProps) {
-  const [products, setProducts] = useState<ProductInfo[]>(initialProducts);
+  const [products, setProducts] = useState<Product[]>(initialProducts);
   const [currentIndex, setCurrentIndex] = useState(0);
 
   useEffect(() => {
@@ -33,24 +36,42 @@ export default function ProductInfoStep({
         setCurrentIndex(initialProducts.length - 1);
       }
     } else if (uploadedFiles.length > 0) {
-      const newProducts: ProductInfo[] = uploadedFiles.map((file) => {
-        const randomDimension = () =>
-          Math.floor(Math.random() * (200 - 20 + 1)) + 20;
+      const newProducts: Product[] = uploadedFiles.map((file) => {
+        // 生成随机尺寸 (20-200mm 范围内)
+        const randomDimension = () => Math.floor(Math.random() * 180) + 20;
+
+        // 生成尺寸
+        const dimensions: ProductDimensions = {
+          width: randomDimension(),
+          depth: randomDimension(),
+          height: randomDimension(),
+        };
+
+        // 计算净体积 (mm³)
+        const netVolume =
+          dimensions.width * dimensions.depth * dimensions.height;
+
+        // 生成包络体积 (比净体积大 10-30%)
+        const volumeIncrease = 1 + (Math.random() * 0.2 + 0.1); // 1.1 到 1.3 之间的随机数
+        const envelopeVolume = Math.ceil(netVolume * volumeIncrease);
 
         return {
           id: file.id,
-          fileId: file.id,
-          fileName: file.file.name,
-          quantity: 1,
-          material: "",
+          name: file.file.name,
+          material: {
+            name: "",
+            density: 0,
+            price: 0,
+            shrinkageRate: 0,
+            processingTemp: 0,
+          },
           color: "",
-          surface: "",
-          notes: "",
+          dimensions: dimensions,
+          quantity: 1,
+          netVolume: netVolume,
+          envelopeVolume: envelopeVolume,
           image: file.type === "image" ? file : undefined,
-          depth: randomDimension(),
-          width: randomDimension(),
-          height: randomDimension(),
-        };
+        } satisfies Product;
       });
 
       setProducts(newProducts);
@@ -59,7 +80,7 @@ export default function ProductInfoStep({
   }, [uploadedFiles, initialProducts, currentIndex, onProductsChange]);
 
   const handleProductChange = useCallback(
-    (data: Partial<ProductInfo>) => {
+    (data: Partial<Product>) => {
       setProducts((prevProducts) => {
         const newProducts = [...prevProducts];
         const currentProduct = newProducts[currentIndex];
@@ -76,7 +97,7 @@ export default function ProductInfoStep({
         requestAnimationFrame(() => {
           const isValid = newProducts.every(
             (product) =>
-              product.quantity > 0 && product.material && product.color,
+              product.quantity > 0 && product.material.name && product.color,
           );
           onValidityChange?.(isValid);
           onProductsChange?.(newProducts);
@@ -102,7 +123,8 @@ export default function ProductInfoStep({
 
   useEffect(() => {
     const isValid = products.every(
-      (product) => product.quantity > 0 && product.material && product.color,
+      (product) =>
+        product.quantity > 0 && product.material.name && product.color,
     );
     onValidityChange?.(isValid);
   }, [products, onValidityChange]);

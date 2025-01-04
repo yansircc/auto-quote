@@ -8,7 +8,7 @@ import ProductInfoStep from "@/components/product-info-step/product-info-step";
 import ConfirmStep from "@/components/confirm-step/confirm-step";
 import PriceCalculationStep from "@/components/price-calculation-step/price-calculation-step";
 import type { UploadFile } from "@/types/user-guide/upload";
-import type { ProductInfo } from "@/types/user-guide/product";
+import type { Product } from "@/lib/quote-price/product/types";
 import { toast } from "sonner";
 
 // 添加联系信息接口
@@ -22,7 +22,7 @@ export default function UserGuidePage() {
   const [currentStep, setCurrentStep] = useState(1);
   const [isStepValid, setIsStepValid] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState<UploadFile[]>([]);
-  const [products, setProducts] = useState<ProductInfo[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const [moldMaterial, setMoldMaterial] = useState<string>("");
   // 添加联系信息状态
   const [contactInfo, setContactInfo] = useState<ContactInfo>({
@@ -38,30 +38,44 @@ export default function UserGuidePage() {
 
   useEffect(() => {
     if (uploadedFiles.length > 0) {
-      const newProducts: ProductInfo[] = uploadedFiles.map((file) => {
-        const randomDimension = () =>
-          Math.floor(Math.random() * (200 - 20 + 1)) + 20;
+      const randomDimension = () => Math.floor(Math.random() * 180) + 20;
+
+      const newProducts: Product[] = uploadedFiles.map((file) => {
+        const dimensions = {
+          width: randomDimension(),
+          depth: randomDimension(),
+          height: randomDimension(),
+        };
+
+        const netVolume =
+          dimensions.width * dimensions.depth * dimensions.height;
+        const volumeIncrease = 1 + (Math.random() * 0.2 + 0.1);
+        const envelopeVolume = Math.ceil(netVolume * volumeIncrease);
 
         return {
           id: file.id,
-          fileId: file.id,
-          fileName: file.file.name,
-          quantity: 1,
-          material: "",
+          name: file.file.name,
+          material: {
+            name: "",
+            density: 0,
+            price: 0,
+            shrinkageRate: 0,
+            processingTemp: 0,
+          },
           color: "",
-          surface: "",
-          notes: "",
+          dimensions,
+          quantity: 1,
+          netVolume,
+          envelopeVolume,
           image: file.type === "image" ? file : undefined,
-          depth: randomDimension(),
-          width: randomDimension(),
-          height: randomDimension(),
         };
       });
+
       setProducts(newProducts);
     }
   }, [uploadedFiles]);
 
-  const handleProductsChange = useCallback((newProducts: ProductInfo[]) => {
+  const handleProductsChange = useCallback((newProducts: Product[]) => {
     setProducts(newProducts);
   }, []);
 
