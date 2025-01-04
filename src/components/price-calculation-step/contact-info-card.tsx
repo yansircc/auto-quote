@@ -40,33 +40,45 @@ export function ContactInfoCard({
     onChange({ phone: numericValue });
   };
 
+  const handleEmailChange = (value: string) => {
+    onChange({ email: value });
+  };
+
+  const handleNameChange = (value: string) => {
+    onChange({ name: value });
+  };
+
   return (
-    <Card className="p-6">
+    <Card className="p-6 border border-gray-100 shadow-md hover:shadow-lg transition-all duration-300">
       <div className="space-y-6">
-        <h3 className="text-lg font-semibold">联系信息</h3>
+        <h3 className="text-lg font-semibold text-gray-800">联系信息</h3>
 
         <div className="grid gap-6 md:grid-cols-3">
           <div className="space-y-2">
-            <Label htmlFor="name" className="flex items-center">
+            <Label htmlFor="name" className="flex items-center text-gray-700">
               姓名
-              <span className="text-destructive ml-1">*</span>
+              <span className="text-red-500 ml-1">*</span>
             </Label>
             <Input
               id="name"
               placeholder="请输入姓名"
               value={contactInfo.name}
-              onChange={(e) => onChange({ name: e.target.value })}
-              className={cn(errors?.name && "border-destructive")}
+              onChange={(e) => handleNameChange(e.target.value)}
+              className={cn(
+                "border-gray-200 focus:border-blue-400 transition-colors",
+                errors?.name && "border-red-500",
+              )}
             />
+            <p className="text-sm text-gray-500">请输入2-20个字符的真实姓名</p>
             {errors?.name && (
-              <p className="text-sm text-destructive">{errors.name}</p>
+              <p className="text-sm text-red-500">{errors.name}</p>
             )}
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="phone" className="flex items-center">
+            <Label htmlFor="phone" className="flex items-center text-gray-700">
               联系电话
-              <span className="text-destructive ml-1">*</span>
+              <span className="text-red-500 ml-1">*</span>
             </Label>
             <Input
               id="phone"
@@ -75,28 +87,36 @@ export function ContactInfoCard({
               value={contactInfo.phone}
               onChange={(e) => handlePhoneChange(e.target.value)}
               maxLength={11}
-              className={cn(errors?.phone && "border-destructive")}
+              className={cn(
+                "border-gray-200 focus:border-blue-400 transition-colors",
+                errors?.phone && "border-red-500",
+              )}
             />
+            <p className="text-sm text-gray-500">请输入11位中国大陆手机号</p>
             {errors?.phone && (
-              <p className="text-sm text-destructive">{errors.phone}</p>
+              <p className="text-sm text-red-500">{errors.phone}</p>
             )}
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="email" className="flex items-center">
+            <Label htmlFor="email" className="flex items-center text-gray-700">
               电子邮箱
-              <span className="text-destructive ml-1">*</span>
+              <span className="text-red-500 ml-1">*</span>
             </Label>
             <Input
               id="email"
               type="email"
               placeholder="请输入电子邮箱"
               value={contactInfo.email}
-              onChange={(e) => onChange({ email: e.target.value })}
-              className={cn(errors?.email && "border-destructive")}
+              onChange={(e) => handleEmailChange(e.target.value)}
+              className={cn(
+                "border-gray-200 focus:border-blue-400 transition-colors",
+                errors?.email && "border-red-500",
+              )}
             />
+            <p className="text-sm text-gray-500">格式：example@domain.com</p>
             {errors?.email && (
-              <p className="text-sm text-destructive">{errors.email}</p>
+              <p className="text-sm text-red-500">{errors.email}</p>
             )}
           </div>
         </div>

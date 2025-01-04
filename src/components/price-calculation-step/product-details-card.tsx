@@ -2,81 +2,91 @@
 
 import { Card } from "@/components/ui/card";
 import Image from "next/image";
-import type { ProductInfo } from "@/types/user-guide/product";
+import type { Product } from "@/lib/quote-price/product/types";
+
+interface ProductCosts {
+  materialCost: number;
+  processingFee: number;
+  totalCost: number;
+}
 
 interface ProductDetailsCardProps {
-  product: ProductInfo;
-  costs: {
-    materialCost: number;
-    processingFee: number;
-    totalCost: number;
-  };
+  product: Product;
+  costs: ProductCosts;
 }
 
 export function ProductDetailsCard({
   product,
   costs,
 }: ProductDetailsCardProps) {
-  const volume =
-    (product.length ?? 0) * (product.width ?? 0) * (product.height ?? 0);
-  const weight = (volume / 1000) * 1.25;
+  // 计算重量 (g) = 体积 (mm³) * 密度 (g/mm³)
+  const weight = product.netVolume * product.material.density;
 
   return (
-    <Card className="p-6">
-      <div className="flex gap-6">
-        {/* 左侧：产品图片 */}
-        <div className="flex-shrink-0">
-          <div className="w-[120px] h-[120px] relative rounded-lg overflow-hidden bg-muted">
+    <Card className="p-6 border border-gray-100 shadow-md hover:shadow-lg transition-all duration-300">
+      <div className="flex items-start gap-6">
+        {/* 产品图片 */}
+        <div className="w-32 h-32 relative rounded-lg overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100 shadow-inner">
+          {product.image && (
             <Image
               src={URL.createObjectURL(product.image.file)}
-              alt={`Product ${product.id}`}
+              alt={product.name}
               fill
-              sizes="120px"
-              className="object-contain"
-              priority
+              className="object-contain p-2"
             />
-          </div>
+          )}
         </div>
 
-        {/* 右侧：产品信息 */}
-        <div className="flex-grow space-y-6">
-          <div className="flex justify-between items-center">
-            <h3 className="text-lg font-semibold">产品详细信息</h3>
-          </div>
+        {/* 产品信息 */}
+        <div className="flex-1">
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">
+            {product.name}
+          </h3>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             <div>
-              <p className="text-sm text-muted-foreground mb-1">产品体积</p>
-              <p className="text-xl font-semibold">
-                {(volume / 1000).toFixed(2)} mm³
+              <p className="text-sm text-gray-500">材料</p>
+              <p className="font-medium text-gray-700 capitalize">
+                {product.material.name || "未指定"}
               </p>
             </div>
             <div>
-              <p className="text-sm text-muted-foreground mb-1">产品重量</p>
-              <p className="text-xl font-semibold">{weight.toFixed(2)} g</p>
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground mb-1">产品材料</p>
-              <p className="text-xl font-semibold">
-                {product.material?.toUpperCase()}
+              <p className="text-sm text-gray-500">颜色</p>
+              <p className="font-medium text-gray-700">
+                {product.color || "未指定"}
               </p>
             </div>
             <div>
-              <p className="text-sm text-muted-foreground mb-1">材料成本</p>
-              <p className="text-xl font-semibold">
-                ¥{costs.materialCost.toFixed(2)}
+              <p className="text-sm text-gray-500">尺寸 (mm)</p>
+              <p className="font-medium text-gray-700">
+                {product.dimensions.depth} × {product.dimensions.width} ×{" "}
+                {product.dimensions.height}
               </p>
             </div>
             <div>
-              <p className="text-sm text-muted-foreground mb-1">加工费用</p>
-              <p className="text-xl font-semibold">
-                ${costs.processingFee.toFixed(2)}
+              <p className="text-sm text-gray-500">体积 (mm³)</p>
+              <p className="font-medium text-gray-700">
+                {product.netVolume.toLocaleString()}
               </p>
             </div>
             <div>
-              <p className="text-sm text-muted-foreground mb-1">总费用</p>
-              <p className="text-xl font-semibold">
-                ${costs.totalCost.toFixed(2)}
+              <p className="text-sm text-gray-500">重量 (g)</p>
+              <p className="font-medium text-gray-700">{weight.toFixed(2)}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">数量</p>
+              <p className="font-medium text-gray-700">{product.quantity}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">单件费用</p>
+              <p className="font-medium text-blue-600">
+                ${(costs.totalCost / product.quantity).toLocaleString()}
+              </p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">总费用</p>
+              <p className="font-semibold text-lg bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
+                ${costs.totalCost.toLocaleString()}
               </p>
             </div>
           </div>

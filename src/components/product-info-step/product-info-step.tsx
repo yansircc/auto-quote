@@ -1,165 +1,206 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { ProductCard } from "./product-card";
 import type { UploadFile } from "@/types/user-guide/upload";
-import type { ProductInfo } from "@/types/user-guide/product";
+import type {
+  Product,
+  ProductDimensions,
+} from "@/lib/quote-price/product/types";
 
 interface ProductInfoStepProps {
   currentStep: number;
   isValid?: boolean;
   onValidityChange?: (isValid: boolean) => void;
   uploadedFiles?: UploadFile[];
-  onProductsChange?: (products: ProductInfo[]) => void;
-}
-
-// 添加生成随机尺寸的辅助函数
-function generateRandomDimensions() {
-  // 生成 50-300 之间的随机整数
-  return {
-    length: Math.floor(Math.random() * (300 - 50 + 1)) + 50,
-    width: Math.floor(Math.random() * (300 - 50 + 1)) + 50,
-    height: Math.floor(Math.random() * (300 - 50 + 1)) + 50,
-  };
+  onProductsChange?: (products: Product[]) => void;
+  products?: Product[];
 }
 
 export default function ProductInfoStep({
-  uploadedFiles,
+  currentStep,
   onValidityChange,
+  uploadedFiles = [],
   onProductsChange,
+  products: initialProducts = [],
 }: ProductInfoStepProps) {
+  const [products, setProducts] = useState<Product[]>(initialProducts);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [products, setProducts] = useState<ProductInfo[]>([]);
 
-  // 根据上传的图片初始化产品列表，包含随机尺寸
   useEffect(() => {
-    if (uploadedFiles?.length) {
-      const initialProducts: ProductInfo[] = uploadedFiles.map((file) => {
-        const dimensions = generateRandomDimensions();
+    if (initialProducts.length > 0) {
+      setProducts(initialProducts);
+      if (currentIndex >= initialProducts.length) {
+        setCurrentIndex(initialProducts.length - 1);
+      }
+    } else if (uploadedFiles.length > 0) {
+      const newProducts: Product[] = uploadedFiles.map((file) => {
+        // 生成随机尺寸 (20-200mm 范围内)
+        const randomDimension = () => Math.floor(Math.random() * 180) + 20;
+
+        // 生成尺寸
+        const dimensions: ProductDimensions = {
+          width: randomDimension(),
+          depth: randomDimension(),
+          height: randomDimension(),
+        };
+
+        // 计算净体积 (mm³)
+        const netVolume =
+          dimensions.width * dimensions.depth * dimensions.height;
+
+        // 生成包络体积 (比净体积大 10-30%)
+        const volumeIncrease = 1 + (Math.random() * 0.2 + 0.1); // 1.1 到 1.3 之间的随机数
+        const envelopeVolume = Math.ceil(netVolume * volumeIncrease);
+
         return {
           id: file.id,
-          image: file,
-          quantity: 1,
-          material: "",
+          name: file.file.name,
+          material: {
+            name: "",
+            density: 0,
+            price: 0,
+            shrinkageRate: 0,
+            processingTemp: 0,
+          },
           color: "",
-          length: dimensions.length,
-          width: dimensions.width,
-          height: dimensions.height,
-        };
+          dimensions: dimensions,
+          quantity: 1,
+          netVolume: netVolume,
+          envelopeVolume: envelopeVolume,
+          image: file.type === "image" ? file : undefined,
+        } satisfies Product;
       });
-      setProducts(initialProducts);
+
+      setProducts(newProducts);
+      onProductsChange?.(newProducts);
     }
-  }, [uploadedFiles]);
+  }, [uploadedFiles, initialProducts, currentIndex, onProductsChange]);
 
-  const handlePrevious = () => {
-    setCurrentIndex((prev) => Math.max(0, prev - 1));
-  };
+  const handleProductChange = useCallback(
+    (data: Partial<Product>) => {
+      setProducts((prevProducts) => {
+        const newProducts = [...prevProducts];
+        const currentProduct = newProducts[currentIndex];
 
-  const handleNext = () => {
-    setCurrentIndex((prev) => Math.min(products.length - 1, prev + 1));
-  };
+        if (!currentProduct) {
+          return prevProducts;
+        }
 
-  const handleProductChange = (
-    productId: string,
-    data: Partial<ProductInfo>,
-  ) => {
-    setProducts((prev) =>
-      prev.map((p) => (p.id === productId ? { ...p, ...data } : p)),
-    );
-  };
+        newProducts[currentIndex] = {
+          ...currentProduct,
+          ...data,
+        };
 
-  // 验证所有产品信息是否完整
+        requestAnimationFrame(() => {
+          const isValid = newProducts.every(
+            (product) =>
+              product.quantity > 0 && product.material.name && product.color,
+          );
+          onValidityChange?.(isValid);
+          onProductsChange?.(newProducts);
+        });
+
+        return newProducts;
+      });
+    },
+    [currentIndex, onValidityChange, onProductsChange],
+  );
+
+  const handleNext = useCallback(() => {
+    if (currentIndex < products.length - 1) {
+      setCurrentIndex((prev) => prev + 1);
+    }
+  }, [currentIndex, products.length]);
+
+  const handlePrevious = useCallback(() => {
+    if (currentIndex > 0) {
+      setCurrentIndex((prev) => prev - 1);
+    }
+  }, [currentIndex]);
+
   useEffect(() => {
     const isValid = products.every(
-      (product) => product.material && product.color && product.quantity > 0,
+      (product) =>
+        product.quantity > 0 && product.material.name && product.color,
     );
-    // const isValid = true;
     onValidityChange?.(isValid);
   }, [products, onValidityChange]);
 
-  // 当产品信息更新时，通知父组件
-  useEffect(() => {
-    onProductsChange?.(products);
-  }, [products, onProductsChange]);
-
-  if (products.length === 0) {
+  if (!products.length) {
     return (
       <div className="text-center p-6">
-        <p className="text-muted-foreground">请先上传产品图片</p>
+        <p className="text-muted-foreground">没有产品信息</p>
+      </div>
+    );
+  }
+
+  const currentProduct = products[currentIndex];
+  if (!currentProduct) {
+    return (
+      <div className="text-center p-6">
+        <p className="text-muted-foreground">无法加载产品信息</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold">填写产品资料</h2>
-        <p className="text-sm text-muted-foreground">
-          {currentIndex + 1} / {products.length}
+    <div className="space-y-8">
+      <div className="text-center space-y-3">
+        <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
+          填写产品资料
+        </h2>
+        <p className="text-gray-600">
+          请为每个产品填写相关信息，确保信息准确完整
         </p>
       </div>
 
       <div className="relative">
-        {/* 修改滑动按钮样式，增加明显的背景色 */}
-        {currentIndex > 0 && (
-          <Button
-            variant="outline"
-            size="icon"
-            className="absolute left-4 top-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-full bg-blue-500 shadow-lg border-2 border-blue-600 hover:bg-blue-600 hover:border-blue-700 transition-colors"
-            onClick={handlePrevious}
-          >
-            <ChevronLeft className="w-8 h-8 text-white" />
-          </Button>
+        <ProductCard
+          key={`product-${currentIndex}`}
+          product={currentProduct}
+          onChange={handleProductChange}
+        />
+
+        {products.length > 1 && (
+          <>
+            <Button
+              variant="outline"
+              size="icon"
+              className="absolute left-4 top-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-full bg-gradient-to-r from-blue-500 to-blue-600 shadow-lg border-0 hover:from-blue-600 hover:to-blue-700 transition-all duration-300"
+              onClick={handlePrevious}
+              disabled={currentIndex === 0}
+            >
+              <ChevronLeft className="w-8 h-8 text-white" />
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              className="absolute right-4 top-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-full bg-gradient-to-r from-blue-500 to-blue-600 shadow-lg border-0 hover:from-blue-600 hover:to-blue-700 transition-all duration-300"
+              onClick={handleNext}
+              disabled={currentIndex === products.length - 1}
+            >
+              <ChevronRight className="w-8 h-8 text-white" />
+            </Button>
+          </>
         )}
 
-        {currentIndex < products.length - 1 && (
-          <Button
-            variant="outline"
-            size="icon"
-            className="absolute right-4 top-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-full bg-blue-500 shadow-lg border-2 border-blue-600 hover:bg-blue-600 hover:border-blue-700 transition-colors"
-            onClick={handleNext}
-          >
-            <ChevronRight className="w-8 h-8 text-white" />
-          </Button>
-        )}
-
-        {/* 产品卡片容器 - 添加背景色和圆角 */}
-        <div className="overflow-hidden rounded-lg bg-muted/30">
-          <div
-            className="flex transition-transform duration-300 ease-in-out"
-            style={{
-              transform: `translateX(-${currentIndex * 100}%)`,
-            }}
-          >
-            {products.map((product, index) => (
-              <div
-                key={product.id}
-                className="w-full flex-shrink-0 p-4"
-                style={{ minWidth: "100%" }}
-              >
-                <ProductCard
-                  product={product}
-                  onChange={(data) => handleProductChange(product.id, data)}
-                />
-              </div>
-            ))}
-          </div>
+        {/* 分页指示器 */}
+        <div className="flex justify-center gap-3 mt-6">
+          {products.map((_, index) => (
+            <button
+              key={index}
+              className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
+                index === currentIndex
+                  ? "bg-blue-600 w-6"
+                  : "bg-gray-200 hover:bg-gray-300"
+              }`}
+              onClick={() => setCurrentIndex(index)}
+            />
+          ))}
         </div>
-      </div>
-
-      {/* 分页指示器 */}
-      <div className="flex justify-center gap-2">
-        {products.map((_, index) => (
-          <button
-            key={index}
-            className={`w-2 h-2 rounded-full transition-colors ${
-              index === currentIndex ? "bg-primary" : "bg-gray-200"
-            }`}
-            onClick={() => setCurrentIndex(index)}
-          />
-        ))}
       </div>
     </div>
   );

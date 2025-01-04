@@ -1,3 +1,4 @@
+import { type UploadFile } from "@/types/user-guide/upload";
 import type { RiskLevel } from "../risk/types";
 
 /**
@@ -27,6 +28,7 @@ export interface Product {
   quantity: number; // 需求数量
   netVolume: number; // 净体积 (cm³)
   envelopeVolume: number; // 包络体积 (cm³)
+  image?: UploadFile; // 产品图片
 }
 
 /**

@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-import type { Product } from "../../product/types";
-=======
 import type { DetailedProductProps } from "../../core";
->>>>>>> upstream/main
 import {
   generateSetPartitions,
   filterPartitions,
@@ -18,24 +14,11 @@ import {
  *
  * 注意：这是一个临时的函数，用于测试，后期需要替换为实际的成本计算函数
  */
-<<<<<<< HEAD
-function calculateCost(products: Product[], cavityCount: number): number {
-  return products.reduce(
-    (sum, product) =>
-      sum +
-      product.material.density *
-        product.material.price *
-        product.quantity *
-        cavityCount,
-    0,
-  );
-=======
 function calculateCost(
   products: DetailedProductProps[],
   cavityCount: number,
 ): number {
   return 1;
->>>>>>> upstream/main
 }
 
 /**
@@ -45,21 +28,12 @@ function calculateCost(
  *
  * 注意：这是一个临时的函数，用于测试，后期需要替换为实际的穴数计算函数
  */
-<<<<<<< HEAD
-function calculateMaxCavities(product: Product): number {
-  return product.material.density * product.material.price * product.quantity;
-}
-
-interface ProductCavityPrice {
-  product: Product;
-=======
 function calculateMaxCavities(product: DetailedProductProps): number {
   return 1;
 }
 
 interface ProductCavityPrice {
   product: DetailedProductProps;
->>>>>>> upstream/main
   cavityCount: number;
   cost: number;
 }
@@ -72,11 +46,7 @@ interface ProductCavityPrice {
  * @returns {ProductCavityPrice[]} 产品及其对应的穴数和成本
  */
 export function calculateProductCavityPrices(
-<<<<<<< HEAD
-  products: Product[],
-=======
   products: DetailedProductProps[],
->>>>>>> upstream/main
   judgePoint = 100,
   maxIterations = 50,
 ): ProductCavityPrice[] {

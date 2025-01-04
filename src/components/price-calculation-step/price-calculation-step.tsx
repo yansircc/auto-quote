@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import type { ProductInfo } from "@/types/user-guide/product";
+import type { Product } from "@/lib/quote-price/product/types";
 import type { ProductScheme } from "@/types/user-guide/scheme";
 import {
   Select,
@@ -19,8 +19,20 @@ interface PriceCalculationStepProps {
   currentStep: number;
   isValid?: boolean;
   onValidityChange?: (isValid: boolean) => void;
-  products?: ProductInfo[];
+  products?: Product[];
   moldMaterial?: string;
+  contactInfo: {
+    name: string;
+    phone: string;
+    email: string;
+  };
+  onContactInfoChange: (
+    info: Partial<{
+      name: string;
+      phone: string;
+      email: string;
+    }>,
+  ) => void;
 }
 
 // 模拟生成方案数据
@@ -43,19 +55,17 @@ function generateSchemes(): ProductScheme[] {
 }
 
 export default function PriceCalculationStep({
-  products,
-  moldMaterial,
+  products = [],
+  moldMaterial = "",
   onValidityChange,
+  contactInfo,
+  onContactInfoChange,
 }: PriceCalculationStepProps) {
   const [schemes] = useState<ProductScheme[]>(generateSchemes());
   const [selectedScheme, setSelectedScheme] = useState<string>(
     schemes[0]?.id.toString() ?? "",
   );
-  const [contactInfo, setContactInfo] = useState({
-    name: "",
-    phone: "",
-    email: "",
-  });
+
   const [errors, setErrors] = useState<{
     name?: string;
     phone?: string;
@@ -101,11 +111,21 @@ export default function PriceCalculationStep({
 
   // 更新验证状态
   useEffect(() => {
+    if (!products.length) {
+      onValidityChange?.(false);
+      return;
+    }
     const isValid = validateContactInfo() && Boolean(selectedScheme);
     onValidityChange?.(isValid);
-  }, [selectedScheme, contactInfo, onValidityChange, validateContactInfo]);
+  }, [
+    selectedScheme,
+    contactInfo,
+    onValidityChange,
+    validateContactInfo,
+    products,
+  ]);
 
-  if (!products?.length) {
+  if (!products.length) {
     return (
       <div className="text-center p-6">
         <p className="text-muted-foreground">没有产品信息</p>
@@ -114,18 +134,31 @@ export default function PriceCalculationStep({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
+      <div className="text-center space-y-3">
+        <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
+          选择产品方案
+        </h2>
+        <p className="text-gray-600">
+          请选择合适的方案并填写联系信息，我们将尽快与您联系
+        </p>
+      </div>
+
       {/* 方案选择 */}
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">选择产品方案</h2>
+        <h3 className="text-lg font-semibold text-gray-800">可选方案</h3>
         <div className="w-[300px]">
           <Select value={selectedScheme} onValueChange={setSelectedScheme}>
-            <SelectTrigger>
+            <SelectTrigger className="border-gray-200 hover:border-blue-400 transition-colors">
               <SelectValue placeholder="请选择方案" />
             </SelectTrigger>
             <SelectContent>
               {schemes.map((scheme) => (
-                <SelectItem key={scheme.id} value={scheme.id.toString()}>
+                <SelectItem
+                  key={scheme.id}
+                  value={scheme.id.toString()}
+                  className="hover:bg-blue-50 transition-colors"
+                >
                   方案{scheme.id} - 价格-${scheme.totalPrice.toLocaleString()},
                   评分-{scheme.score}
                 </SelectItem>
@@ -141,7 +174,7 @@ export default function PriceCalculationStep({
       {/* 模具信息卡片 */}
       {currentScheme && (
         <MoldInfoCard
-          material={currentScheme.moldMaterial}
+          material={moldMaterial ?? "未选择"}
           weight={currentScheme.weight}
           price={currentScheme.moldPrice}
           dimensions={currentScheme.dimensions}
@@ -166,7 +199,7 @@ export default function PriceCalculationStep({
       {/* 联系信息 */}
       <ContactInfoCard
         contactInfo={contactInfo}
-        onChange={(info) => setContactInfo((prev) => ({ ...prev, ...info }))}
+        onChange={onContactInfoChange}
         errors={errors}
       />
     </div>

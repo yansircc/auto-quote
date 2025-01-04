@@ -26,28 +26,28 @@ export function MoldInfoCard({
   ).toFixed(2);
 
   return (
-    <Card className="p-6">
-      <h3 className="text-lg font-semibold mb-4">模具信息</h3>
+    <Card className="p-6 border border-gray-100 shadow-md hover:shadow-lg transition-all duration-300">
+      <h3 className="text-lg font-semibold text-gray-800 mb-4">模具信息</h3>
       <div className="grid grid-cols-2 gap-6">
         <div>
-          <p className="text-sm text-muted-foreground mb-1">模具材料</p>
-          <p className="font-medium">{material}</p>
+          <p className="text-sm text-gray-500 mb-1">模具材料</p>
+          <p className="font-medium text-gray-700">{material}</p>
         </div>
         <div>
-          <p className="text-sm text-muted-foreground mb-1">模具重量</p>
-          <p className="font-medium">{weight.toFixed(2)} kg</p>
+          <p className="text-sm text-gray-500 mb-1">模具重量</p>
+          <p className="font-medium text-gray-700">{weight.toFixed(2)} kg</p>
         </div>
         <div>
-          <p className="text-sm text-muted-foreground mb-1">模具价格</p>
-          <p className="font-medium">${price.toLocaleString()}</p>
+          <p className="text-sm text-gray-500 mb-1">模具价格</p>
+          <p className="font-medium text-blue-600">${price.toLocaleString()}</p>
         </div>
         <div>
-          <p className="text-sm text-muted-foreground mb-1">模具体积</p>
-          <p className="font-medium">{volume} mm³</p>
+          <p className="text-sm text-gray-500 mb-1">模具体积</p>
+          <p className="font-medium text-gray-700">{volume} mm³</p>
         </div>
         <div className="col-span-2">
-          <p className="text-sm text-muted-foreground mb-1">模具尺寸</p>
-          <p className="font-medium">
+          <p className="text-sm text-gray-500 mb-1">模具尺寸</p>
+          <p className="font-medium text-gray-700">
             {dimensions.width} × {dimensions.height} × {dimensions.depth} mm
           </p>
         </div>
