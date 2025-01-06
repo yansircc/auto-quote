@@ -3,7 +3,6 @@ import {
   getMoldTotalPrice,
   getTopAlignedCuboidsLayout,
   getBoundingBox,
-  runAllScorers,
 } from "../mold";
 import { getCheapestMachine } from "../machine";
 import { getProductMaterial, getMoldMaterial } from "../core";

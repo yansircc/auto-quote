@@ -3,9 +3,16 @@
 import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
-import type { ThreeGeometry } from "@/lib/mesh-converter";
-import { MOLD_CONSTANTS } from "@/types/mold/generator";
+import type { ThreeGeometry } from "@/lib/occt";
 import { Progress } from "@/components/ui/progress";
+
+const MOLD_CONSTANTS = {
+  DEFAULT_MOLD_OPTIONS: {
+    color: 0xffffff,
+    roughness: 0.5,
+    metalness: 0.5,
+  },
+};
 
 interface ModelViewerProps {
   geometry: ThreeGeometry;

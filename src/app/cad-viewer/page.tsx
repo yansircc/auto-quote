@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { OCCTService } from "@/lib/occt-service";
-import type { FileProcessingState } from "@/lib/occt-types";
-import { convertOCCTToThreeGeometry } from "@/lib/mesh-converter";
+import {
+  OCCTService,
+  convertOCCTToThreeGeometry,
+  type FileProcessingState,
+} from "@/lib/occt";
 import dynamic from "next/dynamic";
 import DataCards from "@/components/viewers/DataCards";
 import { Progress } from "@/components/ui/progress";

@@ -17,25 +17,25 @@ describe("模具总价计算", () => {
 
   it("应该正确计算小型模具价格", () => {
     const dimensions: Dimensions = { width: 100, depth: 100, height: 50 };
-    const price = getMoldTotalPrice(dimensions, testMaterial);
+    const { total: price } = getMoldTotalPrice(dimensions, testMaterial);
     expect(price).toBeGreaterThan(0);
   });
 
   it("应该正确计算中型模具价格", () => {
     const dimensions: Dimensions = { width: 300, depth: 300, height: 150 };
-    const price = getMoldTotalPrice(dimensions, testMaterial);
+    const { total: price } = getMoldTotalPrice(dimensions, testMaterial);
     expect(price).toBeGreaterThan(0);
   });
 
   it("应该正确计算大型模具价格", () => {
     const dimensions: Dimensions = { width: 500, depth: 500, height: 250 };
-    const price = getMoldTotalPrice(dimensions, testMaterial);
+    const { total: price } = getMoldTotalPrice(dimensions, testMaterial);
     expect(price).toBeGreaterThan(0);
   });
 
   it("应该正确处理边界尺寸", () => {
     const dimensions: Dimensions = { width: 1000, depth: 1000, height: 500 };
-    const price = getMoldTotalPrice(dimensions, testMaterial);
+    const { total: price } = getMoldTotalPrice(dimensions, testMaterial);
     expect(price).toBeGreaterThan(0);
   });
 
@@ -52,7 +52,7 @@ describe("模具总价计算", () => {
     ];
 
     materials.forEach((material) => {
-      const price = getMoldTotalPrice(testDimensions, material);
+      const { total: price } = getMoldTotalPrice(testDimensions, material);
       expect(price).toBeGreaterThan(0);
     });
   });
@@ -65,8 +65,14 @@ describe("模具总价计算", () => {
       height: 500,
     };
 
-    const smallPrice = getMoldTotalPrice(smallDimensions, testMaterial);
-    const largePrice = getMoldTotalPrice(largeDimensions, testMaterial);
+    const { total: smallPrice } = getMoldTotalPrice(
+      smallDimensions,
+      testMaterial,
+    );
+    const { total: largePrice } = getMoldTotalPrice(
+      largeDimensions,
+      testMaterial,
+    );
 
     expect(smallPrice).toBeGreaterThan(0);
     expect(largePrice).toBeGreaterThan(0);

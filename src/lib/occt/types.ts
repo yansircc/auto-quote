@@ -7,7 +7,7 @@ import type {
   OCCTMeshAttributes,
 } from "occt-import-js";
 
-import type { GeometricProperties, Vector3 } from "./occt-utils";
+import type { GeometricProperties, Vector3 } from "./utils";
 
 // Re-export imported types
 export type {

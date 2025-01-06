@@ -35,12 +35,15 @@ describe("报价主流程测试", () => {
   };
 
   it("应该正确计算正常流程的总价", () => {
-    const totalPrice = calculateSolutionPrice(testProducts, testMold);
+    const { total: totalPrice } = calculateSolutionPrice(
+      testProducts,
+      testMold,
+    );
     expect(totalPrice).toBeGreaterThan(0);
   });
 
   it("应该处理强制选项", () => {
-    const totalPrice = calculateSolutionPrice(
+    const { total: totalPrice } = calculateSolutionPrice(
       testProducts,
       testMold,
       testForceOptions,
@@ -50,7 +53,10 @@ describe("报价主流程测试", () => {
 
   it("应该处理单个产品的情况", () => {
     const singleProduct = [testProducts[0]!];
-    const totalPrice = calculateSolutionPrice(singleProduct, testMold);
+    const { total: totalPrice } = calculateSolutionPrice(
+      singleProduct,
+      testMold,
+    );
     expect(totalPrice).toBeGreaterThan(0);
   });
 
@@ -64,8 +70,14 @@ describe("报价主流程测试", () => {
       dimensions: { width: 1000, depth: 300, height: 210 }, // 深度设为300是为了防止重量溢出
     };
 
-    const smallPrice = calculateSolutionPrice([smallProduct], testMold);
-    const largePrice = calculateSolutionPrice([largeProduct], testMold);
+    const { total: smallPrice } = calculateSolutionPrice(
+      [smallProduct],
+      testMold,
+    );
+    const { total: largePrice } = calculateSolutionPrice(
+      [largeProduct],
+      testMold,
+    );
 
     expect(smallPrice).toBeGreaterThan(0);
     expect(largePrice).toBeGreaterThan(0);
@@ -79,7 +91,7 @@ describe("报价主流程测试", () => {
       materialName: material,
     }));
 
-    const totalPrice = calculateSolutionPrice(products, testMold);
+    const { total: totalPrice } = calculateSolutionPrice(products, testMold);
     expect(totalPrice).toBeGreaterThan(0);
   });
 
@@ -90,7 +102,10 @@ describe("报价主流程测试", () => {
 
   it("应该处理零数量的产品", () => {
     const zeroQuantityProduct = { ...testProducts[0]!, quantity: 0 };
-    const totalPrice = calculateSolutionPrice([zeroQuantityProduct], testMold);
+    const { total: totalPrice } = calculateSolutionPrice(
+      [zeroQuantityProduct],
+      testMold,
+    );
     expect(totalPrice).toBeGreaterThanOrEqual(0);
   });
 });

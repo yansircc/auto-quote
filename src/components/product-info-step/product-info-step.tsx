@@ -133,7 +133,7 @@ export default function ProductInfoStep({
               transform: `translateX(-${currentIndex * 100}%)`,
             }}
           >
-            {products.map((product, index) => (
+            {products.map((product) => (
               <div
                 key={product.id}
                 className="w-full flex-shrink-0"

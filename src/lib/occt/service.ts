@@ -1,5 +1,5 @@
-import type { GeometricProperties } from "./occt-utils";
-import { analyzeMeshGeometry } from "./occt-utils";
+import type { GeometricProperties } from "./utils";
+import { analyzeMeshGeometry } from "./utils";
 import type {
   OCCTModule,
   OCCTInstance,

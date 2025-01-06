@@ -11,8 +11,6 @@ describe("产品总价计算", () => {
     smallBatch: { threshold: 1000, rate: 1.5 },
   };
 
-  const testCavities = [1, 2, 4];
-
   const testProducts = [
     {
       materialName: "ABS",
@@ -20,7 +18,8 @@ describe("产品总价计算", () => {
       color: "red",
       quantity: 100,
       weight: 0.1,
-      cavityIndex: 0,
+      netVolume: 100,
+      cavityCount: 1,
     },
     {
       materialName: "PC",
@@ -28,25 +27,18 @@ describe("产品总价计算", () => {
       color: "blue",
       quantity: 200,
       weight: 0.2,
-      cavityIndex: 1,
+      netVolume: 100,
+      cavityCount: 1,
     },
   ];
   it("应该正确计算单个产品的总价", () => {
     const singleProduct = testProducts[0]!;
-    const cost = calculateProductCosts(
-      [singleProduct],
-      testMachineConfig,
-      testCavities,
-    );
+    const cost = calculateProductCosts([singleProduct], testMachineConfig);
     expect(cost).toBeGreaterThan(0);
   });
 
   it("应该正确计算多个产品的总价", () => {
-    const cost = calculateProductCosts(
-      testProducts,
-      testMachineConfig,
-      testCavities,
-    );
+    const cost = calculateProductCosts(testProducts, testMachineConfig);
     expect(cost).toBeGreaterThan(0);
   });
 
@@ -58,7 +50,6 @@ describe("产品总价计算", () => {
     const cost = calculateProductCosts(
       productsWithDifferentCavities,
       testMachineConfig,
-      testCavities,
     );
     expect(cost).toBeGreaterThan(0);
   });
@@ -71,7 +62,6 @@ describe("产品总价计算", () => {
     const cost = calculateProductCosts(
       testProducts,
       testMachineConfig,
-      testCavities,
       forceOptions,
     );
     expect(cost).toBeGreaterThan(0);
@@ -80,17 +70,13 @@ describe("产品总价计算", () => {
   it("应该抛出错误当穴数索引无效", () => {
     const invalidProducts = [{ ...testProducts[0]!, cavityIndex: 999 }];
     expect(() =>
-      calculateProductCosts(invalidProducts, testMachineConfig, testCavities),
+      calculateProductCosts(invalidProducts, testMachineConfig),
     ).toThrow("无效的模具穴数索引");
   });
 
   it("应该处理零数量的产品", () => {
     const zeroQuantityProduct = [{ ...testProducts[0]!, quantity: 0 }];
-    const cost = calculateProductCosts(
-      zeroQuantityProduct,
-      testMachineConfig,
-      testCavities,
-    );
+    const cost = calculateProductCosts(zeroQuantityProduct, testMachineConfig);
     expect(cost).toBeGreaterThanOrEqual(0);
   });
 
@@ -101,11 +87,7 @@ describe("产品总价计算", () => {
         ...testProducts[0]!,
         materialName: material,
       };
-      const cost = calculateProductCosts(
-        [product],
-        testMachineConfig,
-        testCavities,
-      );
+      const cost = calculateProductCosts([product], testMachineConfig);
       expect(cost).toBeGreaterThan(0);
     });
   });

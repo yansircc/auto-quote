@@ -1,6 +1,6 @@
 import type { Range } from "./types";
 
-export interface DiversityConfig<T> {
+export interface DiversityConfig {
   ranges: Record<string, Range>;
   excludeParams?: string[];
   getNormalizedDistance?: (
@@ -12,7 +12,7 @@ export interface DiversityConfig<T> {
 
 export function calculatePopulationDiversity<T extends Record<string, number>>(
   population: T[],
-  config: DiversityConfig<T>,
+  config: DiversityConfig,
 ): number {
   let totalDistance = 0;
   let count = 0;

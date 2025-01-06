@@ -7,9 +7,11 @@ import {
 import type { ForceOptions } from "@/lib/quote-price/core";
 
 describe("searchBestCavityCount", () => {
-  const mockMold: MoldProps = {
-    materialName: "P20",
-  };
+  const mockMold: MoldProps[] = [
+    {
+      materialName: "P20",
+    },
+  ];
 
   const mockForceOptions: ForceOptions = {
     isForceColorSimultaneous: false,
@@ -31,12 +33,13 @@ describe("searchBestCavityCount", () => {
     const result = searchBestCavityCount(products, mockMold, mockForceOptions);
 
     expect(result).toHaveLength(3);
-    expect(result[0]!.productCavityMap).toEqual([
+    expect(result[0]!.breakdown[0]!.productCavityMap).toEqual([
       { productId: 1, cavityCount: 3 },
     ]);
-    expect(result[0]!.price).toBeGreaterThan(0);
-    expect(result[0]!.layoutScore).toBeGreaterThanOrEqual(0);
-    expect(result[0]!.riskScore).toBeGreaterThanOrEqual(0);
+    expect(result[0]!.total).toBeGreaterThan(0);
+    expect(result[0]!.breakdown[0]!.layoutScore).toBeGreaterThanOrEqual(0);
+    expect(result[0]!.breakdown[0]!.riskScore).toBeGreaterThanOrEqual(0);
+    expect(result[0]!.breakdown[0]!.isPass).toBe(true);
   });
 
   it("应该正确处理多个(> 6)相同产品", () => {
@@ -52,7 +55,7 @@ describe("searchBestCavityCount", () => {
     const result = searchBestCavityCount(products, mockMold, mockForceOptions);
 
     expect(result).toHaveLength(3);
-    expect(result[0]!.productCavityMap).toEqual([
+    expect(result[0]!.breakdown[0]!.productCavityMap).toEqual([
       { productId: 1, cavityCount: 1 },
       { productId: 2, cavityCount: 1 },
       { productId: 3, cavityCount: 1 },
@@ -61,9 +64,10 @@ describe("searchBestCavityCount", () => {
       { productId: 6, cavityCount: 1 },
       { productId: 7, cavityCount: 1 },
     ]);
-    expect(result[0]!.price).toBeGreaterThan(0);
-    expect(result[0]!.layoutScore).toBeGreaterThanOrEqual(0);
-    expect(result[0]!.riskScore).toBeGreaterThanOrEqual(0);
+    expect(result[0]!.total).toBeGreaterThan(0);
+    expect(result[0]!.breakdown[0]!.layoutScore).toBeGreaterThanOrEqual(0);
+    expect(result[0]!.breakdown[0]!.riskScore).toBeGreaterThanOrEqual(0);
+    expect(result[0]!.breakdown[0]!.isPass).toBe(true);
   });
 
   it("应该正确处理不同材料的产品", () => {
@@ -97,14 +101,15 @@ describe("searchBestCavityCount", () => {
     const result = searchBestCavityCount(products, mockMold, mockForceOptions);
 
     expect(result).toHaveLength(3);
-    expect(result[0]!.productCavityMap).toEqual([
+    expect(result[0]!.breakdown[0]!.productCavityMap).toEqual([
       { productId: 1, cavityCount: 1 },
       { productId: 2, cavityCount: 1 },
       { productId: 3, cavityCount: 1 },
     ]);
-    expect(result[0]!.price).toBeGreaterThan(0);
-    expect(result[0]!.layoutScore).toBeGreaterThanOrEqual(0);
-    expect(result[0]!.riskScore).toBeGreaterThanOrEqual(0);
+    expect(result[0]!.total).toBeGreaterThan(0);
+    expect(result[0]!.breakdown[0]!.layoutScore).toBeGreaterThanOrEqual(0);
+    expect(result[0]!.breakdown[0]!.riskScore).toBeGreaterThanOrEqual(0);
+    expect(result[0]!.breakdown[0]!.isPass).toBe(true);
   });
 
   it("应该正确处理数量成比例的产品", () => {
@@ -130,13 +135,14 @@ describe("searchBestCavityCount", () => {
     const result = searchBestCavityCount(products, mockMold, mockForceOptions);
 
     expect(result).toHaveLength(3);
-    expect(result[0]!.productCavityMap).toEqual([
+    expect(result[0]!.breakdown[0]!.productCavityMap).toEqual([
       { productId: 1, cavityCount: 1 },
       { productId: 2, cavityCount: 3 },
     ]);
-    expect(result[0]!.price).toBeGreaterThan(0);
-    expect(result[0]!.layoutScore).toBeGreaterThanOrEqual(0);
-    expect(result[0]!.riskScore).toBeGreaterThanOrEqual(0);
+    expect(result[0]!.total).toBeGreaterThan(0);
+    expect(result[0]!.breakdown[0]!.layoutScore).toBeGreaterThanOrEqual(0);
+    expect(result[0]!.breakdown[0]!.riskScore).toBeGreaterThanOrEqual(0);
+    expect(result[0]!.breakdown[0]!.isPass).toBe(true);
   });
 
   it("应该正确处理不同颜色的产品", () => {
@@ -162,13 +168,14 @@ describe("searchBestCavityCount", () => {
     const result = searchBestCavityCount(products, mockMold, mockForceOptions);
 
     expect(result).toHaveLength(3);
-    expect(result[0]!.productCavityMap).toEqual([
+    expect(result[0]!.breakdown[0]!.productCavityMap).toEqual([
       { productId: 1, cavityCount: 1 },
       { productId: 2, cavityCount: 1 },
     ]);
-    expect(result[0]!.price).toBeGreaterThan(0);
-    expect(result[0]!.layoutScore).toBeGreaterThanOrEqual(0);
-    expect(result[0]!.riskScore).toBeGreaterThanOrEqual(0);
+    expect(result[0]!.total).toBeGreaterThan(0);
+    expect(result[0]!.breakdown[0]!.layoutScore).toBeGreaterThanOrEqual(0);
+    expect(result[0]!.breakdown[0]!.riskScore).toBeGreaterThanOrEqual(0);
+    expect(result[0]!.breakdown[0]!.isPass).toBe(true);
   });
 
   it("应该正确处理空产品列表", () => {

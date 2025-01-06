@@ -1,4 +1,4 @@
-import type { OCCTResult } from "./occt-types";
+import type { OCCTResult } from "./types";
 
 export interface ThreeGeometry {
   positions: Float32Array | number[];
