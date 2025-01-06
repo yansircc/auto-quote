@@ -11,12 +11,8 @@
  *    - 越小越均匀
  */
 
-import {
-  createNormalizer,
-  getTopAlignedCuboidsLayout,
-  type BaseCuboid,
-  type CuboidLayout,
-} from "../shared";
+import { createNormalizer } from "../shared";
+import type { CuboidLayout } from "../../../types";
 import {
   getDistanceDistributionScore,
   DISTANCE_DISTRIBUTION_BEST_PARAMS,
@@ -25,6 +21,10 @@ import { PARAM_PREFIX } from "../../optimizer";
 
 /**
  * 计算两个立方体中心点之间的欧氏距离
+ *
+ * @param {CuboidLayout} cuboid1 - 第一个立方体
+ * @param {CuboidLayout} cuboid2 - 第二个立方体
+ * @returns {number} 距离
  */
 function calculate3DDistance(
   cuboid1: CuboidLayout,
@@ -54,10 +54,13 @@ function calculate3DDistance(
 /**
  * 计算布局的距离分布指标
  *
- * @param layout - 3D布局
- * @returns {DistanceDistributionInput} 距离分布指标
+ * @param {CuboidLayout[]} layout - 3D布局
+ * @returns { { cv: number, range: number } } 距离分布指标
  */
-function getDistributionMetrics(layout: CuboidLayout[]) {
+function getDistributionMetrics(layout: CuboidLayout[]): {
+  cv: number;
+  range: number;
+} {
   // 计算所有立方体之间的距离
   const distances: number[] = [];
   for (let i = 0; i < layout.length; i++) {
@@ -76,7 +79,7 @@ function getDistributionMetrics(layout: CuboidLayout[]) {
     return { cv: 0, range: 0 };
   }
 
-  // 计算变异系数 (CV)
+  // 计算平均值和变异系数 (CV)
   const mean = distances.reduce((sum, d) => sum + d, 0) / distances.length;
   const variance =
     distances.reduce((sum, d) => sum + Math.pow(d - mean, 2), 0) /
@@ -84,10 +87,15 @@ function getDistributionMetrics(layout: CuboidLayout[]) {
   const standardDeviation = Math.sqrt(variance);
   const cv = standardDeviation / mean;
 
-  // 计算极差比
-  const max = Math.max(...distances);
-  const min = Math.min(...distances);
-  const range = min > 0 ? (max - min) / min : 1; // 避免除以零
+  // 使用迭代方式计算最大最小值，避免栈溢出
+  let max = distances[0]!;
+  let min = distances[0]!;
+  for (let i = 1; i < distances.length; i++) {
+    if (distances[i]! > max) max = distances[i]!;
+    if (distances[i]! < min) min = distances[i]!;
+  }
+
+  const range = min > 0 ? (max - min) / min : 1;
 
   return { cv, range };
 }
@@ -109,16 +117,15 @@ const distanceDistributionNormalizer = {
 /**
  * 计算距离分布得分
  *
- * @param cuboids - 一组立方体
+ * @param {CuboidLayout[]} optimizedCuboidsLayout - 优化后的立方体布局
  * @param bestParams - 最佳参数
  * @returns {number} 距离分布得分
  */
 function scorer(
-  cuboids: BaseCuboid[],
+  optimizedCuboidsLayout: CuboidLayout[],
   bestParams = DISTANCE_DISTRIBUTION_BEST_PARAMS,
 ): number {
-  const layout = getTopAlignedCuboidsLayout(cuboids);
-  const metrics = getDistributionMetrics(layout);
+  const metrics = getDistributionMetrics(optimizedCuboidsLayout);
   const normalizedMetrics = {
     cv: distanceDistributionNormalizer.cv(metrics.cv, bestParams),
     range: distanceDistributionNormalizer.range(metrics.range, bestParams),

@@ -4,10 +4,7 @@ export interface Dimensions {
   height: number; // z轴
 }
 
-export interface BaseProduct {
-  materialName: string;
-}
-
-export interface BaseMold {
-  materialName: string;
+export interface ForceOptions {
+  isForceColorSimultaneous: boolean;
+  isForceMaterialSimultaneous: boolean;
 }

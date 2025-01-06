@@ -4,6 +4,7 @@ import type { PotpackBox } from "potpack";
  * 矩形定义
  */
 interface Rectangle {
+  id: number;
   width: number;
   height: number;
 }
@@ -12,7 +13,6 @@ interface Rectangle {
  * 带位置信息的矩形
  */
 interface PlacedRectangle extends Rectangle {
-  index: number;
   x: number; // 左上角x坐标
   y: number; // 左上角y坐标
 }
@@ -54,9 +54,30 @@ interface LayoutOptions {
  * 打包用的矩形
  */
 interface Box extends PotpackBox {
-  originalIndex: number;
+  id: number;
   originalRect: Rectangle;
   isRotated: boolean;
+}
+
+interface BaseCuboid extends Rectangle {
+  depth: number;
+}
+
+/**
+ * 3D布局结果，使用笛卡尔坐标系
+ */
+interface CuboidLayout {
+  id: number;
+  dimensions: {
+    width: number; // x
+    depth: number; // y
+    height: number; // z
+  };
+  position: {
+    x: number;
+    y: number;
+    z: number;
+  };
 }
 
 export type {
@@ -66,4 +87,6 @@ export type {
   LayoutOptions,
   SpacingCalculator,
   Box,
+  BaseCuboid,
+  CuboidLayout,
 };

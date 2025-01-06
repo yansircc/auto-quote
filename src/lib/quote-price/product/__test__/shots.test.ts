@@ -1,28 +1,45 @@
 import { describe, expect, it } from "vitest";
 import { getSingleProductShots, getProductsTotalShots } from "../shots";
-import type { SimplifiedProductProps, ForceOptions } from "../../core";
+import type { ForceOptions } from "../../core";
+import type { ProductShotsProps } from "../shots";
 
 describe("模次计算", () => {
   describe("单个产品模次计算", () => {
     it("应正确计算单个产品的模次", () => {
-      expect(getSingleProductShots(1000, 4)).toBe(250);
-      expect(getSingleProductShots(1001, 4)).toBe(251);
+      expect(getSingleProductShots({ quantity: 1000, cavityCount: 4 })).toBe(
+        250,
+      );
+      expect(getSingleProductShots({ quantity: 1001, cavityCount: 4 })).toBe(
+        251,
+      );
     });
 
     it("当穴数为0时应抛出错误", () => {
-      expect(() => getSingleProductShots(1000, 0)).toThrow();
+      expect(() =>
+        getSingleProductShots({ quantity: 1000, cavityCount: 0 }),
+      ).toThrow();
     });
 
     it("当产品数量为0时应返回0", () => {
-      expect(getSingleProductShots(0, 4)).toBe(0);
+      expect(getSingleProductShots({ quantity: 0, cavityCount: 4 })).toBe(0);
     });
   });
 
   describe("多个产品模次计算", () => {
-    const testProducts: SimplifiedProductProps[] = [
-      { shots: 150, materialName: "ABS", color: "Red" },
-      { shots: 100, materialName: "ABS", color: "Blue" },
-      { shots: 200, materialName: "PC", color: "Red" },
+    const testProducts: ProductShotsProps[] = [
+      { materialName: "ABS", quantity: 600, cavityCount: 4, color: "Red" },
+      {
+        materialName: "ABS",
+        quantity: 600,
+        cavityCount: 6,
+        color: "Blue",
+      },
+      {
+        materialName: "PC",
+        quantity: 600,
+        cavityCount: 3,
+        color: "Red",
+      },
     ];
 
     const forceOptions: ForceOptions = {
@@ -39,9 +56,9 @@ describe("模次计算", () => {
     });
 
     it("当颜色和材料都兼容时应返回最大模次", () => {
-      const compatibleProducts: SimplifiedProductProps[] = [
-        { shots: 100, materialName: "ABS", color: "Red" },
-        { shots: 150, materialName: "ABS", color: "Red" },
+      const compatibleProducts: ProductShotsProps[] = [
+        { materialName: "ABS", quantity: 600, cavityCount: 4, color: "Red" },
+        { materialName: "ABS", quantity: 600, cavityCount: 6, color: "Red" },
       ];
       const options: ForceOptions = {
         isForceColorSimultaneous: true,

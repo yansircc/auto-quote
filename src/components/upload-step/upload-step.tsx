@@ -29,7 +29,6 @@ const SUPPORTED_FORMATS = {
 const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
 
 export default function UploadStep({
-  currentStep,
   onValidityChange,
   onFilesChange,
 }: UploadStepProps) {

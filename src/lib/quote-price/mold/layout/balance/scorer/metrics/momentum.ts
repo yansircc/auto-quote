@@ -11,11 +11,8 @@
  *    - 考虑型腔间的相对位置关系
  */
 
-import {
-  createNormalizer,
-  getTopAlignedCuboidsLayout,
-  type BaseCuboid,
-} from "../shared";
+import { createNormalizer } from "../shared";
+import type { CuboidLayout } from "../../../types";
 import {
   getMomentumScore,
   MOMENTUM_BEST_PARAMS,
@@ -24,10 +21,11 @@ import {
 
 /**
  * 计算型腔力矩比率
- * 返回真实的物理量，不做归一化处理
+ *
+ * @param {CuboidLayout[]} layout - 立方体布局
+ * @returns 真实的物理量，不做归一化处理
  */
-function getCavityTorqueRatio(cuboids: BaseCuboid[]): number {
-  const layout = getTopAlignedCuboidsLayout(cuboids);
+function getCavityTorqueRatio(layout: CuboidLayout[]): number {
   const moments = { x: 0, y: 0, z: 0 };
 
   // 1. 计算总体积和质心
@@ -97,10 +95,11 @@ function getCavityTorqueRatio(cuboids: BaseCuboid[]): number {
  * 计算型腔分布均匀性
  * - 评估型腔在空间中的分布情况
  * - 考虑型腔间的相对位置关系
- * 返回真实的相对标准差（RSD），不做归一化处理
+ *
+ * @param {CuboidLayout[]} layout - 立方体布局
+ * @returns 真实的相对标准差（RSD），不做归一化处理
  */
-function getCavityDistribution(cuboids: BaseCuboid[]): number {
-  const layout = getTopAlignedCuboidsLayout(cuboids);
+function getCavityDistribution(layout: CuboidLayout[]): number {
   const contributions: number[] = [];
 
   // 1. 计算质心
@@ -172,20 +171,27 @@ const momentumNormalizer = {
 
 /**
  * 综合评分函数
+ *
+ * @param {CuboidLayout[]} optimizedCuboidsLayout - 优化后的立方体布局
+ * @param bestParams - 最佳参数
+ * @returns 综合评分
  */
-function scorer(cuboids: BaseCuboid[]): number {
+function scorer(
+  optimizedCuboidsLayout: CuboidLayout[],
+  bestParams = MOMENTUM_BEST_PARAMS,
+): number {
   // 1. 计算原始物理量
-  const rawRatio = getCavityTorqueRatio(cuboids);
-  const rawRSD = getCavityDistribution(cuboids);
+  const rawRatio = getCavityTorqueRatio(optimizedCuboidsLayout);
+  const rawRSD = getCavityDistribution(optimizedCuboidsLayout);
 
   // 2. 归一化
   const normalizedMetrics = {
-    ratio: momentumNormalizer.ratio(rawRatio, MOMENTUM_BEST_PARAMS),
-    rsd: momentumNormalizer.rsd(rawRSD, MOMENTUM_BEST_PARAMS),
+    ratio: momentumNormalizer.ratio(rawRatio, bestParams),
+    rsd: momentumNormalizer.rsd(rawRSD, bestParams),
   };
 
   // 3. 使用评分系统计算最终分数
-  return getMomentumScore(normalizedMetrics, MOMENTUM_BEST_PARAMS);
+  return getMomentumScore(normalizedMetrics, bestParams);
 }
 
 export { scorer as momentumScorer };

@@ -2,27 +2,27 @@ export const moldMaterialList = [
   {
     name: "NAK80",
     density: 0.00000785,
-    pricePerKg: 0.013,
+    pricePerKg: 10,
   },
   {
     name: "718H",
     density: 0.00000785,
-    pricePerKg: 0.013,
+    pricePerKg: 10,
   },
   {
     name: "P20",
     density: 0.00000785,
-    pricePerKg: 0.013,
+    pricePerKg: 10,
   },
   {
     name: "H13",
     density: 0.00000785,
-    pricePerKg: 0.013,
+    pricePerKg: 10,
   },
   {
     name: "S136",
     density: 0.00000785,
-    pricePerKg: 0.013,
+    pricePerKg: 10,
   },
 ];
 

@@ -1,75 +1,154 @@
-import { getSingleProductShots, getProductsTotalShots } from "./shots";
+import { getProductsTotalShots } from "./shots";
 import { getProductMaterial, getProductGrossProfit } from "../core";
-import type {
-  MachineConfig,
-  DetailedProductProps,
-  ForceOptions,
-} from "../core";
+import type { MachineConfig, ForceOptions } from "../core";
 import { getTotalMachineProcessingFee } from "../machine";
+
+interface ProductCostProps {
+  materialName: string;
+  color: string;
+  quantity: number;
+  cavityCount: number;
+  netVolume: number;
+}
+
+interface ProductMaterialCosts {
+  materialCost: number; // 材料成本
+  wasteCost: number; // 损耗成本
+  weight: number; // 产品重量
+}
+
+export interface ProductCostsResult {
+  total: number;
+  breakdown: {
+    materialCost: number;
+    wasteCost: number;
+    processingFee: number;
+    grossProfit: number;
+  };
+}
+
+/**
+ * 计算单个产品的材料相关成本
+ * @param product 产品信息
+ * @returns 包含材料成本、损耗成本和重量的对象
+ */
+function calculateProductMaterialCosts(
+  product: ProductCostProps,
+): ProductMaterialCosts {
+  const material = getProductMaterial(product.materialName);
+  const weight = product.netVolume * material.density * product.quantity;
+  const materialCost = material.pricePerKg * weight;
+
+  return {
+    materialCost,
+    wasteCost: materialCost * material.lossRate, // 损耗成本 = 材料成本 * 损耗率
+    weight,
+  };
+}
+
+/**
+ * 计算所有产品的材料总成本
+ * @param products 产品列表
+ * @returns 所有产品的材料和损耗成本总和
+ */
+function calculateTotalMaterialCosts(products: ProductCostProps[]): {
+  totalMaterialCost: number;
+  totalWasteCost: number;
+} {
+  return products.reduce(
+    (acc, product) => {
+      const costs = calculateProductMaterialCosts(product);
+      return {
+        totalMaterialCost: acc.totalMaterialCost + costs.materialCost,
+        totalWasteCost: acc.totalWasteCost + costs.wasteCost,
+      };
+    },
+    { totalMaterialCost: 0, totalWasteCost: 0 },
+  );
+}
+
+/**
+ * 计算单个产品的毛利
+ * @param product 产品信息
+ * @param productProcessingFee 产品分摊的加工费
+ * @returns 产品毛利
+ */
+function calculateSingleProductGrossProfit(
+  product: ProductCostProps,
+  productProcessingFee: number,
+): number {
+  const { materialCost, wasteCost } = calculateProductMaterialCosts(product);
+  const totalCost = materialCost + wasteCost + productProcessingFee;
+  const grossProfitRate = getProductGrossProfit(product.materialName);
+
+  return totalCost * grossProfitRate;
+}
+
+/**
+ * 计算所有产品的总毛利
+ * @param products 产品列表
+ * @param totalProcessingFee 总加工费
+ * @returns 总毛利
+ */
+function calculateTotalGrossProfit(
+  products: ProductCostProps[],
+  totalProcessingFee: number,
+): number {
+  // 简单平均分配加工费到每个产品
+  const processingFeePerProduct = totalProcessingFee / products.length;
+
+  return products.reduce(
+    (acc, product) =>
+      acc + calculateSingleProductGrossProfit(product, processingFeePerProduct),
+    0,
+  );
+}
 
 /**
  * 计算产品的总价格
- * @param {DetailedProductProps[]} products 产品列表
+ * @param {ProductCostProps[]} products 产品列表
  * @param {MachineConfig} machineConfig 机器配置
- * @param {number[]} cavities 模具的穴数
  * @param {ForceOptions} forceOptions 强制选项，可选
- * @returns {number} 产品的总价格
+ * @returns {ProductCostsResult} 产品的总价格（材料成本 + 损耗 + 加工费 + 毛利）
  */
 export function calculateProductCosts(
-  products: DetailedProductProps[],
+  products: ProductCostProps[],
   machineConfig: MachineConfig,
-  cavities: number[],
   forceOptions?: ForceOptions,
-): number {
-  // 计算产品的材料总成本和损耗总费用
-  const { materialCost, wasteCost } = products.reduce(
-    (acc, product) => {
-      const material = getProductMaterial(product.materialName);
-      const productWeight = product.weight * product.quantity;
+): ProductCostsResult {
+  // 1. 计算材料相关成本
+  const { totalMaterialCost, totalWasteCost } =
+    calculateTotalMaterialCosts(products);
 
-      return {
-        materialCost: acc.materialCost + material.pricePerKg * productWeight,
-        wasteCost: acc.wasteCost + material.lossRate * productWeight,
-      };
-    },
-    { materialCost: 0, wasteCost: 0 },
-  );
-
-  // 计算产品各自的模次
-  const cavityIndex = products.map((product) => product.cavityIndex);
-  if (cavityIndex.length !== products.length) {
-    throw new Error("模具的穴数和产品数量不匹配");
-  }
-
-  const productProperties = products.map((product) => {
-    const cavity = cavities[product.cavityIndex];
-    if (typeof cavity !== "number") {
-      throw new Error(`无效的模具穴数索引: ${product.cavityIndex}`);
-    }
-    return {
-      shots: getSingleProductShots(product.quantity, cavity),
-      materialName: product.materialName,
-      color: product.color,
-    };
-  });
-
-  // 计算需要的总模次
-  const totalShots = getProductsTotalShots(productProperties, forceOptions);
-
-  // 计算产品的总加工费
-  const totalMachineProcessingFee = getTotalMachineProcessingFee(
+  // 2. 计算加工费
+  const totalShots = getProductsTotalShots(products, forceOptions);
+  const totalProcessingFee = getTotalMachineProcessingFee(
     totalShots,
     machineConfig,
   );
 
-  // 计算产品的总毛利
-  const totalGrossProfit = products.reduce((acc, product) => {
-    const grossProfit = getProductGrossProfit(product.materialName);
-    return acc + grossProfit;
-  }, 0);
-
-  // 计算产品的总费用
-  return (
-    materialCost + wasteCost + totalMachineProcessingFee + totalGrossProfit
+  // 3. 计算毛利
+  const totalGrossProfit = calculateTotalGrossProfit(
+    products,
+    totalProcessingFee,
   );
+
+  // 4. 计算总费用
+  const result = {
+    total:
+      totalMaterialCost +
+      totalWasteCost +
+      totalProcessingFee +
+      totalGrossProfit,
+    breakdown: {
+      materialCost: totalMaterialCost,
+      wasteCost: totalWasteCost,
+      processingFee: totalProcessingFee,
+      grossProfit: totalGrossProfit,
+    },
+  };
+
+  // console.log("产品最终价格", result);
+
+  return result;
 }

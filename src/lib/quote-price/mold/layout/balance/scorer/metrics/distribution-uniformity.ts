@@ -13,12 +13,8 @@
  *    - 越小越均匀
  */
 
-import {
-  createNormalizer,
-  getTopAlignedCuboidsLayout,
-  type BaseCuboid,
-  type CuboidLayout,
-} from "../shared";
+import { createNormalizer } from "../shared";
+import type { CuboidLayout } from "../../../types";
 import {
   getDistributionUniformityScore,
   DISTRIBUTION_UNIFORMITY_BEST_PARAMS,
@@ -27,6 +23,11 @@ import { PARAM_PREFIX } from "../../optimizer";
 
 /**
  * 计算某立方体在 gridX, gridY 网格（共 gridSize×gridSize）中的覆盖率 [0, 1]
+ * @param {CuboidLayout} cuboid - 立方体
+ * @param {number} gridX - 网格 x 坐标
+ * @param {number} gridY - 网格 y 坐标
+ * @param {number} cellSize - 网格单元尺寸
+ * @returns {number} 覆盖率 [0, 1]
  */
 function calculateCoverage(
   cuboid: CuboidLayout,
@@ -66,6 +67,9 @@ function calculateCoverage(
  * - 统计每个网格单元的叠加覆盖率
  * - 计算各网格单元覆盖率的方差
  * - 最终返回"标准差"以表征分布离散程度：越小越均匀
+ *
+ * @param {CuboidLayout[]} layout - 立方体布局
+ * @returns {number} 标准差
  */
 function calculateGridVariance(layout: CuboidLayout[]): number {
   const gridSize = 10;
@@ -105,6 +109,9 @@ function calculateGridVariance(layout: CuboidLayout[]): number {
  * - 依旧划分 10×10 网格
  * - 每格累加覆盖率
  * - 衡量相邻格之间的覆盖差异均值，越小表示越平滑、越均匀
+ *
+ * @param {CuboidLayout[]} layout - 立方体布局
+ * @returns {number} 密度变化
  */
 function calculateDensityChange(layout: CuboidLayout[]): number {
   const gridSize = 10;
@@ -180,6 +187,9 @@ function calculateDensityChange(layout: CuboidLayout[]): number {
  * 计算集群指数 (clusterIndex)
  * - 越小越表示越"稀疏"（或更均匀、没抱团）
  * - 这里的思路是：立方体之间的距离越大 -> clusterIndex 越小
+ *
+ * @param {CuboidLayout[]} layout - 立方体布局
+ * @returns {number} 集群指数
  */
 function calculateClusterIndex(layout: CuboidLayout[]): number {
   if (layout.length < 2) return 0;
@@ -270,20 +280,23 @@ const distributionUniformityNormalizer = {
  * - 计算 gridVariance, densityChange, clusterIndex
  * - 把这些指标传给 getDistributionUniformityScore
  * - 最终得到一个分布均匀度评分
- * @param cuboids 立方体
+ * @param {CuboidLayout[]} optimizedCuboidsLayout - 优化后的立方体布局
+ * @param bestParams - 最佳参数
  * @returns 分布均匀度评分
  */
-function scorer(cuboids: BaseCuboid[]): number {
-  const layout = getTopAlignedCuboidsLayout(cuboids);
+function scorer(
+  optimizedCuboidsLayout: CuboidLayout[],
+  bestParams = DISTRIBUTION_UNIFORMITY_BEST_PARAMS,
+): number {
   const metrics = {
     // 这里改为返回"标准差"或直接返回"方差"，你可以自行调整
-    gridVariance: calculateGridVariance(layout),
+    gridVariance: calculateGridVariance(optimizedCuboidsLayout),
 
     // 保持原先逻辑
-    densityChange: calculateDensityChange(layout),
+    densityChange: calculateDensityChange(optimizedCuboidsLayout),
 
     // 保持原先逻辑
-    clusterIndex: calculateClusterIndex(layout),
+    clusterIndex: calculateClusterIndex(optimizedCuboidsLayout),
   };
 
   // 做个安全兜底
@@ -294,24 +307,21 @@ function scorer(cuboids: BaseCuboid[]): number {
   const normalizedMetrics = {
     gridVariance: distributionUniformityNormalizer.gridVariance(
       metrics.gridVariance,
-      DISTRIBUTION_UNIFORMITY_BEST_PARAMS,
+      bestParams,
     ),
     densityChange: distributionUniformityNormalizer.densityChange(
       metrics.densityChange,
-      DISTRIBUTION_UNIFORMITY_BEST_PARAMS,
+      bestParams,
     ),
     clusterIndex: distributionUniformityNormalizer.clusterIndex(
       metrics.clusterIndex,
-      DISTRIBUTION_UNIFORMITY_BEST_PARAMS,
+      bestParams,
     ),
   };
 
   // 最后交给你的打分函数
   // DISTRIBUTION_UNIFORMITY_BEST_PARAMS 通常是一组对这三个指标如何映射到 0~100 的参数
-  const score = getDistributionUniformityScore(
-    normalizedMetrics,
-    DISTRIBUTION_UNIFORMITY_BEST_PARAMS,
-  );
+  const score = getDistributionUniformityScore(normalizedMetrics, bestParams);
 
   // 如果需要在此查看日志
   // console.log("Layout:", layout);

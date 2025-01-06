@@ -13,12 +13,8 @@
  *    - 考虑操作和散热空间要求
  */
 
-import {
-  createNormalizer,
-  getTopAlignedCuboidsLayout,
-  PARAM_PREFIX,
-  type BaseCuboid,
-} from "../shared";
+import { createNormalizer, PARAM_PREFIX } from "../shared";
+import type { CuboidLayout } from "../../../types";
 import {
   getSpacingUniformityScore,
   SPACING_UNIFORMITY_BEST_PARAMS,
@@ -27,15 +23,13 @@ import {
 /**
  * 获取间距均匀性指标
  *
- * @param cuboids - 一组立方体
+ * @param {CuboidLayout[]} layout - 立方体布局
  * @returns {number, number} 相邻距离，方向一致性
  */
-function getSpacingUniformityMetrics(cuboids: BaseCuboid[]): {
+function getSpacingUniformityMetrics(layout: CuboidLayout[]): {
   distance: number;
   directional: number;
 } {
-  const layout = getTopAlignedCuboidsLayout(cuboids);
-
   if (layout.length < 2) {
     return {
       distance: 0,
@@ -173,15 +167,15 @@ const spacingUniformityNormalizer = {
 /**
  * 计算间距均匀性得分
  *
- * @param cuboids - 一组立方体
+ * @param {CuboidLayout[]} optimizedCuboidsLayout - 立方体布局
  * @param bestParams - 最佳参数
  * @returns {number} 间距均匀性得分
  */
 function scorer(
-  cuboids: BaseCuboid[],
+  optimizedCuboidsLayout: CuboidLayout[],
   bestParams = SPACING_UNIFORMITY_BEST_PARAMS,
 ): number {
-  const metrics = getSpacingUniformityMetrics(cuboids);
+  const metrics = getSpacingUniformityMetrics(optimizedCuboidsLayout);
   const normalizedMetrics = {
     distance: spacingUniformityNormalizer.distance(
       metrics.distance,

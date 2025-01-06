@@ -13,13 +13,9 @@
  *    - 考虑模具开合方向的对称性
  */
 
-import {
-  createNormalizer,
-  getTopAlignedCuboidsLayout,
-  getBoundingBox,
-  PARAM_PREFIX,
-  type BaseCuboid,
-} from "../shared";
+import { createNormalizer, PARAM_PREFIX } from "../shared";
+import { getBoundingBox } from "../../../packing";
+import type { CuboidLayout } from "../../../types";
 import {
   getSymmetryScore,
   SYMMETRY_BEST_PARAMS,
@@ -28,11 +24,10 @@ import {
 /**
  * 获取轴向对称性
  *
- * @param cuboids - 一组立方体
+ * @param {CuboidLayout[]} layout - 立方体布局
  * @returns {number} 轴向对称性得分
  */
-function getAxialSymmetry(cuboids: BaseCuboid[]): number {
-  const layout = getTopAlignedCuboidsLayout(cuboids);
+function getAxialSymmetry(layout: CuboidLayout[]): number {
   const boundingBox = getBoundingBox(layout);
 
   if (!boundingBox || layout.length < 2) return 0;
@@ -113,11 +108,10 @@ function getAxialSymmetry(cuboids: BaseCuboid[]): number {
 /**
  * 获取重心对称性
  *
- * @param cuboids - 一组立方体
+ * @param {CuboidLayout[]} layout - 立方体布局
  * @returns {number} 重心对称性得分
  */
-function getMassSymmetry(cuboids: BaseCuboid[]): number {
-  const layout = getTopAlignedCuboidsLayout(cuboids);
+function getMassSymmetry(layout: CuboidLayout[]): number {
   const boundingBox = getBoundingBox(layout);
 
   if (!boundingBox || layout.length < 2) return 0;
@@ -192,16 +186,16 @@ const symmetryNormalizer = {
 /**
  * 计算对称性得分
  *
- * @param cuboids - 一组立方体
+ * @param {CuboidLayout[]} optimizedCuboidsLayout - 立方体布局
  * @param bestParams - 最佳参数
  * @returns {number} 对称性得分
  */
 function scorer(
-  cuboids: BaseCuboid[],
+  optimizedCuboidsLayout: CuboidLayout[],
   bestParams = SYMMETRY_BEST_PARAMS,
 ): number {
-  const axial = getAxialSymmetry(cuboids);
-  const mass = getMassSymmetry(cuboids);
+  const axial = getAxialSymmetry(optimizedCuboidsLayout);
+  const mass = getMassSymmetry(optimizedCuboidsLayout);
   const normalizedMetrics = {
     axial: symmetryNormalizer.axial(axial, bestParams),
     mass: symmetryNormalizer.mass(mass, bestParams),

@@ -1,6 +1,5 @@
 import { findBestConfig } from "./optimizer";
 import { ScoreReporter } from "@/lib/quote-price/mold/layout/balance/generic-optimizer";
-import { OptimizationProgressBar } from "../utils/progress-bar";
 import type { SymmetryInput, SymmetryConfig } from "./core/types";
 import type {
   FlatParams,
@@ -21,23 +20,15 @@ async function runSymmetryOptimizer(
   iterations = 1,
 ): Promise<OptimizationResult> {
   const reporter = new ScoreReporter();
-
-  return OptimizationProgressBar.runWithProgress<
-    SymmetryInput,
-    SymmetryConfig,
-    FlatParams
-  >({
-    taskName: "对称性",
-    iterations,
-    optimizeFunc: findBestConfig,
-    onComplete: (result) => {
-      reporter.generateReport({
-        previousScores: result.previousScores,
-        bestScores: result.scores,
-        bestParams: result.params,
-      });
-    },
+  const result = await findBestConfig(iterations);
+  
+  reporter.generateReport({
+    previousScores: result.previousScores,
+    bestScores: result.scores,
+    bestParams: result.params,
   });
+
+  return result;
 }
 
 export { runSymmetryOptimizer };

@@ -5,16 +5,26 @@ import {
 } from "../core";
 import type { MoldMaterial, Dimensions } from "../core";
 
+export interface MoldCostsResult {
+  total: number;
+  breakdown: {
+    materialCost: number;
+    purchaseCost: number;
+    processingFee: number;
+    grossProfit: number;
+  };
+}
+
 /**
  * 计算模具的最终价格
  * @param {Dimensions} dimensions 模具尺寸
  * @param {MoldMaterial} material 模具材料
- * @returns {number} 模具的最终价格
+ * @returns {MoldCostsResult} 模具的最终价格
  */
-export function getMoldTotalPrice(
+export function calculateMoldCosts(
   dimensions: Dimensions,
   material: MoldMaterial,
-): number {
+): MoldCostsResult {
   // 计算体积
   const volume = dimensions.width * dimensions.depth * dimensions.height;
 
@@ -28,8 +38,7 @@ export function getMoldTotalPrice(
   const referencePrice = materialCost;
 
   // 2. 计算采购成本
-  const purchaseCost =
-    weight * getPurchaseCostMultiple(weight) * referencePrice;
+  const purchaseCost = referencePrice * getPurchaseCostMultiple(weight);
 
   // 3. 计算毛利
   const grossProfit = getMoldGrossProfit(weight);
@@ -38,5 +47,17 @@ export function getMoldTotalPrice(
   const processingFee = getExtraProcessFee(material.name);
 
   // 5. 计算最终价格
-  return materialCost + purchaseCost + processingFee + grossProfit;
+  const result = {
+    total: materialCost + purchaseCost + processingFee + grossProfit,
+    breakdown: {
+      materialCost,
+      purchaseCost,
+      processingFee,
+      grossProfit,
+    },
+  };
+
+  // console.log("模具最终价格", result);
+
+  return result;
 }

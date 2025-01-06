@@ -1,2 +1,1 @@
-export * from "./cavity-search";
-export * from "./grouping";
+export * from "./search-cavity";

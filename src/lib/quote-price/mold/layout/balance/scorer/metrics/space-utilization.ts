@@ -11,13 +11,9 @@
  *    - 越小越好
  */
 
-import {
-  createNormalizer,
-  getTopAlignedCuboidsLayout,
-  getBoundingBox,
-  PARAM_PREFIX,
-  type BaseCuboid,
-} from "../shared";
+import { createNormalizer, PARAM_PREFIX } from "../shared";
+import { getBoundingBox } from "../../../packing";
+import type { CuboidLayout } from "../../../types";
 import {
   getSpaceUtilizationScore,
   SPACE_UTILIZATION_BEST_PARAMS,
@@ -26,15 +22,13 @@ import {
 /**
  * 获取体积比率和长宽比
  *
- * @param cuboids - 一组立方体
+ * @param {CuboidLayout[]} layout - 立方体布局
  * @returns {number, number} 体积比率，长宽比
  */
-function getSpaceUtilizationMetrics(cuboids: BaseCuboid[]): {
+function getSpaceUtilizationMetrics(layout: CuboidLayout[]): {
   volumeRatio: number;
   aspectRatio: number;
 } {
-  const layout = getTopAlignedCuboidsLayout(cuboids);
-
   // 如果没有立方体，返回默认值
   if (layout.length === 0) {
     return {
@@ -95,15 +89,15 @@ const spaceUtilizationNormalizer = {
 /**
  * 计算空间利用率得分
  *
- * @param cuboids - 一组立方体
+ * @param {CuboidLayout[]} optimizedCuboidsLayout - 立方体布局
  * @param bestParams - 最佳参数
  * @returns {number} 空间利用率得分
  */
 function scorer(
-  cuboids: BaseCuboid[],
+  optimizedCuboidsLayout: CuboidLayout[],
   bestParams = SPACE_UTILIZATION_BEST_PARAMS,
 ): number {
-  const metrics = getSpaceUtilizationMetrics(cuboids);
+  const metrics = getSpaceUtilizationMetrics(optimizedCuboidsLayout);
   const normalizedMetrics = {
     volumeRatio: spaceUtilizationNormalizer.volumeRatio(
       metrics.volumeRatio,

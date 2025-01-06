@@ -1,6 +1,6 @@
 import React from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import type { GeometricProperties } from "@/lib/occt-types";
+import type { GeometricProperties } from "@/lib/occt";
 
 interface DataCardsProps {
   geometryData: GeometricProperties;

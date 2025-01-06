@@ -1,4 +1,4 @@
-import type { BaseCuboid } from "../types";
+import type { CuboidLayout } from "../types";
 import {
   aspectRatioScorer,
   distanceDistributionScorer,
@@ -10,6 +10,7 @@ import {
   spacingUniformityScorer,
   symmetryScorer,
 } from "../scorer";
+import { getTopAlignedCuboidsLayout } from "../../packing";
 
 /**
  * 评分器配置
@@ -18,7 +19,7 @@ interface ScorerConfig {
   name: string;
   description: string;
   weight: number;
-  run: (cuboids: BaseCuboid[]) => number;
+  run: (layout: CuboidLayout[]) => number;
 }
 
 /**
@@ -86,7 +87,7 @@ const SCORERS: ScorerConfig[] = [
  */
 export function runScorer(
   name: string,
-  cuboids: BaseCuboid[],
+  layout: CuboidLayout[],
   silence = false,
 ): number {
   const scorer = SCORERS.find((s) => s.name === name);
@@ -98,7 +99,7 @@ export function runScorer(
     console.log(`运行${scorer.description}，权重: ${scorer.weight}`);
   }
 
-  const score = scorer.run(cuboids);
+  const score = scorer.run(layout);
 
   if (!silence) {
     console.log(`得分: ${score.toFixed(2)}\n`);
@@ -111,7 +112,7 @@ export function runScorer(
  * 运行所有评分器
  */
 export function runAllScorers(
-  cuboids: BaseCuboid[],
+  layout: CuboidLayout[],
   silence = false,
 ): {
   [key: string]: number;
@@ -132,7 +133,7 @@ export function runAllScorers(
       );
     }
 
-    const score = scorer.run(cuboids);
+    const score = scorer.run(layout);
     scores[scorer.name] = score;
 
     // 累加加权分数
@@ -161,37 +162,43 @@ export function runAllScorers(
 
 // 命令行接口也添加 silence 选项
 if (require.main === module) {
-  const mockCuboids: BaseCuboid[] = [
+  const mockCuboids = [
     {
+      id: 0,
       width: 120,
       depth: 130,
       height: 160,
     },
     {
+      id: 1,
       width: 120,
       depth: 130,
       height: 200,
     },
     {
+      id: 2,
       width: 120,
       depth: 130,
       height: 100,
     },
     {
+      id: 3,
       width: 120,
       depth: 160,
       height: 100,
     },
   ];
 
+  const optimizedCuboidsLayout = getTopAlignedCuboidsLayout(mockCuboids);
+
   const args = process.argv.slice(2);
   const scorerName = args[0] ?? "all";
   const silence = args.includes("--silence") || args.includes("-s");
 
   if (scorerName === "all") {
-    runAllScorers(mockCuboids, silence);
+    runAllScorers(optimizedCuboidsLayout, silence);
   } else {
-    runScorer(scorerName, mockCuboids, silence);
+    runScorer(scorerName, optimizedCuboidsLayout, silence);
   }
 }
 

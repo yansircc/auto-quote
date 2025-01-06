@@ -15,12 +15,9 @@
  *     最终保留的实际体积与位置，而不是原始未挖空时的立方体。
  */
 
-import {
-  getTopAlignedCuboidsLayout,
-  getBoundingBox,
-  type BaseCuboid,
-  createNormalizer,
-} from "../shared";
+import { createNormalizer } from "../shared";
+import { getBoundingBox } from "../../../packing";
+import type { CuboidLayout } from "../../../types";
 import {
   getPositionDistributionScore,
   POSITION_DISTRIBUTION_BEST_PARAMS,
@@ -33,12 +30,12 @@ import { PARAM_PREFIX } from "../../optimizer";
  * - 对每个立方体，计算其中心点
  * - 求与包围盒中心的欧几里得距离
  * - 取距离的平均值并归一化(除以半对角线)，返回 0~1 的数值
+ *
+ * @param {CuboidLayout[]} layout - 立方体布局
+ * @returns {number} 位置偏差评分
  */
-function getDeviation(cuboids: BaseCuboid[]): number {
-  if (!cuboids.length) return 0;
-
-  // 1. 获取3D布局
-  const layout = getTopAlignedCuboidsLayout(cuboids);
+function getDeviation(layout: CuboidLayout[]): number {
+  if (!layout.length) return 0;
 
   // 2. 计算包围盒
   const boundingBox = getBoundingBox(layout);
@@ -76,11 +73,13 @@ function getDeviation(cuboids: BaseCuboid[]): number {
  * - 在笛卡尔坐标系中，z 轴向上为正，但立方体从 z=0 向下延伸
  * - 整体重心 = (Σ(体积 × centerZ)) / (Σ体积)
  * - 归一化到 [0,1]，0 表示重心在底部，1 表示重心在顶部
+ *
+ * @param {CuboidLayout[]} layout - 立方体布局
+ * @returns {number} 重心高度评分
  */
-function getCenterHeight(cuboids: BaseCuboid[]): number {
-  if (!cuboids.length) return 0;
+function getCenterHeight(layout: CuboidLayout[]): number {
+  if (!layout.length) return 0;
 
-  const layout = getTopAlignedCuboidsLayout(cuboids);
   const boundingBox = getBoundingBox(layout);
 
   // 1. 累加每个立方体的 (volume, centerZ)
@@ -139,33 +138,31 @@ const positionDistributionNormalizer = {
 /**
  * 获取位置分布评分
  *
- * @param cuboids - 一组立方体
+ * @param {CuboidLayout[]} optimizedCuboidsLayout - 立方体布局
+ * @param bestParams - 最佳参数
  * @returns {number} 评分
  */
-export function scorer(cuboids: BaseCuboid[]): number {
+export function scorer(
+  optimizedCuboidsLayout: CuboidLayout[],
+  bestParams = POSITION_DISTRIBUTION_BEST_PARAMS,
+): number {
   const metrics = {
-    deviation: getDeviation(cuboids),
-    height: getCenterHeight(cuboids),
+    deviation: getDeviation(optimizedCuboidsLayout),
+    height: getCenterHeight(optimizedCuboidsLayout),
   };
 
   // 归一化
   const normalizedMetrics = {
     deviation: positionDistributionNormalizer.deviation(
       metrics.deviation,
-      POSITION_DISTRIBUTION_BEST_PARAMS,
+      bestParams,
     ),
-    height: positionDistributionNormalizer.height(
-      metrics.height,
-      POSITION_DISTRIBUTION_BEST_PARAMS,
-    ),
+    height: positionDistributionNormalizer.height(metrics.height, bestParams),
   };
 
   // 假定这两个指标都是“越小越好”，则由 getPositionDistributionScore
   // 来做相应映射 => 最终得到一个综合评分(0~100 或其他范围)
-  const score = getPositionDistributionScore(
-    normalizedMetrics,
-    POSITION_DISTRIBUTION_BEST_PARAMS,
-  );
+  const score = getPositionDistributionScore(normalizedMetrics, bestParams);
 
   // 调试日志可选
   // console.log("Deviation:", deviation.toFixed(4));

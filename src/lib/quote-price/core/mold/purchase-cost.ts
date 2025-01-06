@@ -9,7 +9,7 @@ const purchaseCostList: PurchaseCostRule[] = [
     coefficient: 4,
   },
   {
-    weightRange: [1000, 4000],
+    weightRange: [1001, 4000],
     coefficient: 3,
   },
 ];
@@ -29,7 +29,9 @@ export function getPurchaseCostMultiple(weight: number): number {
   );
 
   if (!costItem) {
-    throw new Error(`模具重量 ${weight} 超出计算范围`);
+    throw new Error(
+      `模具重量 ${weight} 超出计算范围最大值 ${purchaseCostList[purchaseCostList.length - 1]!.weightRange[1]}`,
+    );
   }
 
   return costItem.coefficient;
@@ -43,5 +45,5 @@ export function getPurchaseCostMultiple(weight: number): number {
  */
 function isWeightInRange(weight: number, range: [number, number]): boolean {
   const [minWeight, maxWeight] = range;
-  return weight >= minWeight && weight < maxWeight;
+  return weight >= minWeight && weight <= maxWeight;
 }
