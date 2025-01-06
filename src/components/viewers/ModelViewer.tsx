@@ -17,11 +17,25 @@ const MOLD_CONSTANTS = {
 interface ModelViewerProps {
   geometry: ThreeGeometry;
   className?: string;
+  options?: {
+    cameraPosition?: { x: number; y: number; z: number };
+    cameraTarget?: { x: number; y: number; z: number };
+    material?: {
+      color?: number;
+      transparent?: boolean;
+      opacity?: number;
+      metalness?: number;
+      roughness?: number;
+      depthWrite?: boolean;
+      side?: THREE.Side;
+    };
+  };
 }
 
 export function ModelViewer({
   geometry,
   className = "h-[500px] w-full",
+  options = {},
 }: ModelViewerProps) {
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
@@ -72,8 +86,16 @@ export function ModelViewer({
       50,
       containerRef.current.clientWidth / containerRef.current.clientHeight,
       0.1,
-      1000,
+      2000,
     );
+
+    if (options.cameraPosition) {
+      camera.position.set(
+        options.cameraPosition.x,
+        options.cameraPosition.y,
+        options.cameraPosition.z,
+      );
+    }
 
     // 几何体设置
     const bufferGeometry = new THREE.BufferGeometry();
@@ -92,10 +114,12 @@ export function ModelViewer({
       bufferGeometry.computeVertexNormals();
     }
 
-    // 材质设置 - 不透明的白色
-    const material = new THREE.MeshPhysicalMaterial(
-      MOLD_CONSTANTS.DEFAULT_MOLD_OPTIONS,
-    );
+    // 材质设置
+    const material = new THREE.MeshPhysicalMaterial({
+      ...MOLD_CONSTANTS.DEFAULT_MOLD_OPTIONS,
+      ...(options.material ?? {}),
+      side: options.material?.side ?? THREE.FrontSide,
+    });
 
     // 创建网格
     const mesh = new THREE.Mesh(bufferGeometry, material);
@@ -166,7 +190,17 @@ export function ModelViewer({
     gridHelper.position.y = 0; // 确保网格在地面上
     scene.add(gridHelper);
 
-    // 调整相机位置
+    // 调整相机位置和目标点
+    if (options.cameraTarget) {
+      camera.lookAt(
+        options.cameraTarget.x,
+        options.cameraTarget.y,
+        options.cameraTarget.z,
+      );
+    } else {
+      camera.lookAt(0, 0, 0);
+    }
+
     const maxDim = Math.max(
       boundingBox.max.x - boundingBox.min.x,
       boundingBox.max.y - boundingBox.min.y,
@@ -180,7 +214,6 @@ export function ModelViewer({
       cameraDistance * 0.6,
       cameraDistance * 0.8,
     );
-    camera.lookAt(0, 0, 0);
 
     // 渲染器设置
     const renderer = new THREE.WebGLRenderer({
@@ -266,7 +299,7 @@ export function ModelViewer({
         canvas.parentNode?.removeChild(canvas);
       }
     };
-  }, [geometry]);
+  }, [geometry, options]);
 
   return (
     <div className="relative">

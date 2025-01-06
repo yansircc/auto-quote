@@ -85,7 +85,7 @@ export default function CuboidForm({ cuboid, onUpdate }: CuboidFormProps) {
           name="materialName"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Material</FormLabel>
+              <FormLabel>材料</FormLabel>
               <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
                   <SelectTrigger>
@@ -110,7 +110,7 @@ export default function CuboidForm({ cuboid, onUpdate }: CuboidFormProps) {
           name="quantity"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Quantity</FormLabel>
+              <FormLabel>生产数量</FormLabel>
               <FormControl>
                 <Input
                   type="number"
@@ -128,7 +128,7 @@ export default function CuboidForm({ cuboid, onUpdate }: CuboidFormProps) {
           name="color"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Color</FormLabel>
+              <FormLabel>颜色</FormLabel>
               <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
                   <SelectTrigger>
@@ -162,7 +162,7 @@ export default function CuboidForm({ cuboid, onUpdate }: CuboidFormProps) {
             name="dimensions.width"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Width</FormLabel>
+                <FormLabel>宽度</FormLabel>
                 <FormControl>
                   <Input
                     type="number"
@@ -180,7 +180,7 @@ export default function CuboidForm({ cuboid, onUpdate }: CuboidFormProps) {
             name="dimensions.depth"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Depth</FormLabel>
+                <FormLabel>深度</FormLabel>
                 <FormControl>
                   <Input
                     type="number"
@@ -198,7 +198,7 @@ export default function CuboidForm({ cuboid, onUpdate }: CuboidFormProps) {
             name="dimensions.height"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Height</FormLabel>
+                <FormLabel>高度</FormLabel>
                 <FormControl>
                   <Input
                     type="number"
@@ -217,7 +217,7 @@ export default function CuboidForm({ cuboid, onUpdate }: CuboidFormProps) {
           name="netVolume"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Net Volume</FormLabel>
+              <FormLabel>净体积</FormLabel>
               <FormControl>
                 <Input
                   type="number"
@@ -235,7 +235,7 @@ export default function CuboidForm({ cuboid, onUpdate }: CuboidFormProps) {
           name="cavityCount"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Cavity Count</FormLabel>
+              <FormLabel>穴数</FormLabel>
               <FormControl>
                 <Input
                   type="number"

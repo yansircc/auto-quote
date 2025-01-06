@@ -9,14 +9,8 @@ import {
   calculateSolutionPrice,
   type SolutionPriceResult,
 } from "@/lib/quote-price/optimization/solution-price";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import DispalyCard from "./display-card";
+// import { LayoutViewer } from "./layout-viewer";
 
 interface CuboidData {
   id: number;
@@ -124,97 +118,27 @@ export default function CuboidCreator() {
       </div>
 
       {priceResult && (
-        <Card className="mt-6">
-          <CardContent className="pt-6">
-            <div className="space-y-6">
-              <div>
-                <h3 className="text-lg font-semibold mb-2">Price Summary</h3>
-                <div className="text-2xl font-bold text-primary">
-                  Total: ¥{priceResult.total.toLocaleString()}
+        <div className="space-y-4">
+          {/* <div className="rounded-lg border bg-card p-4">
+            <h2 className="mb-4 text-lg font-semibold">优化布局</h2>
+            {(() => {
+              console.log("Layout Data:", {
+                layout: priceResult.details.optimizedLayout,
+                moldDimensions: priceResult.details.moldDimensions,
+              });
+              return (
+                <div className="relative">
+                  <LayoutViewer
+                    layout={priceResult.details.optimizedLayout}
+                    moldDimensions={priceResult.details.moldDimensions}
+                    className="h-[500px] w-full"
+                  />
                 </div>
-              </div>
-
-              <div>
-                <h4 className="font-semibold mb-2">Breakdown</h4>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Category</TableHead>
-                      <TableHead>Cost</TableHead>
-                      <TableHead>Details</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    <TableRow>
-                      <TableCell className="font-medium">Mold</TableCell>
-                      <TableCell>
-                        ¥{priceResult.breakdown.mold.total.toLocaleString()}
-                      </TableCell>
-                      <TableCell>
-                        <div className="text-sm text-muted-foreground">
-                          Material: ¥
-                          {priceResult.breakdown.mold.breakdown.materialCost.toLocaleString()}
-                          <br />
-                          Purchase: ¥
-                          {priceResult.breakdown.mold.breakdown.purchaseCost.toLocaleString()}
-                          <br />
-                          Processing: ¥
-                          {priceResult.breakdown.mold.breakdown.processingFee.toLocaleString()}
-                          <br />
-                          Profit: ¥
-                          {priceResult.breakdown.mold.breakdown.grossProfit.toLocaleString()}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell className="font-medium">Product</TableCell>
-                      <TableCell>
-                        ¥{priceResult.breakdown.product.total.toLocaleString()}
-                      </TableCell>
-                      <TableCell>
-                        <div className="text-sm text-muted-foreground">
-                          Material: ¥
-                          {priceResult.breakdown.product.breakdown.materialCost.toLocaleString()}
-                          <br />
-                          Waste: ¥
-                          {priceResult.breakdown.product.breakdown.wasteCost.toLocaleString()}
-                          <br />
-                          Processing: ¥
-                          {priceResult.breakdown.product.breakdown.processingFee.toLocaleString()}
-                          <br />
-                          Profit: ¥
-                          {priceResult.breakdown.product.breakdown.grossProfit.toLocaleString()}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  </TableBody>
-                </Table>
-              </div>
-
-              <div>
-                <h4 className="font-semibold mb-2">Technical Details</h4>
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <span className="text-muted-foreground">
-                      Mold Dimensions:
-                    </span>
-                    <div>
-                      W: {priceResult.details.moldDimensions.width}mm
-                      <br />
-                      D: {priceResult.details.moldDimensions.depth}mm
-                      <br />
-                      H: {priceResult.details.moldDimensions.height}mm
-                    </div>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">Machine:</span>
-                    <div>{priceResult.details.cheapestMachine.name}</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+              );
+            })()}
+          </div> */}
+          <DispalyCard priceResult={priceResult} />
+        </div>
       )}
     </div>
   );
