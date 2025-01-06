@@ -9,6 +9,9 @@ import type { MachineConfig } from "../core";
  * 注意：因为已经做了是否大于阈值的判断，所以可正常写入主流程
  */
 function calculateSmallBatchFee(shots: number, config: MachineConfig): number {
+  if (shots <= 0) {
+    throw new Error("模次数不能小于等于0");
+  }
   // 获取小批量阈值，使用配置中的值或默认值
   const smallBatchThreshold = config.smallBatch.threshold;
 

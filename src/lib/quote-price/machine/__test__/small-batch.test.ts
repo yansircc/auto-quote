@@ -6,7 +6,7 @@ describe("小批量费用计算", () => {
   const testConfig: MachineConfig = {
     smallBatch: {
       threshold: 1000,
-      rate: 0.5,
+      fixed: 50 * 7.1,
     },
     // 其他配置省略
   } as MachineConfig;

@@ -8,7 +8,7 @@ describe("产品总价计算", () => {
     costPerShots: 0.1,
     injection: { maxWeight: 1000, safetyFactor: 1.2 },
     mold: { maxWidth: 500, maxHeight: 500 },
-    smallBatch: { threshold: 1000, rate: 1.5 },
+    smallBatch: { threshold: 1000, fixed: 80 * 7.1 },
   };
 
   const testProducts = [
