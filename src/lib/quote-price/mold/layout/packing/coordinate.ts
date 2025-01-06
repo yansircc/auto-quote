@@ -67,15 +67,11 @@ export function getTopAlignedCuboidsLayout(
       throw new Error(`原始id为 ${rect.id} 的立方体未找到`);
     }
 
-    // 确保 width >= depth
-    const width = Math.max(rect.width, rect.height);
-    const depth = Math.min(rect.width, rect.height);
-
     return {
       id: rect.id,
       dimensions: {
-        width, // 确保 width >= depth
-        depth, // 2D layout 中的 height 对应 3D 的 depth
+        width: rect.width,
+        depth: rect.height,
         height: originalCuboid.height,
       },
       position: {

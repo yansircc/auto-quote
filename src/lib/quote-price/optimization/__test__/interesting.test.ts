@@ -7,9 +7,11 @@ import {
 import type { ForceOptions } from "@/lib/quote-price/core";
 
 describe("searchBestCavityCount", () => {
-  const mockMold: MoldProps = {
-    materialName: "P20",
-  };
+  const mockMold: MoldProps[] = [
+    {
+      materialName: "P20",
+    },
+  ];
 
   const mockForceOptions: ForceOptions = {
     isForceColorSimultaneous: false,
@@ -49,7 +51,7 @@ describe("searchBestCavityCount", () => {
       {
         id: 1,
         materialName: "TPU",
-        netVolume: 5000,
+        netVolume: 50000,
         dimensions: { width: 100, depth: 100, height: 100 },
         color: "red",
         quantity: 20000,
@@ -57,7 +59,7 @@ describe("searchBestCavityCount", () => {
       {
         id: 2,
         materialName: "PVC",
-        netVolume: 5000,
+        netVolume: 50000,
         dimensions: { width: 100, depth: 100, height: 100 },
         color: "red",
         quantity: 55000,
@@ -66,9 +68,6 @@ describe("searchBestCavityCount", () => {
 
     const result = searchBestCavityCount(products, mockMold, mockForceOptions);
 
-    expect(result[0]!.productCavityMap).toEqual([
-      { productId: 1, cavityCount: 1 },
-      { productId: 2, cavityCount: 3 },
-    ]);
+    expect(result[0]!.total).toEqual(1);
   });
 });

@@ -24,19 +24,25 @@ export interface MoldProps {
   materialName: string;
 }
 
-/** “产品ID -> cavityCount” 的映射 */
+/** "产品ID -> cavityCount" 的映射 */
 interface ProductCavityMap {
   productId: number;
   cavityCount: number;
 }
 
-/** 最终返回的完整方案信息 */
-interface Solution {
+/** 单个模具的方案信息 */
+interface MoldSolution {
   productCavityMap: ProductCavityMap[];
   price: number;
   layoutScore: number;
   riskScore: number;
   isPass: boolean;
+}
+
+/** 最终返回的完整方案信息（可能包含多个模具） */
+interface CompleteSolution {
+  total: number;
+  breakdown: MoldSolution[];
 }
 
 // ========= 可以在这里配置截断大小 =========
@@ -45,13 +51,36 @@ const TOP_K_PER_PARTITION = 5; // 每个分组合并后最多保留多少解
 const TOP_K_GLOBAL = 5; // 多分组合并后最多保留多少全局解
 
 /**
+ * 计算单个模具的解决方案
+ */
+function calculateMoldSolution(
+  products: (ProductProps & { cavityCount: number })[],
+  mold: MoldProps,
+  forceOptions: ForceOptions,
+): MoldSolution {
+  const { total: price } = calculateSolutionPrice(products, mold, forceOptions);
+  const evalResult = evaluateSolution(products);
+
+  return {
+    productCavityMap: products.map((p) => ({
+      productId: p.id,
+      cavityCount: p.cavityCount,
+    })),
+    price,
+    layoutScore: evalResult.scores.layoutScore ?? 0,
+    riskScore: evalResult.scores.riskScore ?? 0,
+    isPass: evalResult.isPass,
+  };
+}
+
+/**
  * 搜索最佳的cavityCount组合（返回所有产品的方案）
  */
 export function searchBestCavityCount(
   products: ProductProps[],
-  mold: MoldProps,
+  molds: MoldProps[],
   forceOptions: ForceOptions,
-): Solution[] {
+): CompleteSolution[] {
   // 添加对空产品列表的校验
   if (products.length === 0) {
     throw new Error("产品列表不能为空");
@@ -74,7 +103,6 @@ export function searchBestCavityCount(
   // 创建一个 Map 快速拿到产品信息
   const productInfoMap = new Map(
     products.map((p) => {
-      // 校验产品ID是否有效
       if (p.id == null || typeof p.id !== "number") {
         throw new Error("无效的产品ID");
       }
@@ -82,24 +110,13 @@ export function searchBestCavityCount(
     }),
   );
 
-  // 2) 对 grouping 做处理：对每个 partition 的每个子组，都搜到一堆解，但立刻做“排序+截断”
-  const partitionCandidates: {
-    productCavityMap: ProductCavityMap[];
-    price: number;
-  }[][] = [];
-  // ↑ partitionCandidates[i] 是 partition i 的候选解数组；
-  //   里面每个元素包含 { productCavityMap, price }
+  // 2) 对 grouping 做处理：对每个 partition 的每个子组，都搜到一堆解，但立刻做"排序+截断"
+  const partitionCandidates: CompleteSolution[][] = [];
 
   grouping.forEach((partition, partitionIndex) => {
-    // 先对 partition 中的每个“子组”做搜索，再“逐步合并+截断”
-    // subGroupCandidatesList: T[][]，其中每个 T[] 是某子组的一批解
-    const subGroupCandidatesList: {
-      productCavityMap: ProductCavityMap[];
-      price: number;
-    }[][] = [];
+    const subGroupCandidatesList: CompleteSolution[][] = [];
 
     partition.forEach((subGroup) => {
-      // 从 productInfoMap 拿到所有产品对象
       const fullProducts = subGroup.map(({ id }) => {
         const p = productInfoMap.get(id!);
         if (!p) {
@@ -110,7 +127,6 @@ export function searchBestCavityCount(
 
       // 计算 maxCavity
       const maxCavityMap = getAllMaxCavityCount(fullProducts);
-      // 转成 [ [1..maxCavity], ... ]，并使用动态最大穴数
       const cavityRanges = fullProducts.map((p) => {
         const maxCav = Math.min(
           maxCavityMap[p.id] ?? 1,
@@ -121,20 +137,21 @@ export function searchBestCavityCount(
 
       // 目标函数
       const fn = (cavityCounts: number[]) => {
-        const updated = fullProducts.map((prod, i) => ({
+        const updatedProducts = fullProducts.map((prod, i) => ({
           ...prod,
           cavityCount: cavityCounts[i] ?? 1,
         }));
-        return calculateSolutionPrice(updated, mold, forceOptions);
+        const moldSolution = calculateMoldSolution(
+          updatedProducts,
+          molds[0]!,
+          forceOptions,
+        );
+        return moldSolution.price;
       };
 
-      // 算出组合总数
       const totalComb = cavityRanges.reduce((acc, arr) => acc * arr.length, 1);
 
-      let subGroupCandidates: {
-        productCavityMap: ProductCavityMap[];
-        price: number;
-      }[] = [];
+      let subGroupCandidates: CompleteSolution[] = [];
 
       if (totalComb < 1000) {
         // 用暴力搜索
@@ -142,172 +159,108 @@ export function searchBestCavityCount(
           fn,
           cavityRanges.map((arr) => arr.length),
         );
-        subGroupCandidates = bfsResults.map(({ x, val }) => ({
-          productCavityMap: x.map((cnt, i) => ({
-            productId: fullProducts[i]!.id,
-            cavityCount: cnt,
-          })),
-          price: val,
-        }));
+        subGroupCandidates = bfsResults.map(({ x }) => {
+          const updatedProducts = fullProducts.map((prod, i) => ({
+            ...prod,
+            cavityCount: x[i] ?? 1,
+          }));
+          const moldSolution = calculateMoldSolution(
+            updatedProducts,
+            molds[0]!,
+            forceOptions,
+          );
+          return {
+            total: moldSolution.price,
+            breakdown: [moldSolution],
+          };
+        });
       } else {
         // 坐标下降
         const { allCandidates } = coordinateDescentMulti(
           fn,
           cavityRanges.map((arr) => arr.length),
         );
-        subGroupCandidates = allCandidates.map((c) => ({
-          productCavityMap: c.x.map((cnt, i) => ({
-            productId: fullProducts[i]!.id,
-            cavityCount: cnt,
-          })),
-          price: c.val,
-        }));
+        subGroupCandidates = allCandidates.map((c) => {
+          const updatedProducts = fullProducts.map((prod, i) => ({
+            ...prod,
+            cavityCount: c.x[i] ?? 1,
+          }));
+          const moldSolution = calculateMoldSolution(
+            updatedProducts,
+            molds[0]!,
+            forceOptions,
+          );
+          return {
+            total: moldSolution.price,
+            breakdown: [moldSolution],
+          };
+        });
       }
 
-      // 先按价格排升序，只保留前 TOP_K_PER_SUBGROUP 条
-      subGroupCandidates.sort((a, b) => a.price - b.price);
+      // 按总价格排序，只保留前 TOP_K_PER_SUBGROUP 条
+      subGroupCandidates.sort((a, b) => a.total - b.total);
       subGroupCandidates = subGroupCandidates.slice(0, TOP_K_PER_SUBGROUP);
 
       // 收集
       subGroupCandidatesList.push(subGroupCandidates);
     });
 
-    // subGroupCandidatesList 是 partition 里每个子组的一批解
-    // 我们做“逐步合并+截断”，得到 partition 级候选解
-    let partitionSolutions: {
-      productCavityMap: ProductCavityMap[];
-      price: number;
-    }[] = [{ productCavityMap: [], price: 0 }];
+    // 对每个partition做"逐步合并+截断"
+    let partitionSolutions: CompleteSolution[] = [{ total: 0, breakdown: [] }];
 
     for (const subGroupSolutions of subGroupCandidatesList) {
       partitionSolutions = mergeTwoGroupsWithPrune(
         partitionSolutions,
         subGroupSolutions,
         TOP_K_PER_PARTITION,
-        products,
-        mold,
-        forceOptions,
       );
     }
 
-    // 得到 partition 级别的解(含该 partition 所有子组)，保存
     partitionCandidates[partitionIndex] = partitionSolutions;
   });
 
-  // 3) 如果 grouping 只有一个 partition，就直接用 partitionCandidates[0];
-  //    否则再做“逐步合并+截断”
-  let globalSolutions = [
-    { productCavityMap: [] as ProductCavityMap[], price: 0 },
-  ];
+  // 3) 合并所有partition的解
+  let globalSolutions = [{ total: 0, breakdown: [] as MoldSolution[] }];
   for (const partSols of partitionCandidates) {
     globalSolutions = mergeTwoGroupsWithPrune(
       globalSolutions,
       partSols,
       TOP_K_GLOBAL,
-      products,
-      mold,
-      forceOptions,
     );
   }
 
-  // 4) 最后对 globalSolutions 中每个方案做 evaluateSolution
-  const evaluated: Solution[] = globalSolutions.map((sol) => {
-    // 构造 updatedProducts
-    const updatedProducts = sol.productCavityMap.map((pm) => {
-      const originalP = productInfoMap.get(pm.productId)!;
-      return {
-        ...originalP,
-        cavityCount: pm.cavityCount,
-      };
-    });
+  // 4) 筛选并排序
+  const valid = globalSolutions
+    .filter((sol) => sol.breakdown.every((mold) => mold.isPass))
+    .sort((a, b) => a.total - b.total);
 
-    // 做评估
-    const evalResult = evaluateSolution(updatedProducts);
-
-    return {
-      productCavityMap: sol.productCavityMap.sort(
-        (a, b) => a.productId - b.productId,
-      ),
-      price: sol.price,
-      layoutScore: evalResult.scores.layoutScore ?? 0,
-      riskScore: evalResult.scores.riskScore ?? 0,
-      isPass: evalResult.isPass,
-    };
-  });
-
-  // 5) 筛选并排序
-  const valid = evaluated
-    .filter((v) => v.isPass)
-    .sort((a, b) => a.price - b.price);
-
-  const best = valid.slice(0, 1);
+  const best = valid.slice(0, 3);
   console.log("best", best);
   return best;
 }
 
 /**
- * 将两个候选解列表 A, B 做笛卡尔乘积，并将结果按 price 排序后截断到前 k 条
- * 每条解合并时，price = A.price + B.price，productCavityMap = A+B
+ * 将两个候选解列表 A, B 做笛卡尔乘积，并将结果按总价格排序后截断到前 k 条
  */
 function mergeTwoGroupsWithPrune(
-  A: { productCavityMap: ProductCavityMap[]; price: number }[],
-  B: { productCavityMap: ProductCavityMap[]; price: number }[],
+  A: CompleteSolution[],
+  B: CompleteSolution[],
   k: number,
-  products: ProductProps[],
-  mold: MoldProps,
-  forceOptions: ForceOptions,
-): { productCavityMap: ProductCavityMap[]; price: number }[] {
-  const merged: { productCavityMap: ProductCavityMap[]; price: number }[] = [];
+): CompleteSolution[] {
+  const merged: CompleteSolution[] = [];
+
   for (const a of A) {
     for (const b of B) {
-      // 创建一个 Map 来去重，以 productId 为 key
-      const combinedMap = new Map<number, ProductCavityMap>();
-
-      // 添加 A 组的 productCavityMap
-      a.productCavityMap.forEach((item) => {
-        combinedMap.set(item.productId, item);
-      });
-
-      // 添加 B 组的 productCavityMap，如果有重复会覆盖
-      b.productCavityMap.forEach((item) => {
-        combinedMap.set(item.productId, item);
-      });
-
-      // 将 Map 转换回数组
-      const combinedProductCavityMap = Array.from(combinedMap.values());
-
-      // 构建完整的产品信息，包含cavity count
-      const updatedProducts = products.map((p) => {
-        const cavityMap = combinedProductCavityMap.find(
-          (cm) => cm.productId === p.id,
-        );
-        return {
-          ...p,
-          cavityCount: cavityMap?.cavityCount ?? 1,
-        };
-      });
-
-      // // Debug logging
-      // if (combinedProductCavityMap.length === products.length) {
-      //   console.log("Merge - Updated products:", JSON.stringify(updatedProducts, null, 2));
-      // }
-
-      // 计算合并后的完整价格
-      const combinedPrice = calculateSolutionPrice(
-        updatedProducts,
-        mold,
-        forceOptions,
-      );
-
+      // 合并两个解的breakdown和总价
       merged.push({
-        productCavityMap: combinedProductCavityMap,
-        price: combinedPrice,
+        total: a.total + b.total,
+        breakdown: [...a.breakdown, ...b.breakdown],
       });
     }
   }
 
-  // 按 price 排序
-  merged.sort((x, y) => x.price - y.price);
+  // 按总价格排序
+  merged.sort((x, y) => x.total - y.total);
 
   // 只保留前 k 条
   return merged.slice(0, k);
@@ -319,23 +272,14 @@ function mergeTwoGroupsWithPrune(
  * @returns 最大穴数
  */
 function getDynamicMaxCavityCount(productCount: number): number {
-  // 当产品数量为1时，最大穴数为50
-  // 当产品数量为7时，最大穴数为10
-  // 中间值线性递减
   const minCount = 10;
   const maxCount = 50;
   const minProductCount = 7;
   const maxProductCount = 1;
 
-  // 计算斜率
   const slope = (minCount - maxCount) / (minProductCount - maxProductCount);
-
-  // 计算截距
   const intercept = maxCount - slope * maxProductCount;
-
-  // 计算动态值并向下取整
   const dynamicValue = slope * productCount + intercept;
 
-  // 确保返回值在[minCount, maxCount]范围内
   return Math.max(minCount, Math.min(maxCount, Math.floor(dynamicValue)));
 }

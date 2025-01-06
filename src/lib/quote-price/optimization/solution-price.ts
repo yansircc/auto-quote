@@ -3,6 +3,7 @@ import {
   getMoldTotalPrice,
   getTopAlignedCuboidsLayout,
   getBoundingBox,
+  runAllScorers,
 } from "../mold";
 import { getCheapestMachine } from "../machine";
 import { getProductMaterial, getMoldMaterial } from "../core";
@@ -23,18 +24,30 @@ interface MoldProps {
   materialName: string;
 }
 
+interface SolutionPriceResult {
+  total: number;
+  breakdown: {
+    mold: number;
+    product: number;
+  };
+  details: {
+    moldDimensions: Dimensions;
+    cheapestMachine: string;
+  };
+}
+
 /**
  * 计算模具的最终价格
  * @param {ProductProps[]} products 产品
  * @param {MoldProps} mold 模具
  * @param {ForceOptions} forceOptions 强制选项，可选
- * @returns {number} 模具的最终价格
+ * @returns {SolutionPriceResult} 模具的最终价格
  */
 export function calculateSolutionPrice(
   products: ProductProps[],
   mold: MoldProps,
   forceOptions?: ForceOptions,
-): number {
+): SolutionPriceResult {
   // 计算产品组成的最小xy平面的二维面积
   const optimizedLayout = getTopAlignedCuboidsLayout(
     products.map((product) => ({
@@ -55,15 +68,11 @@ export function calculateSolutionPrice(
     height: boundingBox.dimensions.height,
   });
 
-  console.log("模具尺寸:", moldDimensions);
-
   // 计算模具总价，包含材料成本、采购成本、额外加工费、毛利
   const moldTotalPrice = getMoldTotalPrice(
     moldDimensions,
     getMoldMaterial(mold.materialName),
   );
-
-  console.log("模具总价:", moldTotalPrice);
 
   // 计算注胶总质量时考虑穴数
   const totalInjectionWeight = products.reduce((sum, product) => {
@@ -75,15 +84,11 @@ export function calculateSolutionPrice(
     );
   }, 0);
 
-  console.log("注胶总质量:", totalInjectionWeight);
-
   // 根据模具尺寸和注胶量选择最便宜的机器
   const machineConfig = getCheapestMachine(
     moldDimensions,
     totalInjectionWeight,
   );
-
-  console.log("最便宜的机器:", machineConfig);
 
   // 计算产品的总价格（包含材料成本、损耗成本、加工费、毛利）
   const productCosts = calculateProductCosts(
@@ -92,9 +97,20 @@ export function calculateSolutionPrice(
     forceOptions,
   );
 
-  console.log("产品总价:", productCosts);
-  console.log("模具总价 + 产品总价:", moldTotalPrice + productCosts);
-
   // 返回模具总价和产品总价之和
-  return moldTotalPrice + productCosts;
+  const result = {
+    total: moldTotalPrice.total + productCosts.total,
+    breakdown: {
+      mold: moldTotalPrice.total,
+      product: productCosts.total,
+    },
+    details: {
+      moldDimensions: moldDimensions,
+      cheapestMachine: machineConfig.name,
+    },
+  };
+
+  // console.log("模具最终价格", result);
+
+  return result;
 }

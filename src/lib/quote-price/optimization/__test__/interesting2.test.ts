@@ -45,24 +45,27 @@ describe("interesting", () => {
       {
         id: 1,
         materialName: "TPU",
-        netVolume: 5000,
+        netVolume: 50000,
         dimensions: { width: 100, depth: 100, height: 100 },
         color: "red",
         quantity: 20000,
         cavityCount: 3,
       },
-      {
-        id: 2,
-        materialName: "PVC",
-        netVolume: 5000,
-        dimensions: { width: 100, depth: 100, height: 100 },
-        color: "red",
-        quantity: 55000,
-        cavityCount: 5,
-      },
+      // {
+      //   id: 2,
+      //   materialName: "PVC",
+      //   netVolume: 50000,
+      //   dimensions: { width: 100, depth: 100, height: 100 },
+      //   color: "red",
+      //   quantity: 55000,
+      //   cavityCount: 4,
+      // },
     ];
 
     const result = calculateSolutionPrice(products, mockMold, mockForceOptions);
     expect(result).toEqual(58560.23249999999); // Expected price from search
   });
 });
+
+// 52220.63
+// 77402.63

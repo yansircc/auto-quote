@@ -17,6 +17,16 @@ interface ProductMaterialCosts {
   weight: number; // 产品重量
 }
 
+interface ProductCostsResult {
+  total: number;
+  breakdown: {
+    materialCost: number;
+    wasteCost: number;
+    processingFee: number;
+    grossProfit: number;
+  };
+}
+
 /**
  * 计算单个产品的材料相关成本
  * @param product 产品信息
@@ -31,7 +41,7 @@ function calculateProductMaterialCosts(
 
   return {
     materialCost,
-    wasteCost: materialCost * material.lossRate, // 修改：损耗成本 = 材料成本 * 损耗率
+    wasteCost: materialCost * material.lossRate, // 损耗成本 = 材料成本 * 损耗率
     weight,
   };
 }
@@ -99,37 +109,46 @@ function calculateTotalGrossProfit(
  * @param {ProductCostProps[]} products 产品列表
  * @param {MachineConfig} machineConfig 机器配置
  * @param {ForceOptions} forceOptions 强制选项，可选
- * @returns {number} 产品的总价格（材料成本 + 损耗 + 加工费 + 毛利）
+ * @returns {ProductCostsResult} 产品的总价格（材料成本 + 损耗 + 加工费 + 毛利）
  */
 export function calculateProductCosts(
   products: ProductCostProps[],
   machineConfig: MachineConfig,
   forceOptions?: ForceOptions,
-): number {
+): ProductCostsResult {
   // 1. 计算材料相关成本
   const { totalMaterialCost, totalWasteCost } =
     calculateTotalMaterialCosts(products);
-  // console.log("材料成本", totalMaterialCost);
-  // console.log("材料损耗", totalWasteCost);
 
   // 2. 计算加工费
   const totalShots = getProductsTotalShots(products, forceOptions);
-  // console.log("总模次", totalShots);
   const totalProcessingFee = getTotalMachineProcessingFee(
     totalShots,
     machineConfig,
   );
-  // console.log("总加工费", totalProcessingFee);
 
   // 3. 计算毛利
   const totalGrossProfit = calculateTotalGrossProfit(
     products,
     totalProcessingFee,
   );
-  // console.log("总毛利", totalGrossProfit);
 
   // 4. 计算总费用
-  return (
-    totalMaterialCost + totalWasteCost + totalProcessingFee + totalGrossProfit
-  );
+  const result = {
+    total:
+      totalMaterialCost +
+      totalWasteCost +
+      totalProcessingFee +
+      totalGrossProfit,
+    breakdown: {
+      materialCost: totalMaterialCost,
+      wasteCost: totalWasteCost,
+      processingFee: totalProcessingFee,
+      grossProfit: totalGrossProfit,
+    },
+  };
+
+  // console.log("产品最终价格", result);
+
+  return result;
 }
