@@ -1,6 +1,5 @@
 import { findBestConfig } from "./optimizer";
 import { ScoreReporter } from "@/lib/quote-price/mold/layout/balance/generic-optimizer";
-import { OptimizationProgressBar } from "../utils/progress-bar";
 import type { ShapeInput, ShapeConfig } from "./core/types";
 import type {
   FlatParams,
@@ -21,23 +20,15 @@ async function runShapeSimilarityOptimizer(
   iterations = 1,
 ): Promise<OptimizationResult> {
   const reporter = new ScoreReporter();
+  const result = await findBestConfig(iterations);
 
-  return OptimizationProgressBar.runWithProgress<
-    ShapeInput,
-    ShapeConfig,
-    FlatParams
-  >({
-    taskName: "形状相似度",
-    iterations,
-    optimizeFunc: findBestConfig,
-    onComplete: (result) => {
-      reporter.generateReport({
-        previousScores: result.previousScores,
-        bestScores: result.scores,
-        bestParams: result.params,
-      });
-    },
+  reporter.generateReport({
+    previousScores: result.previousScores,
+    bestScores: result.scores,
+    bestParams: result.params,
   });
+
+  return result;
 }
 
 export { runShapeSimilarityOptimizer };
