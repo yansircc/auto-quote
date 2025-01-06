@@ -121,9 +121,9 @@ export function calculateProductCosts(
     calculateTotalMaterialCosts(products);
 
   // 2. 计算加工费
-  const totalShots = getProductsTotalShots(products, forceOptions);
+  const separatedShots = getProductsTotalShots(products, forceOptions);
   const totalProcessingFee = getTotalMachineProcessingFee(
-    totalShots,
+    separatedShots,
     machineConfig,
   );
 

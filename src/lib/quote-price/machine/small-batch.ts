@@ -17,11 +17,8 @@ function calculateSmallBatchFee(shots: number, config: MachineConfig): number {
     return 0;
   }
 
-  // 获取小批量费率
-  const rate = config.smallBatch.rate;
-
-  // 计算小批量费用：(阈值 - 实际模次) * 费率
-  return (smallBatchThreshold - shots) * rate;
+  // 获取小批量费
+  return config.smallBatch.fixed;
 }
 
 /**

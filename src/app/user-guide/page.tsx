@@ -9,6 +9,7 @@ import ConfirmStep from "@/components/confirm-step/confirm-step";
 import PriceCalculationStep from "@/components/price-calculation-step/price-calculation-step";
 import type { UploadFile } from "@/types/user-guide/upload";
 import type { ProductInfo } from "@/types/user-guide/product";
+import { toast } from "sonner";
 
 interface StepProps {
   currentStep: number;
@@ -26,18 +27,22 @@ export default function UserGuidePage() {
   const [products, setProducts] = useState<ProductInfo[]>([]);
   const [moldMaterial, setMoldMaterial] = useState<string>("");
   const totalSteps = 4;
-
+  // const { toast } = useToast();
   const handleNext = () => {
-    if (currentStep < totalSteps && isStepValid) {
+    if (!isStepValid) return;
+
+    if (currentStep < totalSteps) {
       setCurrentStep((prev) => prev + 1);
-      setIsStepValid(false); // 重置验证状态
+      setIsStepValid(false);
+    } else {
+      toast.success("感谢您的使用！我们会尽快与您联系。");
     }
   };
 
   const handlePrev = () => {
     if (currentStep > 1) {
       setCurrentStep((prev) => prev - 1);
-      setIsStepValid(true); // 返回上一步时默认为有效
+      setIsStepValid(true);
     }
   };
 
@@ -123,10 +128,7 @@ export default function UserGuidePage() {
           >
             上一步
           </Button>
-          <Button
-            onClick={handleNext}
-            disabled={currentStep === totalSteps || !isStepValid}
-          >
+          <Button onClick={handleNext} disabled={!isStepValid}>
             {currentStep === totalSteps ? "完成" : "下一步"}
           </Button>
         </div>

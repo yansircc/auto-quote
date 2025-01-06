@@ -1,7 +1,7 @@
 import {
   getPurchaseCostMultiple,
   getMoldGrossProfit,
-  getExtraProcessFee,
+  getExtraProcessFeeMultiple,
 } from "../core";
 import type { MoldMaterial, Dimensions } from "../core";
 
@@ -44,7 +44,8 @@ export function calculateMoldCosts(
   const grossProfit = getMoldGrossProfit(weight);
 
   // 4. 计算额外加工费
-  const processingFee = getExtraProcessFee(material.name);
+  const processingFeeMultiple = getExtraProcessFeeMultiple(material.name);
+  const processingFee = materialCost * processingFeeMultiple;
 
   // 5. 计算最终价格
   const result = {

@@ -35,16 +35,16 @@ export interface ProductShotsProps {
 }
 
 /**
- * 计算一组产品的总模次
+ * 计算一组产品的模次数组
  * @param {ProductShotsProps[]} products 产品属性
  * @param {ForceOptions} forceOptions 强制选项，可选
- * @returns {number} 总模次
+ * @returns {number[]} 模次数组，每个元素代表一个分组的模次
  */
 export function getProductsTotalShots(
   products: ProductShotsProps[],
   forceOptions?: ForceOptions,
-): number {
-  if (products.length === 0) return 0;
+): number[] {
+  if (products.length === 0) return [];
 
   // 提前计算每个产品的模次
   const productsWithShots = products.map((p) => ({
@@ -53,7 +53,7 @@ export function getProductsTotalShots(
   }));
 
   if (!forceOptions) {
-    return productsWithShots.reduce((sum, p) => sum + p.shots, 0);
+    return productsWithShots.map((p) => p.shots);
   }
 
   // 获取所有颜色和材料的唯一值
@@ -68,33 +68,30 @@ export function getProductsTotalShots(
   const isMaterialCompatible =
     uniqueMaterials.size === 1 || forceOptions.isForceMaterialSimultaneous;
 
-  // 如果颜色和材料都兼容，返回最大模次
+  // 如果颜色和材料都兼容，返回最大模次作为单个元素的数组
   if (isColorCompatible && isMaterialCompatible) {
-    return Math.max(...productsWithShots.map((p) => p.shots));
+    return [Math.max(...productsWithShots.map((p) => p.shots))];
   }
 
-  // 如果颜色不兼容但材料兼容，按颜色分组计算模次
+  // 如果颜色不兼容但材料兼容，按颜色分组返回每组的最大模次
   if (!isColorCompatible && isMaterialCompatible) {
     const colorGroups = Array.from(uniqueColors).map((color) =>
       productsWithShots.filter((p) => p.color === color),
     );
-    return colorGroups.reduce(
-      (sum, group) => sum + Math.max(...group.map((p) => p.shots)),
-      0,
-    );
+    return colorGroups.map((group) => Math.max(...group.map((p) => p.shots)));
   }
 
-  // 如果材料不兼容但颜色兼容，按材料分组计算模次
+  // 如果材料不兼容但颜色兼容，按材料分组返回每组的最大模次
   if (isColorCompatible && !isMaterialCompatible) {
     const materialGroups = Array.from(uniqueMaterials).map((material) =>
       productsWithShots.filter((p) => p.materialName === material),
     );
-    return materialGroups.reduce(
-      (sum, group) => sum + Math.max(...group.map((p) => p.shots)),
-      0,
+    return materialGroups.map((group) =>
+      Math.max(...group.map((p) => p.shots)),
     );
   }
 
+  // 如果颜色和材料都不兼容，返回每个颜色和材料组合的最大模次
   const combinedGroups = Array.from(uniqueColors).flatMap((color) =>
     Array.from(uniqueMaterials).map((material) =>
       productsWithShots.filter(
@@ -103,8 +100,8 @@ export function getProductsTotalShots(
     ),
   );
 
-  // 过滤掉空组，然后计算模次
+  // 过滤掉空组，然后返回每组的最大模次
   return combinedGroups
     .filter((group) => group.length > 0)
-    .reduce((sum, group) => sum + Math.max(...group.map((p) => p.shots)), 0);
+    .map((group) => Math.max(...group.map((p) => p.shots)));
 }

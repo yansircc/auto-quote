@@ -102,31 +102,31 @@ export default function ProductInfoStep({
       </div>
 
       <div className="relative">
-        {/* 滑动按钮 */}
+        {/* 修改滑动按钮样式，增加明显的背景色 */}
         {currentIndex > 0 && (
           <Button
-            variant="ghost"
+            variant="outline"
             size="icon"
-            className="absolute left-0 top-1/2 -translate-y-1/2 z-10"
+            className="absolute left-4 top-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-full bg-blue-500 shadow-lg border-2 border-blue-600 hover:bg-blue-600 hover:border-blue-700 transition-colors"
             onClick={handlePrevious}
           >
-            <ChevronLeft className="w-6 h-6" />
+            <ChevronLeft className="w-8 h-8 text-white" />
           </Button>
         )}
 
         {currentIndex < products.length - 1 && (
           <Button
-            variant="ghost"
+            variant="outline"
             size="icon"
-            className="absolute right-0 top-1/2 -translate-y-1/2 z-10"
+            className="absolute right-4 top-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-full bg-blue-500 shadow-lg border-2 border-blue-600 hover:bg-blue-600 hover:border-blue-700 transition-colors"
             onClick={handleNext}
           >
-            <ChevronRight className="w-6 h-6" />
+            <ChevronRight className="w-8 h-8 text-white" />
           </Button>
         )}
 
-        {/* 产品卡片容器 */}
-        <div className="overflow-hidden">
+        {/* 产品卡片容器 - 添加背景色和圆角 */}
+        <div className="overflow-hidden rounded-lg bg-muted/30">
           <div
             className="flex transition-transform duration-300 ease-in-out"
             style={{
@@ -136,7 +136,7 @@ export default function ProductInfoStep({
             {products.map((product) => (
               <div
                 key={product.id}
-                className="w-full flex-shrink-0"
+                className="w-full flex-shrink-0 p-4"
                 style={{ minWidth: "100%" }}
               >
                 <ProductCard
