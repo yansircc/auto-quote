@@ -48,3 +48,6 @@ yarn-error.log*
 package-lock.json
 
 vitest.config.ts
+
+# 显式不忽略 public/node_modules
+!/public/node_modules
