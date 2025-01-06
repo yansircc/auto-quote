@@ -40,7 +40,7 @@ export interface ProductShotsProps {
  * @param {ForceOptions} forceOptions 强制选项，可选
  * @returns {number[]} 模次数组，每个元素代表一个分组的模次
  */
-export function getProductsTotalShots(
+export function getProductsShots(
   products: ProductShotsProps[],
   forceOptions?: ForceOptions,
 ): number[] {

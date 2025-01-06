@@ -40,7 +40,7 @@ interface MoldSolution {
 }
 
 /** 最终返回的完整方案信息（可能包含多个模具） */
-interface CompleteSolution {
+export interface CompleteSolution {
   total: number;
   breakdown: MoldSolution[];
 }

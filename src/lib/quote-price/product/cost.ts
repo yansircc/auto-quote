@@ -1,4 +1,4 @@
-import { getProductsTotalShots } from "./shots";
+import { getProductsShots } from "./shots";
 import { getProductMaterial, getProductGrossProfit } from "../core";
 import type { MachineConfig, ForceOptions } from "../core";
 import { getTotalMachineProcessingFee } from "../machine";
@@ -121,7 +121,7 @@ export function calculateProductCosts(
     calculateTotalMaterialCosts(products);
 
   // 2. 计算加工费
-  const separatedShots = getProductsTotalShots(products, forceOptions);
+  const separatedShots = getProductsShots(products, forceOptions);
   const totalProcessingFee = getTotalMachineProcessingFee(
     separatedShots,
     machineConfig,

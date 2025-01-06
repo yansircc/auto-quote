@@ -12,10 +12,10 @@ export function getTotalMachineProcessingFee(
   config: MachineConfig,
 ): number {
   const totalSmallBatchFee = calculateTotalSmallBatchFee(seperateShots, config);
-  console.log("seperateShots", seperateShots);
+  const processingFee =
+    seperateShots.reduce((acc, cur) => acc + cur, 0) * config.costPerShots;
+
   console.log("totalSmallBatchFee", totalSmallBatchFee);
-  return (
-    seperateShots.reduce((acc, cur) => acc + cur, 0) * config.costPerShots +
-    totalSmallBatchFee
-  );
+  console.log("processingFee", processingFee);
+  return totalSmallBatchFee + processingFee;
 }

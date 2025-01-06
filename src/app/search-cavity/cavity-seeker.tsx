@@ -6,37 +6,22 @@ import { Card, CardContent } from "@/components/ui/card";
 import { PlusCircle, Trash2, Calculator } from "lucide-react";
 import CuboidForm, { type FormSchema } from "./cuboid-form";
 import {
-  calculateSolutionPrice,
-  type SolutionPriceResult,
-} from "@/lib/quote-price/optimization/solution-price";
+  searchBestCavityCount,
+  type ProductProps,
+  type CompleteSolution,
+} from "@/lib/quote-price/optimization/search-cavity";
 import DispalyCard from "./display-card";
-// import { LayoutViewer } from "./layout-viewer";
-interface CuboidData {
-  id: number;
-  materialName: string;
-  quantity: number;
-  color: string;
-  dimensions: {
-    width: number;
-    depth: number;
-    height: number;
-  };
-  netVolume: number;
-  cavityCount: number;
-}
 
-interface CuboidCreatorProps {
+interface CavitySeekerProps {
   moldMaterial: string;
 }
 
-export default function CuboidCreator({ moldMaterial }: CuboidCreatorProps) {
-  const [cuboids, setCuboids] = useState<CuboidData[]>([]);
-  const [priceResult, setPriceResult] = useState<SolutionPriceResult | null>(
-    null,
-  );
+export default function CavitySeeker({ moldMaterial }: CavitySeekerProps) {
+  const [cuboids, setCuboids] = useState<ProductProps[]>([]);
+  const [solution, setSolution] = useState<CompleteSolution[]>([]);
 
   const addCuboid = () => {
-    const newCuboid: CuboidData = {
+    const newCuboid: ProductProps = {
       id: cuboids.length,
       materialName: "ABS",
       quantity: 10000,
@@ -47,7 +32,6 @@ export default function CuboidCreator({ moldMaterial }: CuboidCreatorProps) {
         height: 100,
       },
       netVolume: 50000,
-      cavityCount: 1,
     };
     setCuboids([...cuboids, newCuboid]);
   };
@@ -67,17 +51,16 @@ export default function CuboidCreator({ moldMaterial }: CuboidCreatorProps) {
   const calculatePrice = () => {
     if (cuboids.length === 0) return;
 
-    console.log("cuboids", cuboids);
-    const result = calculateSolutionPrice(
+    const result = searchBestCavityCount(
       cuboids,
-      { materialName: moldMaterial },
+      [{ materialName: moldMaterial }],
       {
         isForceColorSimultaneous: false,
         isForceMaterialSimultaneous: false,
       },
     );
 
-    setPriceResult(result);
+    setSolution(result);
   };
 
   return (
@@ -121,27 +104,9 @@ export default function CuboidCreator({ moldMaterial }: CuboidCreatorProps) {
         </Button>
       </div>
 
-      {priceResult && (
+      {solution.length > 0 && (
         <div className="space-y-4">
-          {/* <div className="rounded-lg border bg-card p-4">
-            <h2 className="mb-4 text-lg font-semibold">优化布局</h2>
-            {(() => {
-              console.log("Layout Data:", {
-                layout: priceResult.details.optimizedLayout,
-                moldDimensions: priceResult.details.moldDimensions,
-              });
-              return (
-                <div className="relative">
-                  <LayoutViewer
-                    layout={priceResult.details.optimizedLayout}
-                    moldDimensions={priceResult.details.moldDimensions}
-                    className="h-[500px] w-full"
-                  />
-                </div>
-              );
-            })()}
-          </div> */}
-          <DispalyCard priceResult={priceResult} />
+          <DispalyCard solution={solution} />
         </div>
       )}
     </div>

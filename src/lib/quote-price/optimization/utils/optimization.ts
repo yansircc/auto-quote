@@ -1,3 +1,5 @@
+import { handleError } from "@/lib/utils";
+
 /**
  * 暴力搜索：返回所有可行解，而不是只返回最优解
  * @param {Function} f 目标函数 (x: number[]) => number
@@ -20,7 +22,7 @@ export function bruteForceSearchAll(
         results.push({ x: [...current], val });
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
       } catch (error) {
-        // 忽略错误信息
+        handleError(error);
       }
       return;
     }

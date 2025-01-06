@@ -1,6 +1,5 @@
 "use client";
 
-import React from "react";
 import {
   Form,
   FormControl,
@@ -44,7 +43,6 @@ const formSchema = z.object({
     height: z.number().min(1, "Height must be at least 1"),
   }),
   netVolume: z.number().min(0, "Net volume must be non-negative"),
-  cavityCount: z.number().min(1, "Cavity count must be at least 1"),
 });
 
 export type FormSchema = z.infer<typeof formSchema>;
@@ -60,7 +58,6 @@ interface CuboidData {
     height: number;
   };
   netVolume: number;
-  cavityCount: number;
 }
 
 interface CuboidFormProps {
@@ -74,19 +71,13 @@ export default function CuboidForm({ cuboid, onUpdate }: CuboidFormProps) {
     defaultValues: cuboid,
   });
 
-  React.useEffect(() => {
-    const subscription = form.watch((value) => {
-      if (value.materialName && value.color && value.quantity) {
-        onUpdate(cuboid.id, value as FormSchema);
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, [form, cuboid.id, onUpdate]);
+  const onSubmit = (data: FormSchema) => {
+    onUpdate(cuboid.id, data);
+  };
 
   return (
     <Form {...form}>
-      <form className="space-y-4">
+      <form onChange={form.handleSubmit(onSubmit)} className="space-y-4">
         <FormField
           control={form.control}
           name="materialName"
@@ -225,24 +216,6 @@ export default function CuboidForm({ cuboid, onUpdate }: CuboidFormProps) {
           render={({ field }) => (
             <FormItem>
               <FormLabel>净体积</FormLabel>
-              <FormControl>
-                <Input
-                  type="number"
-                  {...field}
-                  onChange={(e) => field.onChange(Number(e.target.value))}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="cavityCount"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>穴数</FormLabel>
               <FormControl>
                 <Input
                   type="number"
