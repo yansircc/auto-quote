@@ -71,7 +71,7 @@
 //     //   moldMaterial,
 //     // );
 //     // 模具的总价格也能计算出来
-//     // const moldTotalPrice = calculateMoldTotalPrice(
+//     // const moldTotalCosts = calculateMoldTotalPrice(
 //     //   moldWeight,
 //     //   moldUnitPrice,
 //     // );

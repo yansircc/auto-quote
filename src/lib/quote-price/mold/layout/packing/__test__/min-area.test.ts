@@ -17,7 +17,7 @@ describe("calculateMinArea", () => {
       height: 100,
       x: 0,
       y: 0,
-      index: 0,
+      id: 0,
     });
   });
 

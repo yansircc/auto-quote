@@ -17,7 +17,7 @@ interface ProductMaterialCosts {
   weight: number; // 产品重量
 }
 
-interface ProductCostsResult {
+export interface ProductCostsResult {
   total: number;
   breakdown: {
     materialCost: number;

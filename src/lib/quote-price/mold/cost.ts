@@ -5,7 +5,7 @@ import {
 } from "../core";
 import type { MoldMaterial, Dimensions } from "../core";
 
-interface MoldCostsResult {
+export interface MoldCostsResult {
   total: number;
   breakdown: {
     materialCost: number;
@@ -21,7 +21,7 @@ interface MoldCostsResult {
  * @param {MoldMaterial} material 模具材料
  * @returns {MoldCostsResult} 模具的最终价格
  */
-export function getMoldTotalPrice(
+export function calculateMoldCosts(
   dimensions: Dimensions,
   material: MoldMaterial,
 ): MoldCostsResult {

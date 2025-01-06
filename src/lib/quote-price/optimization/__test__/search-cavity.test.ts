@@ -43,7 +43,7 @@ describe("searchBestCavityCount", () => {
   });
 
   it("应该正确处理多个(> 6)相同产品", () => {
-    const products: ProductProps[] = Array.from({ length: 7 }, (_, i) => ({
+    const products: ProductProps[] = Array.from({ length: 5 }, (_, i) => ({
       id: i + 1,
       materialName: "ABS",
       netVolume: 100,

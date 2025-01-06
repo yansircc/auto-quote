@@ -12,8 +12,8 @@ describe("getTopAlignedCuboidsLayout", () => {
     expect(result).toHaveLength(1);
     expect(result[0]).toEqual({
       dimensions: {
-        width: 100,
-        depth: 50,
+        width: 50,
+        depth: 100,
         height: 30,
       },
       position: {
@@ -21,7 +21,7 @@ describe("getTopAlignedCuboidsLayout", () => {
         y: 0,
         z: -30,
       },
-      index: 0,
+      id: 0,
     });
   });
 
@@ -83,8 +83,8 @@ describe("getTopAlignedCuboidsLayout", () => {
 
     expect(result).toHaveLength(1);
     expect(result[0]!.dimensions).toEqual({
-      width: 1000,
-      depth: 1,
+      width: 1,
+      depth: 1000,
       height: 1,
     });
   });

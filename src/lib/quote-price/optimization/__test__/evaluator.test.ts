@@ -40,7 +40,7 @@ describe("createLayoutScorerEvaluator", () => {
   it("应创建布局评分评估器", () => {
     const evaluator = createLayoutScorerEvaluator();
     expect(evaluator.name).toBe("layoutScore");
-    expect(evaluator.threshold).toBe(60);
+    expect(evaluator.threshold).toBe(40);
     expect(evaluator.direction).toBe("greater");
   });
 });

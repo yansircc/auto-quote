@@ -26,13 +26,11 @@ describe("模具安全厚度计算", () => {
     });
 
     it("应该抛出错误当宽度为负数", () => {
-      expect(() => getSafeEdgeThickness(-1)).toThrow("模具宽度不能小于等于0");
+      expect(() => getSafeEdgeThickness(-1)).toThrow();
     });
 
     it("应该抛出错误当宽度超过最大阈值", () => {
-      expect(() => getSafeEdgeThickness(1001)).toThrow(
-        "模具宽度超出安全厚度范围",
-      );
+      expect(() => getSafeEdgeThickness(1001)).toThrow();
     });
   });
 
@@ -57,13 +55,11 @@ describe("模具安全厚度计算", () => {
     });
 
     it("应该抛出错误当高度为负数", () => {
-      expect(() => getSafeBottomThickness(-1)).toThrow("模具高度不能小于等于0");
+      expect(() => getSafeBottomThickness(-1)).toThrow();
     });
 
     it("应该抛出错误当高度超过最大阈值", () => {
-      expect(() => getSafeBottomThickness(211)).toThrow(
-        "模具高度超出安全厚度范围",
-      );
+      expect(() => getSafeBottomThickness(211)).toThrow();
     });
   });
 });

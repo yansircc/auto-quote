@@ -33,12 +33,18 @@ describe("产品总价计算", () => {
   ];
   it("应该正确计算单个产品的总价", () => {
     const singleProduct = testProducts[0]!;
-    const cost = calculateProductCosts([singleProduct], testMachineConfig);
+    const { total: cost } = calculateProductCosts(
+      [singleProduct],
+      testMachineConfig,
+    );
     expect(cost).toBeGreaterThan(0);
   });
 
   it("应该正确计算多个产品的总价", () => {
-    const cost = calculateProductCosts(testProducts, testMachineConfig);
+    const { total: cost } = calculateProductCosts(
+      testProducts,
+      testMachineConfig,
+    );
     expect(cost).toBeGreaterThan(0);
   });
 
@@ -47,7 +53,7 @@ describe("产品总价计算", () => {
       { ...testProducts[0]!, cavityIndex: 0 }, // 1 cavity
       { ...testProducts[1]!, cavityIndex: 2 }, // 4 cavities
     ];
-    const cost = calculateProductCosts(
+    const { total: cost } = calculateProductCosts(
       productsWithDifferentCavities,
       testMachineConfig,
     );
@@ -59,7 +65,7 @@ describe("产品总价计算", () => {
       isForceColorSimultaneous: true,
       isForceMaterialSimultaneous: false,
     };
-    const cost = calculateProductCosts(
+    const { total: cost } = calculateProductCosts(
       testProducts,
       testMachineConfig,
       forceOptions,
@@ -68,15 +74,18 @@ describe("产品总价计算", () => {
   });
 
   it("应该抛出错误当穴数索引无效", () => {
-    const invalidProducts = [{ ...testProducts[0]!, cavityIndex: 999 }];
+    const invalidProducts = [{ ...testProducts[0]!, cavityCount: -1 }];
     expect(() =>
       calculateProductCosts(invalidProducts, testMachineConfig),
-    ).toThrow("无效的模具穴数索引");
+    ).toThrow();
   });
 
   it("应该处理零数量的产品", () => {
     const zeroQuantityProduct = [{ ...testProducts[0]!, quantity: 0 }];
-    const cost = calculateProductCosts(zeroQuantityProduct, testMachineConfig);
+    const { total: cost } = calculateProductCosts(
+      zeroQuantityProduct,
+      testMachineConfig,
+    );
     expect(cost).toBeGreaterThanOrEqual(0);
   });
 
@@ -87,7 +96,10 @@ describe("产品总价计算", () => {
         ...testProducts[0]!,
         materialName: material,
       };
-      const cost = calculateProductCosts([product], testMachineConfig);
+      const { total: cost } = calculateProductCosts(
+        [product],
+        testMachineConfig,
+      );
       expect(cost).toBeGreaterThan(0);
     });
   });

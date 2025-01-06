@@ -1,13 +1,22 @@
 import {
   getMoldDimensions,
-  getMoldTotalPrice,
+  calculateMoldCosts,
   getTopAlignedCuboidsLayout,
   getBoundingBox,
+  type MoldCostsResult,
+  type CuboidLayout,
 } from "../mold";
 import { getCheapestMachine } from "../machine";
-import { getProductMaterial, getMoldMaterial } from "../core";
+import {
+  getProductMaterial,
+  getMoldMaterial,
+  type MachineConfig,
+} from "../core";
 import type { ForceOptions, Dimensions } from "../core";
-import { calculateProductCosts } from "../product/cost";
+import {
+  calculateProductCosts,
+  type ProductCostsResult,
+} from "../product/cost";
 
 interface ProductProps {
   id: number;
@@ -23,15 +32,16 @@ interface MoldProps {
   materialName: string;
 }
 
-interface SolutionPriceResult {
+export interface SolutionPriceResult {
   total: number;
   breakdown: {
-    mold: number;
-    product: number;
+    mold: MoldCostsResult;
+    product: ProductCostsResult;
   };
   details: {
+    optimizedLayout: CuboidLayout[];
     moldDimensions: Dimensions;
-    cheapestMachine: string;
+    cheapestMachine: MachineConfig;
   };
 }
 
@@ -68,7 +78,7 @@ export function calculateSolutionPrice(
   });
 
   // 计算模具总价，包含材料成本、采购成本、额外加工费、毛利
-  const moldTotalPrice = getMoldTotalPrice(
+  const moldTotalCosts = calculateMoldCosts(
     moldDimensions,
     getMoldMaterial(mold.materialName),
   );
@@ -98,14 +108,15 @@ export function calculateSolutionPrice(
 
   // 返回模具总价和产品总价之和
   const result = {
-    total: moldTotalPrice.total + productCosts.total,
+    total: moldTotalCosts.total + productCosts.total,
     breakdown: {
-      mold: moldTotalPrice.total,
-      product: productCosts.total,
+      mold: moldTotalCosts,
+      product: productCosts,
     },
     details: {
-      moldDimensions: moldDimensions,
-      cheapestMachine: machineConfig.name,
+      optimizedLayout,
+      moldDimensions,
+      cheapestMachine: machineConfig,
     },
   };
 
