@@ -10,13 +10,7 @@ import withBundleAnalyzer from "@next/bundle-analyzer";
 const nextConfig: NextConfig = {
   // Optimize asset compression
   compress: true,
-  experimental: {
-    turbo: {
-      rules: {
-        "*.wasm": ["file-loader"],
-      },
-    },
-  },
+  output: "standalone",
 };
 
 export default withBundleAnalyzer({

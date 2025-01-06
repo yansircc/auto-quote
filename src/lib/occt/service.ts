@@ -52,9 +52,7 @@ export class OCCTService {
 
         this.occtInstance = await this.occtModule({
           locateFile: (path: string) => {
-            if (path.endsWith(".wasm")) {
-              return "/node_modules/occt-import-js/dist/occt-import-js.wasm";
-            }
+            // Let Vercel handle WASM loading through Edge Runtime
             return path;
           },
         });
