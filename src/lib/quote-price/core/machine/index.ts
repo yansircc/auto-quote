@@ -12,7 +12,7 @@ export const machineList = [
     },
     smallBatch: {
       threshold: 1000,
-      rate: 1.2,
+      fixed: 50 * 7.1,
     },
   },
   {
@@ -28,7 +28,7 @@ export const machineList = [
     },
     smallBatch: {
       threshold: 1000,
-      rate: 1.5,
+      fixed: 80 * 7.1,
     },
   },
   {
@@ -44,7 +44,7 @@ export const machineList = [
     },
     smallBatch: {
       threshold: 1000,
-      rate: 1.8,
+      fixed: 100 * 7.1,
     },
   },
   {
@@ -60,7 +60,7 @@ export const machineList = [
     },
     smallBatch: {
       threshold: 1000,
-      rate: 2,
+      fixed: 120 * 7.1,
     },
   },
   {
@@ -76,7 +76,7 @@ export const machineList = [
     },
     smallBatch: {
       threshold: 1000,
-      rate: 2.5,
+      fixed: 140 * 7.1,
     },
   },
   {
@@ -92,7 +92,7 @@ export const machineList = [
     },
     smallBatch: {
       threshold: 1000,
-      rate: 3,
+      fixed: 160 * 7.1,
     },
   },
   {
@@ -108,7 +108,7 @@ export const machineList = [
     },
     smallBatch: {
       threshold: 1000,
-      rate: 3.5,
+      fixed: 180 * 7.1,
     },
   },
   {
@@ -124,7 +124,7 @@ export const machineList = [
     },
     smallBatch: {
       threshold: 1000,
-      rate: 4,
+      fixed: 200 * 7.1,
     },
   },
   {
@@ -140,7 +140,7 @@ export const machineList = [
     },
     smallBatch: {
       threshold: 1000,
-      rate: 5,
+      fixed: 250 * 7.1,
     },
   },
   {
@@ -156,7 +156,7 @@ export const machineList = [
     },
     smallBatch: {
       threshold: 1000,
-      rate: 6,
+      fixed: 300 * 7.1,
     },
   },
   {
@@ -172,7 +172,7 @@ export const machineList = [
     },
     smallBatch: {
       threshold: 1000,
-      rate: 7,
+      fixed: 350 * 7.1,
     },
   },
   {
@@ -188,7 +188,7 @@ export const machineList = [
     },
     smallBatch: {
       threshold: 1000,
-      rate: 8,
+      fixed: 400 * 7.1,
     },
   },
   {
@@ -204,7 +204,7 @@ export const machineList = [
     },
     smallBatch: {
       threshold: 1000,
-      rate: 10,
+      fixed: 450 * 7.1,
     },
   },
   {
@@ -220,7 +220,7 @@ export const machineList = [
     },
     smallBatch: {
       threshold: 1000,
-      rate: 15,
+      fixed: 500 * 7.1,
     },
   },
   {
@@ -236,7 +236,7 @@ export const machineList = [
     },
     smallBatch: {
       threshold: 1000,
-      rate: 20,
+      fixed: 550 * 7.1,
     },
   },
   {
@@ -252,7 +252,7 @@ export const machineList = [
     },
     smallBatch: {
       threshold: 1000,
-      rate: 35,
+      fixed: 600 * 7.1,
     },
   },
 ];

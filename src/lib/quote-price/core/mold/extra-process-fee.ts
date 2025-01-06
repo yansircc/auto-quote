@@ -1,9 +1,9 @@
 const extraProcessFeeList = [
   { material: "P20", coefficient: 0 },
-  { material: "NAK80", coefficient: 15 },
-  { material: "718H", coefficient: 5 },
-  { material: "H13", coefficient: 25 },
-  { material: "S136", coefficient: 25 },
+  { material: "NAK80", coefficient: 1.5 },
+  { material: "718H", coefficient: 0.5 },
+  { material: "H13", coefficient: 2.5 },
+  { material: "S136", coefficient: 2.5 },
 ];
 
 /**
@@ -11,7 +11,7 @@ const extraProcessFeeList = [
  * @param {string} material 材料
  * @returns {number} 额外加工费
  */
-export function getExtraProcessFee(material: string): number {
+export function getExtraProcessFeeMultiple(material: string): number {
   const item = extraProcessFeeList.find((item) => item.material === material);
 
   if (!item) {
