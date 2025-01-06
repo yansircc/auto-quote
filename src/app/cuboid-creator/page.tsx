@@ -1,12 +1,19 @@
-import type { Metadata } from "next";
-import CuboidCreator from "./cuboid-creator";
+"use client";
 
-export const metadata: Metadata = {
-  title: "Cuboid Creator",
-  description: "Create and manage multiple cuboids with ease",
-};
+import { useState } from "react";
+import { moldMaterialList } from "@/lib/quote-price/core";
+import CuboidCreator from "./cuboid-creator";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export default function CuboidCreatorPage() {
+  const [moldMaterial, setMoldMaterial] = useState("P20");
+
   return (
     <div className="container mx-auto py-10">
       <div className="flex flex-col gap-8">
@@ -16,7 +23,21 @@ export default function CuboidCreatorPage() {
             仅供参考，验证价格计算结果和逻辑是否正确
           </p>
         </div>
-        <CuboidCreator />
+        <div className="w-[200px]">
+          <Select value={moldMaterial} onValueChange={setMoldMaterial}>
+            <SelectTrigger>
+              <SelectValue placeholder="选择模具材料" />
+            </SelectTrigger>
+            <SelectContent>
+              {moldMaterialList.map((material, index) => (
+                <SelectItem key={index} value={material.name}>
+                  {material.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <CuboidCreator moldMaterial={moldMaterial} />
       </div>
     </div>
   );

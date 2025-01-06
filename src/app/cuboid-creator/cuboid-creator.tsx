@@ -11,7 +11,6 @@ import {
 } from "@/lib/quote-price/optimization/solution-price";
 import DispalyCard from "./display-card";
 // import { LayoutViewer } from "./layout-viewer";
-
 interface CuboidData {
   id: number;
   materialName: string;
@@ -26,7 +25,11 @@ interface CuboidData {
   cavityCount: number;
 }
 
-export default function CuboidCreator() {
+interface CuboidCreatorProps {
+  moldMaterial: string;
+}
+
+export default function CuboidCreator({ moldMaterial }: CuboidCreatorProps) {
   const [cuboids, setCuboids] = useState<CuboidData[]>([]);
   const [priceResult, setPriceResult] = useState<SolutionPriceResult | null>(
     null,
@@ -66,7 +69,7 @@ export default function CuboidCreator() {
 
     const result = calculateSolutionPrice(
       cuboids,
-      { materialName: "P20" }, // Default mold material
+      { materialName: moldMaterial },
       {
         isForceColorSimultaneous: false,
         isForceMaterialSimultaneous: false,
